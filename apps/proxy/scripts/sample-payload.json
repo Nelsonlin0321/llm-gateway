@@ -1,0 +1,16 @@
+{
+  "model": "minimax/MiniMax-M3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant. Keep answers brief."
+    },
+    {
+      "role": "user",
+      "content": "Say hello in two short sentences."
+    }
+  ],
+  "max_tokens": 64,
+  "temperature": 0.7,
+  "stream": true
+}
