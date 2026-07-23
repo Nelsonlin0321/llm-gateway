@@ -17,6 +17,20 @@ const HOP_BY_HOP_REQUEST_HEADERS = new Set([
   "authorization",
 ]);
 
+/** Response headers that must be recalculated by the local server. */
+const HOP_BY_HOP_RESPONSE_HEADERS = new Set([
+  "connection",
+  "keep-alive",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailers",
+  "transfer-encoding",
+  "upgrade",
+  "content-length",
+  "content-encoding",
+]);
+
 function buildTargetHeaders(req: Request, apiKey: string): Headers {
   const headers = new Headers();
   for (const [key, value] of req.headers.entries()) {
@@ -27,6 +41,17 @@ function buildTargetHeaders(req: Request, apiKey: string): Headers {
   }
   headers.set("authorization", `Bearer ${apiKey}`);
   headers.set("content-type", "application/json");
+  return headers;
+}
+
+function buildDownstreamHeaders(upstream: Response): Headers {
+  const headers = new Headers();
+  for (const [key, value] of upstream.headers.entries()) {
+    if (HOP_BY_HOP_RESPONSE_HEADERS.has(key.toLowerCase())) {
+      continue;
+    }
+    headers.set(key, value);
+  }
   return headers;
 }
 
@@ -89,5 +114,9 @@ export async function proxyToProvider(c: Context): Promise<Response> {
     );
   }
 
-  return upstream;
+  return new Response(upstream.body, {
+    status: upstream.status,
+    statusText: upstream.statusText,
+    headers: buildDownstreamHeaders(upstream),
+  });
 }

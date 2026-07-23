@@ -5,7 +5,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test:providers": "tsx scripts/test-providers.ts"
+    "test": "tsx scripts/test-providers.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.11",
