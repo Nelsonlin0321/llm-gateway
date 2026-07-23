@@ -1,37 +1,13 @@
 import type { Context } from "hono";
 import { proxy } from "hono/proxy";
-import { prepareUpstreamPayload } from "./payload.js";
-import { buildTargetUrl, getProviderApiKey } from "./providers.js";
+import { prepareOpenaiPayload } from "./payload-openai.js";
+import {
+  buildUpstreamHeaders,
+  buildUpstreamUrl,
+  getProviderApiKey,
+} from "./shared/upstream.js";
 
-/** Request headers that should not be forwarded to the target provider. */
-const HOP_BY_HOP_REQUEST_HEADERS = new Set([
-  "host",
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailers",
-  "transfer-encoding",
-  "upgrade",
-  "content-length",
-  "authorization",
-]);
-
-function buildTargetHeaders(req: Request, apiKey: string): Headers {
-  const headers = new Headers();
-  for (const [key, value] of req.headers.entries()) {
-    if (HOP_BY_HOP_REQUEST_HEADERS.has(key.toLowerCase())) {
-      continue;
-    }
-    headers.set(key, value);
-  }
-  headers.set("authorization", `Bearer ${apiKey}`);
-  headers.set("content-type", "application/json");
-  return headers;
-}
-
-export async function proxyToProvider(c: Context): Promise<Response> {
+export async function proxyToOpenai(c: Context): Promise<Response> {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -47,11 +23,10 @@ export async function proxyToProvider(c: Context): Promise<Response> {
     );
   }
 
-  const prepared = prepareUpstreamPayload(body);
+  const prepared = prepareOpenaiPayload(body);
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
-
   const { parsed, upstreamBody } = prepared.value;
   const apiKey = getProviderApiKey(parsed.provider);
   if (!apiKey) {
@@ -67,12 +42,12 @@ export async function proxyToProvider(c: Context): Promise<Response> {
   }
 
   const requestPath = new URL(c.req.url).pathname;
-  const upstreamUrl = buildTargetUrl(parsed.provider.baseUrl, requestPath);
+  const upstreamUrl = buildUpstreamUrl(parsed.provider.baseUrl, requestPath);
 
   try {
     return await proxy(upstreamUrl, {
       method: c.req.method,
-      headers: buildTargetHeaders(c.req.raw, apiKey),
+      headers: buildUpstreamHeaders(c.req.raw, apiKey),
       body: JSON.stringify(upstreamBody),
     });
   } catch (err) {

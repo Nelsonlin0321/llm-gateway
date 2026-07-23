@@ -1,33 +1,7 @@
-import {
-  parseModel,
-  providers,
-  type ParsedModel,
-} from "./providers.js";
-
-export type JsonBody = Record<string, unknown>;
-
-export type PayloadError = {
-  status: 400;
-  error: {
-    message: string;
-    type: string;
-    param?: string;
-  };
-};
-
-export type PreparedPayload = {
-  parsed: ParsedModel;
-  /** Body ready to forward (bare model + stream_options forced when streaming). */
-  upstreamBody: JsonBody;
-};
-
-export type PrepareResult =
-  | { ok: true; value: PreparedPayload }
-  | { ok: false; error: PayloadError };
-
-function isRecord(value: unknown): value is JsonBody {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+import { parseModel } from "./shared/upstream.js";
+import type { JsonBody, PrepareResult } from "./types/payload.js";
+import { openaiCompatibleProviders } from "./providers.js";
+import { isRecord } from "./utils.js";
 
 /**
  * When `stream` is true, force `stream_options` to `{ include_usage: true }`
@@ -54,7 +28,7 @@ export function ensureStreamUsageOptions(body: JsonBody): JsonBody {
  * - strip the provider prefix from `model`
  * - force stream usage options when streaming
  */
-export function prepareUpstreamPayload(body: unknown): PrepareResult {
+export function prepareOpenaiPayload(body: unknown): PrepareResult {
   if (!isRecord(body) || typeof body.model !== "string" || !body.model) {
     return {
       ok: false,
@@ -69,9 +43,9 @@ export function prepareUpstreamPayload(body: unknown): PrepareResult {
     };
   }
 
-  const parsed = parseModel(body.model);
+  const parsed = parseModel(body.model, "openai");
   if (!parsed) {
-    const known = Object.keys(providers).join(", ");
+    const known = Object.keys(openaiCompatibleProviders).join(", ");
     return {
       ok: false,
       error: {

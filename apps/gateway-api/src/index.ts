@@ -1,8 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import { proxyToOpenai } from "./proxy.js";
 import { providers } from "./providers.js";
-import { proxyToProvider } from "./proxy.js";
 
 const app = new Hono();
 
@@ -12,7 +12,7 @@ app.get("/", (c) => {
   return c.json({
     name: "llm-gateway",
     status: "ok",
-    docs: "POST /openai/* with model set to provider/model",
+    docs: "POST /openai/* or /anthropic/* with model set to provider/model",
     providers: Object.fromEntries(
       Object.entries(providers).map(([id, p]) => [
         id,
@@ -27,8 +27,8 @@ app.get("/", (c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
-app.post("/openai/*", proxyToProvider);
-app.post("/anthropic/*", proxyToProvider);
+app.post("/openai/*", proxyToOpenai);
+// app.post("/anthropic/*", proxyToProvider);
 
 const port = Number(process.env.PORT) || 8080;
 
