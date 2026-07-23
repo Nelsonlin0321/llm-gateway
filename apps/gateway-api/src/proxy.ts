@@ -2,7 +2,7 @@ import type { Context } from "hono";
 import { prepareUpstreamPayload } from "./payload.js";
 import { buildTargetUrl, getProviderApiKey } from "./providers.js";
 
-/** Request headers that should not be forwarded to the upstream provider. */
+/** Request headers that should not be forwarded to the target provider. */
 const HOP_BY_HOP_REQUEST_HEADERS = new Set([
   "host",
   "connection",

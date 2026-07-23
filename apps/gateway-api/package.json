@@ -1,5 +1,5 @@
 {
-  "name": "gateway",
+  "name": "gateway-api",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",

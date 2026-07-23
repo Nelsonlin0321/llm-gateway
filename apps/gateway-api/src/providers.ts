@@ -16,19 +16,24 @@ export type ProviderConfig = {
 
 export const providers: Record<string, ProviderConfig> = {
   minimax: {
-    baseUrl: "https://api.minimaxi.com",
+    baseUrl: "https://api.minimaxi.com/v1",
     apiKeyEnv: "MINIMAX_API_KEY",
     exampleModel: "MiniMax-M3",
   },
   openai: {
-    baseUrl: "https://api.openai.com",
+    baseUrl: "https://api.openai.com/v1",
     apiKeyEnv: "OPENAI_API_KEY",
     exampleModel: "gpt-4o-mini",
   },
   deepseek: {
-    baseUrl: "https://api.deepseek.com",
+    baseUrl: "https://api.deepseek.com/v1",
     apiKeyEnv: "DEEPSEEK_API_KEY",
     exampleModel: "deepseek-v4-pro",
+  },
+  azure: {
+    baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
+    apiKeyEnv: "AZURE_API_KEY",
+    exampleModel: "gpt-4o-mini",
   },
 };
 

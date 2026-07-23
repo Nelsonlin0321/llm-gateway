@@ -30,7 +30,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 app.post("/openai/*", proxyToProvider);
 app.post("/anthropic/*", proxyToProvider);
 
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 8080;
 
 serve(
   {

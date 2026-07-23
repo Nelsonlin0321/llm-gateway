@@ -1,4 +1,4 @@
-**System Design & Architecture for LLM-Proxy** ✅
+**System Design & Architecture for LLM-Gateway** ✅
 
 Here's a refined, enterprise-grade architecture based on your proposed three-service structure.
 
@@ -7,7 +7,7 @@ Here's a refined, enterprise-grade architecture based on your proposed three-ser
 ```
 Clients / Applications
        ↓ (HTTP / OpenAI-compatible API)
-[Proxy Service] (Hono + Node.js/Bun)
+[Gateway Service] (Hono + Node.js/Bun)
        ↓ (Async)
 Redis Streams (Event Buffer)
        ↓ (Consumer Groups)
@@ -18,7 +18,7 @@ PostgreSQL + Redis (Cache)
 [Next.js Dashboard] (Admin UI)
 ```
 
-### 1. Proxy Service (Hono Framework)
+### 1. Gateway Service (Hono Framework)
 
 **Responsibilities:**
 
@@ -38,7 +38,7 @@ PostgreSQL + Redis (Cache)
   - Request validation & transformation
   - Provider routing engine
   - Response transformation (normalize across providers)
-- Event emission: Use a lightweight producer to push to Redis Stream (`llm-proxy-events`).
+- Event emission: Use a lightweight producer to push to Redis Stream (`llm-Gateway-events`).
   - Event payload example:
     ```json
     {
@@ -124,9 +124,9 @@ Use **JSONB** heavily for flexibility (tags, metadata, raw payloads when needed)
 ### Data Flow Example
 
 1. Client calls `POST /v1/chat/completions` with child API key.
-2. Proxy validates key → routes to provider → gets response.
-3. Proxy returns response to client.
-4. Proxy asynchronously pushes event to Redis Stream.
+2. Gateway validates key → routes to provider → gets response.
+3. Gateway returns response to client.
+4. Gateway asynchronously pushes event to Redis Stream.
 5. Ingest worker consumes batch → transforms → writes to Postgres.
 6. Dashboard queries Postgres (or cached aggregates) for UI.
 
@@ -136,7 +136,7 @@ Use **JSONB** heavily for flexibility (tags, metadata, raw payloads when needed)
 
 | Concern            | Solution                                        |
 | ------------------ | ----------------------------------------------- |
-| High QPS           | Multiple Proxy instances + Load Balancer        |
+| High QPS           | Multiple Gateway instances + Load Balancer      |
 | Event Backpressure | Redis Stream + multiple consumer groups         |
 | Ingestion Scale    | Horizontal scaling of worker pods               |
 | Durability         | Redis AOF + Postgres                            |
@@ -145,7 +145,7 @@ Use **JSONB** heavily for flexibility (tags, metadata, raw payloads when needed)
 
 **Deployment:**
 
-- Kubernetes recommended (Proxy + Workers + Next.js)
+- Kubernetes recommended (Gateway + Workers + Next.js)
 - Use Helm charts or Terraform
 - Secrets management: External Secrets Operator + Vault
 
@@ -175,7 +175,7 @@ Use **JSONB** heavily for flexibility (tags, metadata, raw payloads when needed)
 
 **Recommended Next Actions:**
 
-1. Create detailed **API Contract** (OpenAPI spec) for the Proxy.
+1. Create detailed **API Contract** (OpenAPI spec) for the Gateway.
 2. Design the **Database Schema** (I can help draft full SQL).
 3. Define **Event Schema** formally.
 4. Choose observability stack (Prometheus + Grafana + Loki).
@@ -186,7 +186,7 @@ Use **JSONB** heavily for flexibility (tags, metadata, raw payloads when needed)
 Would you like me to:
 
 - Draft the full **database schema**?
-- Write **OpenAPI spec** examples for the proxy?
+- Write **OpenAPI spec** examples for the Gateway?
 - Detail the **Redis Stream event format**?
 - Provide **Hono middleware structure** pseudocode?
 - Draw a more detailed **C4 model** or sequence diagram?

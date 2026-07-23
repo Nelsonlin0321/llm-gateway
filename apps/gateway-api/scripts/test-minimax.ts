@@ -14,7 +14,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:3000").replace(
+const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:8080").replace(
   /\/$/,
   "",
 );
