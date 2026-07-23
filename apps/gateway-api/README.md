@@ -20,3 +20,18 @@ providers, url, example model, API_KEY environment variable
 - deepseek: https://api.deepseek.com, deepseek-v4-pro, DEEPSEEK_API_KEY
 
 Please implement the proxy api on the file @apps/proxy/src/index.ts
+
+```shell
+curl http://localhost:8080/openai/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+        "model": "deepseek/deepseek-v4-flash",
+        "messages": [
+          {"role": "system", "content": "You are a helpful assistant."},
+          {"role": "user", "content": "Hello!"}
+        ],
+        "thinking": {"type": "enabled"},
+        "reasoning_effort": "high",
+        "stream": true
+      }'
+```
