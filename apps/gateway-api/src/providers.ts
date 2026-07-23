@@ -21,19 +21,19 @@ export const providers: Record<string, ProviderConfig> = {
     exampleModel: "MiniMax-M3",
   },
   openai: {
-    baseUrl: "https://api.openai.com/v1",
+    baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
     apiKeyEnv: "OPENAI_API_KEY",
-    exampleModel: "gpt-4o-mini",
+    exampleModel: "gpt-5.4-mini",
   },
   deepseek: {
-    baseUrl: "https://api.deepseek.com/v1",
+    baseUrl: "https://api.deepseek.com",
     apiKeyEnv: "DEEPSEEK_API_KEY",
-    exampleModel: "deepseek-v4-pro",
+    exampleModel: "deepseek-v4-flash",
   },
   azure: {
     baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
     apiKeyEnv: "AZURE_API_KEY",
-    exampleModel: "gpt-4o-mini",
+    exampleModel: "gpt-5.4-mini",
   },
 };
 
