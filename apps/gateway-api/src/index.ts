@@ -2,7 +2,10 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { proxyToOpenai } from "./proxy.js";
-import { providers } from "./providers.js";
+import {
+  anthropicCompatibleProviders,
+  openaiCompatibleProviders,
+} from "./providers.js";
 
 const app = new Hono();
 
@@ -13,8 +16,18 @@ app.get("/", (c) => {
     name: "llm-gateway",
     status: "ok",
     docs: "POST /openai/* or /anthropic/* with model set to provider/model",
-    providers: Object.fromEntries(
-      Object.entries(providers).map(([id, p]) => [
+    "openai-compatible": Object.fromEntries(
+      Object.entries(openaiCompatibleProviders).map(([id, p]) => [
+        id,
+        {
+          baseUrl: p.baseUrl,
+          exampleModel: `${id}/${p.exampleModel}`,
+          apiKeyEnv: p.apiKeyEnv,
+        },
+      ]),
+    ),
+    "anthropic-compatible": Object.fromEntries(
+      Object.entries(anthropicCompatibleProviders).map(([id, p]) => [
         id,
         {
           baseUrl: p.baseUrl,
