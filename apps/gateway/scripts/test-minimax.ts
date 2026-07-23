@@ -30,7 +30,7 @@ async function main(): Promise<void> {
   };
 
   console.log("=== LLM Proxy MiniMax smoke test ===");
-  console.log(`URL:   ${baseUrl}/v1/chat/completions`);
+  console.log(`URL:   ${baseUrl}/openai/v1/chat/completions`);
   console.log(`Model: ${payload.model}`);
   console.log("Payload:");
   console.log(JSON.stringify(payload, null, 2));
@@ -39,7 +39,7 @@ async function main(): Promise<void> {
   const started = Date.now();
   let response: Response;
   try {
-    response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    response = await fetch(`${baseUrl}/openai/v1/chat/completions`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -66,16 +66,8 @@ async function main(): Promise<void> {
 
   console.log(`Status:  ${response.status} ${response.statusText}`);
   console.log(`Latency: ${latencyMs}ms`);
-  console.log(
-    `Provider header: ${response.headers.get("x-llm-proxy-provider") ?? "(none)"}`,
-  );
-  console.log(
-    `Model header:    ${response.headers.get("x-llm-proxy-model") ?? "(none)"}`,
-  );
   console.log("Response body:");
-  console.log(
-    typeof body === "string" ? body : JSON.stringify(body, null, 2),
-  );
+  console.log(typeof body === "string" ? body : JSON.stringify(body, null, 2));
 
   if (!response.ok) {
     process.exitCode = 1;
@@ -89,8 +81,9 @@ async function main(): Promise<void> {
     "choices" in body &&
     Array.isArray((body as { choices: unknown }).choices)
   ) {
-    const choice = (body as { choices: Array<{ message?: { content?: string } }> })
-      .choices[0];
+    const choice = (
+      body as { choices: Array<{ message?: { content?: string } }> }
+    ).choices[0];
     const content = choice?.message?.content;
     if (content) {
       console.log("---");

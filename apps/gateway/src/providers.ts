@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 export type ProviderConfig = {
   /** Upstream OpenAI-compatible base URL (may or may not include /v1). */
   baseUrl: string;
@@ -11,14 +13,15 @@ export type ProviderConfig = {
  * Provider registry. Clients address models as `{provider}/{model}`, e.g.
  * `minimax/MiniMax-M3` or `openai/gpt-4o-mini`.
  */
+
 export const providers: Record<string, ProviderConfig> = {
   minimax: {
-    baseUrl: "https://api.minimaxi.com/v1",
+    baseUrl: "https://api.minimaxi.com",
     apiKeyEnv: "MINIMAX_API_KEY",
     exampleModel: "MiniMax-M3",
   },
   openai: {
-    baseUrl: "https://api.openai.com/v1",
+    baseUrl: "https://api.openai.com",
     apiKeyEnv: "OPENAI_API_KEY",
     exampleModel: "gpt-4o-mini",
   },
@@ -56,19 +59,17 @@ export function parseModel(model: string): ParsedModel | null {
   return { providerId, model: bareModel, provider };
 }
 
-/**
- * Build the upstream URL for a request path like `/v1/chat/completions`.
- * Avoids doubling `/v1` when the provider base already ends with it.
- */
-export function buildUpstreamUrl(baseUrl: string, requestPath: string): string {
+export function buildTargetUrl(baseUrl: string, requestPath: string): string {
   const base = baseUrl.replace(/\/$/, "");
   const path = requestPath.startsWith("/") ? requestPath : `/${requestPath}`;
+  const normalizedPath =
+    path.replace(/^\/(?:openai|anthropic)(?=\/|$)/, "") || "/";
 
-  if (base.endsWith("/v1") && path.startsWith("/v1")) {
-    return `${base}${path.slice(3)}`;
+  if (base.endsWith("/v1") && normalizedPath.startsWith("/v1")) {
+    return `${base}${normalizedPath.slice(3)}`;
   }
 
-  return `${base}${path}`;
+  return `${base}${normalizedPath}`;
 }
 
 export function getProviderApiKey(provider: ProviderConfig): string | null {

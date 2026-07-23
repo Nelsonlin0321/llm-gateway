@@ -7,10 +7,10 @@
     },
     {
       "role": "user",
-      "content": "Say hello in two short sentences."
+      "content": "Writing a long long poem about the weather today"
     }
   ],
   "max_tokens": 64,
   "temperature": 0.7,
-  "stream": true
+  "stream": false
 }

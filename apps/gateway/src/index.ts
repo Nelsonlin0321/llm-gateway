@@ -10,9 +10,9 @@ app.use("*", logger());
 
 app.get("/", (c) => {
   return c.json({
-    name: "llm-proxy",
+    name: "llm-gateway",
     status: "ok",
-    docs: "POST /v1/chat/completions with model set to provider/model",
+    docs: "POST /openai/* with model set to provider/model",
     providers: Object.fromEntries(
       Object.entries(providers).map(([id, p]) => [
         id,
@@ -27,15 +27,8 @@ app.get("/", (c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
-
-// OpenAI-compatible surface: route by model prefix (provider/model).
-app.post("/v1/chat/completions", proxyToProvider);
-app.post("/v1/completions", proxyToProvider);
-app.post("/v1/embeddings", proxyToProvider);
-app.post("/v1/messages", proxyToProvider);
-
-// Catch-all for other OpenAI-style POST endpoints under /v1.
-app.post("/v1/*", proxyToProvider);
+app.post("/openai/*", proxyToProvider);
+app.post("/anthropic/*", proxyToProvider);
 
 const port = Number(process.env.PORT) || 3000;
 
