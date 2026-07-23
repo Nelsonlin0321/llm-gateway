@@ -5,6 +5,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "test": "node --import tsx --test tests/**/*.test.ts",
     "test:json": "tsx scripts/test-json-response.ts",
     "test:stream": "tsx scripts/test-stream-response.ts"
   },

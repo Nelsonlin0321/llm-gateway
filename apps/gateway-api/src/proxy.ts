@@ -23,7 +23,8 @@ export async function proxyToOpenai(c: Context): Promise<Response> {
     );
   }
 
-  const prepared = prepareOpenaiPayload(body);
+  const requestPath = new URL(c.req.url).pathname;
+  const prepared = prepareOpenaiPayload(body, requestPath);
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
@@ -41,7 +42,6 @@ export async function proxyToOpenai(c: Context): Promise<Response> {
     );
   }
 
-  const requestPath = new URL(c.req.url).pathname;
   const upstreamUrl = buildUpstreamUrl(parsed.provider.baseUrl, requestPath);
 
   try {

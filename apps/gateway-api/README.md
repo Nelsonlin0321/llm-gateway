@@ -43,6 +43,6 @@ curl http://localhost:8080/openai/v1/responses \
   "model": "openai/gpt-5.4-mini",
   "instructions": "You are a helpful assistant.",
   "input": "Hello!",
-  "stream": false
+  "stream": true
 }'
 ```

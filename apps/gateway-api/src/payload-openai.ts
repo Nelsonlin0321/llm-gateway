@@ -4,14 +4,24 @@ import { openaiCompatibleProviders } from "./providers.js";
 import { isRecord } from "./utils.js";
 
 /**
- * When `stream` is true, force `stream_options` to `{ include_usage: true }`
- * so providers always emit a final usage chunk on streamed responses.
+ * When `stream` is true on chat completions endpoints, force
+ * `stream_options` to `{ include_usage: true }` so providers always emit a
+ * final usage chunk on streamed responses.
  *
  * Overwrites any client-supplied `stream_options`. Leaves the body unchanged
- * when streaming is not enabled.
+ * when streaming is not enabled or the request is not targeting
+ * `/chat/completions`.
  */
-export function ensureStreamUsageOptions(body: JsonBody): JsonBody {
-  if (body.stream !== true) {
+function isChatCompletionsPath(requestPath: string): boolean {
+  const path = requestPath.startsWith("/") ? requestPath : `/${requestPath}`;
+  return /\/(?:v1\/)?chat\/completions\/?$/.test(path);
+}
+
+export function ensureStreamUsageOptions(
+  body: JsonBody,
+  requestPath: string,
+): JsonBody {
+  if (body.stream !== true || !isChatCompletionsPath(requestPath)) {
     return body;
   }
 
@@ -26,9 +36,12 @@ export function ensureStreamUsageOptions(body: JsonBody): JsonBody {
  * - require a non-empty string `model` in `provider/model` form
  * - resolve the provider from the model prefix
  * - strip the provider prefix from `model`
- * - force stream usage options when streaming
+ * - force stream usage options for streamed chat completions requests
  */
-export function prepareOpenaiPayload(body: unknown): PrepareResult {
+export function prepareOpenaiPayload(
+  body: unknown,
+  requestPath: string,
+): PrepareResult {
   if (!isRecord(body) || typeof body.model !== "string" || !body.model) {
     return {
       ok: false,
@@ -59,10 +72,13 @@ export function prepareOpenaiPayload(body: unknown): PrepareResult {
     };
   }
 
-  const upstreamBody = ensureStreamUsageOptions({
-    ...body,
-    model: parsed.model,
-  });
+  const upstreamBody = ensureStreamUsageOptions(
+    {
+      ...body,
+      model: parsed.model,
+    },
+    requestPath,
+  );
 
   return {
     ok: true,
