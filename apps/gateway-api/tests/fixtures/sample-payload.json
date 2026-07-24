@@ -1,0 +1,14 @@
+{
+  "model": "minimax/MiniMax-M3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful assistant. Keep answers brief."
+    },
+    {
+      "role": "user",
+      "content": "Hi there!"
+    }
+  ],
+  "stream": false
+}

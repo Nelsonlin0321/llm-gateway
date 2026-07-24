@@ -49,3 +49,20 @@ curl http://localhost:8080/openai/v1/responses \
   }
 }'
 ```
+
+## Testing
+
+Run the regular automated tests:
+
+```shell
+npm test
+```
+
+Run live proxy checks for `/openai/v1/chat/completions` from the `tests/` folder:
+
+```shell
+npm run test:json
+npm run test:stream
+```
+
+These live tests expect the proxy to be running at `PROXY_BASE_URL` (defaults to `http://localhost:8080`). You can narrow the provider list with `PROXY_TEST_PROVIDERS=openai,deepseek`.

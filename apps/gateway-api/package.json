@@ -6,8 +6,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "node --import tsx --test tests/**/*.test.ts",
-    "test:json": "tsx scripts/test-json-response.ts",
-    "test:stream": "tsx scripts/test-stream-response.ts"
+    "test:json": "LIVE_PROXY_TEST=1 node --import tsx --test tests/openai-chat-completions-json.live.test.ts",
+    "test:stream": "LIVE_PROXY_TEST=1 node --import tsx --test tests/openai-chat-completions-stream.live.test.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.11",
