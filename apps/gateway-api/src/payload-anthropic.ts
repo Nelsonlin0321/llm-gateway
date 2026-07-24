@@ -46,6 +46,12 @@ export function prepareAnthropicPayload(body: unknown): PrepareResult {
 
   return {
     ok: true,
-    value: { parsed, upstreamBody: body },
+    value: {
+      parsed,
+      upstreamBody: {
+        ...body,
+        model: parsed.model,
+      },
+    },
   };
 }
