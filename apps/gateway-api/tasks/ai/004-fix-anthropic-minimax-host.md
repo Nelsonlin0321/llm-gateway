@@ -2,7 +2,7 @@
 
 ## Summary
 
-Fixed the Anthropic-compatible MiniMax provider host. The configured host was `api.minimax.com`, which Node could not resolve, causing the gateway to return `502 fetch failed`.
+Fixed the Anthropic-compatible MiniMax provider URL in `src/providers.ts`. The configured Anthropic upstream URL was incorrect, which caused the gateway to return `502 fetch failed`.
 
 ## Files Touched
 
@@ -10,10 +10,8 @@ Fixed the Anthropic-compatible MiniMax provider host. The configured host was `a
 
 ## What Changed
 
-- Updated the Anthropic MiniMax base URL from:
-  - `https://api.minimax.com/anthropic`
-- To:
-  - `https://api.minimax.io/anthropic`
+- Corrected the Anthropic MiniMax `baseUrl` entry under `anthropicCompatibleProviders.minimax`
+- This restored the gateway's ability to reach the Anthropic-compatible upstream endpoint
 
 ## How To Verify
 

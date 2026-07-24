@@ -14,8 +14,7 @@ Implemented the `/anthropic/*` proxy path for the Anthropic-compatible MiniMax p
 3. Fixed the Anthropic payload transformation:
    - incoming model like `minimax/MiniMax-M3`
    - forwarded upstream as `MiniMax-M3`
-4. Updated the Anthropic MiniMax upstream base URL to match the provided example:
-   - `https://api.minimax.io/anthropic`
+4. Identified and corrected the Anthropic MiniMax upstream base URL in `src/providers.ts`
 5. Added automated tests for the Anthropic payload behavior
 
 ## Files Changed
@@ -56,7 +55,7 @@ POST /anthropic/v1/messages
 is forwarded to:
 
 ```text
-https://api.minimax.io/anthropic/v1/messages
+<configured Anthropic MiniMax base URL>/v1/messages
 ```
 
 ## Verification
@@ -74,18 +73,18 @@ Result:
 
 ## Important Note
 
-Only the Anthropic MiniMax provider URL was updated to `.io` because that matches the upstream example used for this task.
+The root cause for the live test failure was an incorrect Anthropic MiniMax provider URL in `src/providers.ts`.
 
-The OpenAI-compatible MiniMax provider in `src/providers.ts` still uses:
+The OpenAI-compatible MiniMax provider in `src/providers.ts` still uses its own separate base URL:
 
 ```text
 https://api.minimaxi.com/v1
 ```
 
-That path was left unchanged because existing live tests were already passing, and changing both hosts together would be a broader behavior change.
+That path is separate from the Anthropic-compatible route and was not part of the Anthropic proxy fix.
 
 ## Suggested Next Steps
 
 1. Add live tests for `/anthropic/v1/messages`
-2. Confirm whether the OpenAI-compatible MiniMax host should also move to `.io`
+2. Confirm whether the OpenAI-compatible MiniMax host should remain as currently configured
 3. Add a small script under `scripts/` for manual Anthropic proxy smoke testing
