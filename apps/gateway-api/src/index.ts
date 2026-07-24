@@ -1,11 +1,12 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import { proxyToOpenai } from "./proxy.js";
+import { proxyToOpenai } from "./proxy-openai.js";
 import {
   anthropicCompatibleProviders,
   openaiCompatibleProviders,
 } from "./providers.js";
+import { proxyToAnthropic } from "./proxy-anthropic.js";
 
 const app = new Hono();
 
@@ -41,7 +42,7 @@ app.get("/", (c) => {
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 app.post("/openai/*", proxyToOpenai);
-// app.post("/anthropic/*", proxyToProvider);
+app.post("/anthropic/*", proxyToAnthropic);
 
 const port = Number(process.env.PORT) || 8080;
 

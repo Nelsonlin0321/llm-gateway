@@ -28,7 +28,7 @@ export function prepareAnthropicPayload(body: unknown): PrepareResult {
     };
   }
 
-  const parsed = parseModel(body.model, "openai");
+  const parsed = parseModel(body.model, "anthropic");
   if (!parsed) {
     const known = Object.keys(anthropicCompatibleProviders).join(", ");
     return {
