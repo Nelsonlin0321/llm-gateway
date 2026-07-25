@@ -13,15 +13,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id
+  id            String        @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean       @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   sessions      Session[]
   accounts      Account[]
+  llmproviders  LLMProvider[]
 
   @@unique([email])
   @@map("user")
@@ -73,4 +74,26 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+enum CompatibilityType {
+  openai
+  anthropic
+}
+
+//
+model LLMProvider {
+  id                String            @id
+  name              String
+  apiUrl            String
+  encryptedApiKey   String
+  compatibilityType CompatibilityType
+  inputPrice        Float? // input price per 1M tokens
+  inputCachePrice   Float? // input cache price per 1M tokens
+  outputPrice       Float? // output price per 1M tokens
+  isActive          Boolean           @default(true)
+  creatorId         String
+  creator           User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 }
