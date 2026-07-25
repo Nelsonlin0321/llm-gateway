@@ -1,19 +1,23 @@
+import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { createElement } from "react";
 import { render, toPlainText } from "react-email";
 
 import VerificationEmail, {
   verificationEmailSubject,
 } from "@/emails/verification-email";
+import { sesClient } from "@/lib/ses";
 
-export interface RenderVerificationEmailOptions {
+export interface SendVerificationEmailOptions {
   email: string;
   verificationUrl: string;
 }
 
-export async function renderVerificationEmail({
+const EMAIL_FROM = process.env.EMAIL_FROM!;
+
+async function renderVerificationEmail({
   email,
   verificationUrl,
-}: RenderVerificationEmailOptions) {
+}: SendVerificationEmailOptions) {
   const html = await render(
     createElement(VerificationEmail, {
       email,
@@ -28,4 +32,37 @@ export async function renderVerificationEmail({
   };
 }
 
-export { verificationEmailSubject };
+export async function sendVerificationEmail({
+  email,
+  verificationUrl,
+}: SendVerificationEmailOptions) {
+  const { html, subject, text } = await renderVerificationEmail({
+    email,
+    verificationUrl,
+  });
+
+  return sesClient.send(
+    new SendEmailCommand({
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Body: {
+          Html: {
+            Charset: "UTF-8",
+            Data: html,
+          },
+          Text: {
+            Charset: "UTF-8",
+            Data: text,
+          },
+        },
+        Subject: {
+          Charset: "UTF-8",
+          Data: subject,
+        },
+      },
+      Source: EMAIL_FROM,
+    }),
+  );
+}
