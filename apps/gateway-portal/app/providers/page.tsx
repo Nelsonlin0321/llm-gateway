@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, LockKeyhole, Server, Wallet } from "lucide-react";
 
-import { getProviders } from "@/app/server-actions/llm-provider/get-providers";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -19,7 +18,6 @@ import { ProvidersManagementSection } from "@/components/providers/providers-man
 
 export default async function ProvidersPage() {
   const session = await requireSession();
-  const providers = await getProviders({ includeInactive: true });
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">

@@ -38,9 +38,17 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
+type CardDescriptionProps = React.ComponentProps<"p"> & {
+  as?: "p" | "div";
+};
+
+function CardDescription({
+  as: Component = "p",
+  className,
+  ...props
+}: CardDescriptionProps) {
   return (
-    <p
+    <Component
       data-slot="card-description"
       className={cn(
         "text-sm leading-6 tracking-[-0.01em] text-text-secondary",

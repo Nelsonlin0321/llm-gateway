@@ -20,7 +20,7 @@ export function ProviderManagementSkeleton() {
             className="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_80%,transparent))]"
           >
             <CardHeader className="pb-3">
-              <CardDescription>
+              <CardDescription as="div">
                 <Skeleton className="h-4 w-20" />
               </CardDescription>
               <CardTitle>
@@ -40,7 +40,7 @@ export function ProviderManagementSkeleton() {
             <CardTitle className="text-[1.8rem]">
               <Skeleton className="h-8 w-56" />
             </CardTitle>
-            <CardDescription className="space-y-2">
+            <CardDescription as="div" className="space-y-2">
               <Skeleton className="h-4 w-full max-w-2xl" />
               <Skeleton className="h-4 w-full max-w-xl" />
             </CardDescription>
