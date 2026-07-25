@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, LogOut, ShieldCheck, Wallet, Waypoints } from "lucide-react";
+import {
+  ArrowRight,
+  LogOut,
+  ShieldCheck,
+  Wallet,
+  Waypoints,
+} from "lucide-react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useEffect } from "react";
 
@@ -30,12 +36,14 @@ export default function DashboardPage() {
   if (isPending)
     return <p className="mt-8 text-center text-text-secondary">Loading...</p>;
   if (!session?.user)
-    return <p className="mt-8 text-center text-text-secondary">Redirecting...</p>;
+    return (
+      <p className="mt-8 text-center text-text-secondary">Redirecting...</p>
+    );
 
   const { user } = session;
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-6rem)] w-full max-w-7xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+    <main className="mx-auto flex min-h-[calc(100vh-6rem)] w-full flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_84%,transparent))]">
           <CardHeader className="gap-4">
@@ -62,14 +70,19 @@ export default function DashboardPage() {
           <CardContent className="flex flex-col gap-2.5 sm:flex-row">
             <Link
               href="/providers"
-              className={cn(buttonVariants({ variant: "default", size: "default" }), "px-4")}
+              className={cn(
+                buttonVariants({ variant: "default", size: "default" }),
+                "px-4",
+              )}
             >
               Manage providers
               <ArrowRight className="size-4" />
             </Link>
             <div className="rounded-[16px] border border-border bg-background px-3.5 py-2.5 text-sm text-text-secondary">
               Signed in as{" "}
-              <span className="font-medium text-text-primary">{user.email}</span>
+              <span className="font-medium text-text-primary">
+                {user.email}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -133,7 +146,9 @@ function DashboardFeature({
         <Icon className="size-4 text-accent" />
         {title}
       </div>
-      <p className="mt-2 text-sm leading-5 text-text-secondary">{description}</p>
+      <p className="mt-2 text-sm leading-5 text-text-secondary">
+        {description}
+      </p>
     </div>
   );
 }
