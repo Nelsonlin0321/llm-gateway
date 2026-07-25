@@ -92,3 +92,18 @@ This app currently starts from a minimal Next.js scaffold. New work should move 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 
 <!-- END:nextjs-agent-rules -->
+
+# Work Log Rule
+
+When you complete any meaningful change (feature, fix, refactor, test, documentation, configuration), you must record what was done in a Markdown file.
+
+## Requirements
+
+- Location: under the most relevant `tasks/**` folder in `apps/gateway-portal/`.
+- Filename prefix: a three-digit, zero-padded sequence number that increases over time within that folder.
+  - Examples: `001-auth-flow.md`, `002-provider-loading-states.md`
+- Content: include at minimum:
+  - Summary of changes
+  - Files touched
+  - How to verify (commands/tests run)
+  - Follow-ups / next steps (if any)
