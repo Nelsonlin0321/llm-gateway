@@ -42,9 +42,9 @@ type ProviderFormModalProps = {
 };
 
 const inputClassName =
-  "w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground shadow-sm transition-colors placeholder:text-text-tertiary focus:border-accent focus:outline-none";
+  "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
 
-const fieldLabelClassName = "text-sm font-medium text-text-primary";
+const fieldLabelClassName = "text-sm font-medium tracking-[-0.01em] text-text-primary";
 
 function getInitialValues(provider?: ProviderListItem): ProviderFormValues {
   return {
@@ -123,17 +123,17 @@ export function ProviderFormModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="provider-form-title"
-        className="w-full max-w-2xl rounded-[28px] border border-border bg-surface-1 shadow-hero"
+        className="w-full max-w-xl rounded-[24px] border border-border bg-surface-1 shadow-hero"
       >
-        <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
+        <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="space-y-1">
             <h2
               id="provider-form-title"
-              className="[font-family:var(--font-display)] text-2xl font-semibold tracking-[-0.03em]"
+              className="[font-family:var(--font-display)] text-[1.35rem] leading-[1.1] font-semibold tracking-[-0.03em]"
             >
               {title}
             </h2>
-            <p className="text-sm text-text-secondary">
+            <p className="max-w-lg text-sm leading-5 text-text-secondary">
               API keys are encrypted before they are stored. Existing keys are
               never shown back to the client.
             </p>
@@ -150,8 +150,8 @@ export function ProviderFormModal({
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
-          <div className="grid gap-5 sm:grid-cols-2">
+        <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2 sm:col-span-2">
               <label htmlFor="provider-name" className={fieldLabelClassName}>
                 Provider name
@@ -235,7 +235,7 @@ export function ProviderFormModal({
             </div>
 
             <div className="flex items-end">
-              <label className="flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 text-sm text-text-primary">
+              <label className="flex h-10 w-full items-center gap-3 rounded-lg border border-border bg-background px-3 text-sm text-text-primary">
                 <input
                   type="checkbox"
                   checked={values.isActive}
@@ -315,11 +315,11 @@ export function ProviderFormModal({
             </div>
           </div>
 
-          <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2.5 border-t border-border pt-4 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="secondary"
-              size="lg"
+              size="default"
               className="w-full sm:w-auto"
               onClick={onClose}
               disabled={isSubmitting}
@@ -328,7 +328,7 @@ export function ProviderFormModal({
             </Button>
             <Button
               type="submit"
-              size="lg"
+              size="default"
               className="w-full sm:w-auto"
               disabled={isSubmitting}
             >

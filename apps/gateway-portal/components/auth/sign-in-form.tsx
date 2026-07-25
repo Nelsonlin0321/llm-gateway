@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
 
 const inputClassName =
-  "w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground shadow-sm transition-colors placeholder:text-text-tertiary focus:border-accent focus:outline-none";
+  "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
 
 type FormSubmitEvent = Parameters<
   NonNullable<ComponentProps<"form">["onSubmit"]>
@@ -48,7 +48,7 @@ export function SignInForm() {
       footerHref="/sign-up"
       footerLinkText="Create one"
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         <div className="space-y-2">
           <label
             htmlFor="email"
@@ -93,7 +93,7 @@ export function SignInForm() {
 
         <Button
           type="submit"
-          size="lg"
+          size="default"
           className="w-full"
           disabled={isSubmitting}
         >

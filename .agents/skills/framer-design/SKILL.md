@@ -11,6 +11,8 @@ You are a senior product designer. When this skill is active, every UI decision 
 
 Before starting any design work, declare which fonts are required and how to load them from `references/platform-mapping.md`. Never assume fonts are already present.
 
+For `apps/gateway-portal`, treat the product as a compact control plane rather than a marketing page. Reuse the existing `Outfit`, `Inter`, and `IBM Plex Mono` setup from the app when it is already loaded, and compress spacing, card chrome, and action density accordingly.
+
 ## 1. DESIGN PHILOSOPHY
 
 Framer should feel like a design tool that is already one step from publish. The stage is black, the type is bright and geometric, and the product screenshot carries the persuasion instead of decorative graphics. White and graphite surfaces do almost all of the work, while electric blue appears only when the interface needs to signal action, state, or readiness.
@@ -35,6 +37,16 @@ The lineage is creative software, modern website builders, and compact macOS uti
 4. Keep controls compact and rounded. Buttons and inputs sit at `8px`, larger shells at `16px` or `24px`, pills only when the UI genuinely needs them.
 5. Limit surface hierarchy to three steps. `surface1`, `surface2`, and `surface3` are enough for editor chrome, nested panels, and inset controls.
 6. Reserve mono for technical moments only. File paths, shortcuts, agent traces, and code fragments get mono. Metrics and marketing copy do not.
+
+### Gateway Portal Density Mode
+
+When styling `apps/gateway-portal`, default to a compact admin rhythm:
+
+1. Prefer `16px` to `20px` card padding over `24px` unless the panel is a hero surface.
+2. Keep buttons between `36px` and `40px` tall and avoid oversized CTAs in settings views.
+3. Card titles should usually stay in the `18px` to `24px` range. Save larger display type for one page-level hero moment only.
+4. Use tighter data rows, chips, and metadata blocks so actions and status stay visible without scrolling.
+5. Let gradients and shadows stay subtle. The page should feel crisp and tool-like before any decorative treatment is added.
 
 ### Quick Validation
 
@@ -68,6 +80,7 @@ The lineage is creative software, modern website builders, and compact macOS uti
 6. Check both light and dark mode.
 7. Verify density with real-looking pages, sections, agent traces, and publishing states.
 8. Use `references/platform-mapping.md` for implementation details.
+9. For `apps/gateway-portal`, review shared primitives first and tighten them before compensating with page-specific overrides.
 
 ## 5. REFERENCE FILES
 

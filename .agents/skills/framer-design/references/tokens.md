@@ -81,6 +81,17 @@
 | `--caption` | 12px | 1.4 | 0em | 500 | Small helper text |
 | `--label` | 11px | 1.2 | 0.08em | 600 | Uppercase metadata and UI labels |
 
+### Compact Portal Scale
+
+Use this scale for dense control-plane surfaces such as `apps/gateway-portal`:
+
+| Token | Size | Line Height | Letter Spacing | Weight | Use |
+|-------|------|-------------|----------------|--------|-----|
+| `--heading-compact` | 32px | 1.02 | -0.035em | 600 | Page hero for admin screens |
+| `--subheading-compact` | 20px | 1.12 | -0.02em | 600 | Panel titles |
+| `--body-compact` | 14px | 1.5 | -0.01em | 400 | Dense descriptions |
+| `--meta-compact` | 11px | 1.25 | 0.08em | 600 | Labels, route pills, timestamps |
+
 ### Typographic Rules
 
 - Headlines are wide, heavy, and short.
@@ -161,6 +172,15 @@
 | `--space-2xl` | 48px | Major card and panel breathing room |
 | `--space-3xl` | 64px | Section separation |
 | `--space-4xl` | 96px | Hero and landing rhythm |
+
+### Compact Portal Spacing
+
+For dense admin panels, bias toward this subset:
+
+- `12px` for control padding
+- `16px` for standard card padding
+- `20px` for featured panel padding
+- `24px` for section gaps
 
 ## 4. BORDERS AND RADII
 

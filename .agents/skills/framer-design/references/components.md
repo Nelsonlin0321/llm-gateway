@@ -42,6 +42,15 @@
 - Padding: `24px`
 - Shadow: level 1
 
+### Compact Admin Card
+
+- Background: `var(--surface1)` or `var(--background)` for nested data cards
+- Border: `1px solid color-mix(in srgb, var(--text1) 8%, transparent)`
+- Radius: `16px` to `20px`
+- Padding: `16px` to `20px`
+- Shadow: none or level 1 only
+- Use for provider cards, settings panels, metric summaries, and auth forms
+
 ### Featured Card
 
 - Background: `var(--surface1)` with brighter top edge
@@ -70,6 +79,17 @@
 | Error border | `1px solid var(--error)` |
 | Radius | 8px |
 | Padding | 10px 14px |
+
+### Compact Portal Field
+
+| Property | Value |
+|----------|-------|
+| Height | 38px to 40px |
+| Background | `var(--background)` or `var(--surface1)` |
+| Border | `1px solid var(--input)` |
+| Radius | 10px to 12px |
+| Padding | 9px 12px |
+| Helper copy | `--caption`, `var(--text2)` |
 
 ### States
 
@@ -252,6 +272,13 @@
 | Warning | `var(--warning-bg)` | `var(--warning)` |
 | Error | `var(--error-bg)` | `var(--error)` |
 | Info | `var(--accent-subtle)` | `var(--accent)` |
+
+### Compact Portal Badge
+
+- Height: `22px` to `24px`
+- Padding: `4px 8px`
+- Font: `11px` to `12px`, medium weight
+- Use border tint instead of heavy fills for neutral technical metadata
 
 ### Alert
 
