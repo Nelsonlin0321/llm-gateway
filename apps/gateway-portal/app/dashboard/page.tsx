@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useEffect } from "react";
@@ -26,6 +27,12 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-bold">Dashboard</h1>
       <p>Welcome, {user.name || "User"}!</p>
       <p>Email: {user.email}</p>
+      <Link
+        href="/providers"
+        className="w-full rounded-md bg-blue-500 px-4 py-2 text-center font-medium text-white hover:bg-blue-400"
+      >
+        Manage providers
+      </Link>
       <button
         onClick={() => signOut()}
         className="w-full bg-white text-black font-medium rounded-md px-4 py-2 hover:bg-gray-200"
