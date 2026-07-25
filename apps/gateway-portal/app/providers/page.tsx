@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowLeft, LockKeyhole, Server, Wallet } from "lucide-react";
 
 import { getProviders } from "@/app/server-actions/llm-provider/get-providers";
-import { ProviderManagementClient } from "@/components/providers/provider-management-client";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -14,6 +13,9 @@ import {
 } from "@/components/ui/card";
 import { requireSession } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
+import { Suspense } from "react";
+import { ProviderManagementSkeleton } from "@/components/providers/provider-management-skeleton";
+import { ProvidersManagementSection } from "@/components/providers/providers-management-section";
 
 export default async function ProvidersPage() {
   const session = await requireSession();
@@ -93,7 +95,9 @@ export default async function ProvidersPage() {
         </Card>
       </section>
 
-      <ProviderManagementClient providers={providers} />
+      <Suspense fallback={<ProviderManagementSkeleton />}>
+        <ProvidersManagementSection />
+      </Suspense>
     </main>
   );
 }

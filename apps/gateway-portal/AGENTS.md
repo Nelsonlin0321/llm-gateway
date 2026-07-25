@@ -70,10 +70,10 @@ When working in this app, optimize for:
 
 When adding features to this app, prefer this stack by default:
 
-- UI: 
-    - Tailwind CSS
-    - shadcn/ui components: How to install component: 
-        if you're working on the root directory of the project, run `npx shadcn@latest add card -c apps/gateway-portal`
+- UI:
+  - Tailwind CSS
+  - shadcn/ui components: How to install component:
+    if you're working on the root directory of the project, run `npx shadcn@latest add card -c apps/gateway-portal`
 - State management: React Context for simple shared state, TanStack React Query for server state, and Zustand for client-side app state where Context becomes cumbersome
 - ORM: Prisma
 - Auth: Better Auth
@@ -92,4 +92,3 @@ This app currently starts from a minimal Next.js scaffold. New work should move 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 
 <!-- END:nextjs-agent-rules -->
-
