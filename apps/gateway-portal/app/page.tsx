@@ -12,7 +12,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { PortalHeader } from "@/components/portal-header";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -131,20 +130,10 @@ const auditRows = [
   },
 ] as const;
 
-const navItems = [
-  { label: "Providers", href: "#providers-card" },
-  { label: "Pricing", href: "#pricing-card" },
-  { label: "Keys", href: "#keys-card" },
-  { label: "Policies", href: "#workflow" },
-  { label: "Analytics", href: "#analytics" },
-] as const;
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-        <PortalHeader navItems={navItems} />
-
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
           <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_84%,transparent))]">
             <CardHeader className="gap-5 pb-4 sm:pb-6">

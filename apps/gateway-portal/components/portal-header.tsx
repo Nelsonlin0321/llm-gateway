@@ -45,7 +45,7 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
           </nav>
           <div className="flex items-center gap-2">
             <Link
-              href="#audit"
+              href="/#audit"
               className={cn(
                 buttonVariants({ variant: "ghost", size: "lg" }),
                 "h-10 rounded-lg px-4 text-sm text-text-secondary hover:bg-secondary hover:text-foreground",
@@ -54,7 +54,7 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
               View audit trail
             </Link>
             <Link
-              href="#providers-card"
+              href="/#providers-card"
               className={cn(
                 buttonVariants({ variant: "default", size: "lg" }),
                 "h-10 rounded-lg border border-white/8 px-4 text-sm font-semibold",
