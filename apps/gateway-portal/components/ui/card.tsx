@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "rounded-2xl border border-border bg-card text-card-foreground shadow-[var(--shadow-card)]",
+        "rounded-2xl border border-border bg-card text-card-foreground shadow-card",
         className,
       )}
       {...props}
@@ -43,7 +43,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="card-description"
       className={cn(
-        "text-sm leading-6 tracking-[-0.01em] text-[color:var(--text-secondary)]",
+        "text-sm leading-6 tracking-[-0.01em] text-text-secondary",
         className,
       )}
       {...props}

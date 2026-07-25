@@ -143,24 +143,24 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
-        <header className="rounded-[24px] border border-border bg-[color:color-mix(in_srgb,var(--surface-1)_76%,transparent)] p-3 shadow-[var(--shadow-card)] backdrop-blur">
+        <header className="rounded-[24px] border border-border bg-[color-mix(in_srgb,var(--surface-1)_76%,transparent)] p-3 shadow-card backdrop-blur">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-2xl border border-[color:color-mix(in_srgb,var(--accent)_35%,var(--border))] bg-[color:var(--accent-subtle)] text-accent">
+              <div className="flex size-10 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--accent)_35%,var(--border))] bg-accent-subtle text-accent">
                 <Command className="size-4" />
               </div>
               <div className="space-y-1">
                 <p className="[font-family:var(--font-display)] text-lg font-semibold tracking-[-0.03em]">
                   LLM Gateway Portal
                 </p>
-                <p className="text-sm text-[color:var(--text-secondary)]">
+                <p className="text-sm text-text-secondary">
                   Self-service governance for providers, pricing, keys, and
                   analytics
                 </p>
               </div>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <nav className="flex items-center gap-2 overflow-x-auto pb-1 text-sm text-[color:var(--text-secondary)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              <nav className="flex items-center gap-2 overflow-x-auto pb-1 text-sm text-text-secondary [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
                 {navItems.map((item) => (
                   <Link
                     key={item.label}
@@ -176,7 +176,7 @@ export default function Home() {
                   href="#audit"
                   className={cn(
                     buttonVariants({ variant: "ghost", size: "lg" }),
-                    "h-10 rounded-lg px-4 text-sm text-[color:var(--text-secondary)] hover:bg-secondary hover:text-foreground",
+                    "h-10 rounded-lg px-4 text-sm text-text-secondary hover:bg-secondary hover:text-foreground",
                   )}
                 >
                   View audit trail
@@ -196,7 +196,7 @@ export default function Home() {
         </header>
 
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
-          <Card className="overflow-hidden border-[color:color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_84%,transparent))]">
+          <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_84%,transparent))]">
             <CardHeader className="gap-5 pb-4 sm:pb-6">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="info" className="gap-1.5">
@@ -211,11 +211,11 @@ export default function Home() {
                 </Badge>
               </div>
               <div className="space-y-5">
-                <h1 className="max-w-3xl [font-family:var(--font-display)] text-[3rem] leading-[0.96] font-semibold tracking-[-0.05em] text-foreground sm:text-[4.4rem]">
+                <h1 className="max-w-3xl [font-family:var(--font-display)] text-[3rem] leading-[0.96] font-semibold tracking-tighter text-foreground sm:text-[4.4rem]">
                   Run every provider, policy, and token dollar from one
                   black-stage console.
                 </h1>
-                <p className="max-w-2xl text-base leading-7 tracking-[-0.01em] text-[color:var(--text-secondary)] sm:text-lg">
+                <p className="max-w-2xl text-base leading-7 tracking-[-0.01em] text-text-secondary sm:text-lg">
                   Gateway Portal is the management and analytics layer between
                   your upstream AI providers and every downstream team, user,
                   project, and application that depends on them.
@@ -238,7 +238,7 @@ export default function Home() {
                   href="#workflow"
                   className={cn(
                     buttonVariants({ variant: "secondary", size: "lg" }),
-                    "h-10 rounded-lg border border-[color:color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-secondary px-4 text-sm text-foreground",
+                    "h-10 rounded-lg border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-secondary px-4 text-sm text-foreground",
                   )}
                 >
                   Review the workflow
@@ -268,16 +268,16 @@ export default function Home() {
           {stats.map((stat) => (
             <Card
               key={stat.label}
-              className="bg-[color:color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
+              className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
             >
               <CardContent className="flex h-full flex-col gap-3 p-6">
-                <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+                <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                   {stat.label}
                 </p>
                 <p className="[font-family:var(--font-display)] text-4xl leading-none font-semibold tracking-[-0.04em]">
                   {stat.value}
                 </p>
-                <p className="text-sm leading-6 text-[color:var(--text-secondary)]">
+                <p className="text-sm leading-6 text-text-secondary">
                   {stat.detail}
                 </p>
               </CardContent>
@@ -286,7 +286,7 @@ export default function Home() {
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <Card className="bg-[color:color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
+          <Card className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
             <CardHeader>
               <Badge
                 variant="neutral"
@@ -338,7 +338,7 @@ export default function Home() {
                 <Card
                   key={feature.title}
                   id={sectionId}
-                  className="h-full bg-[color:color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
+                  className="h-full bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
                 >
                   <CardHeader className="gap-4">
                     <div className="flex size-10 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground">
@@ -353,7 +353,7 @@ export default function Home() {
                     {feature.bullets.map((bullet) => (
                       <div
                         key={bullet}
-                        className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm leading-6 text-[color:var(--text-secondary)]"
+                        className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm leading-6 text-text-secondary"
                       >
                         <ChevronRight className="mt-1 size-4 shrink-0 text-accent" />
                         <span>{bullet}</span>
@@ -372,7 +372,7 @@ export default function Home() {
         >
           <Card
             id="analytics"
-            className="bg-[color:color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
+            className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
           >
             <CardHeader>
               <Badge
@@ -401,7 +401,7 @@ export default function Home() {
                       <h3 className="text-base font-semibold tracking-[-0.02em] text-foreground">
                         {step.title}
                       </h3>
-                      <p className="text-sm leading-6 text-[color:var(--text-secondary)]">
+                      <p className="text-sm leading-6 text-text-secondary">
                         {step.detail}
                       </p>
                     </div>
@@ -416,7 +416,7 @@ export default function Home() {
 
           <Card
             id="launch"
-            className="overflow-hidden border-[color:color-mix(in_srgb,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--accent-subtle)_28%,var(--surface-1)))]"
+            className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--accent-subtle)_28%,var(--surface-1)))]"
           >
             <CardHeader>
               <Badge variant="info" className="w-fit gap-1.5">
@@ -463,10 +463,10 @@ export default function Home() {
               <div className="rounded-[24px] border border-border bg-background/70 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                       Suggested first action
                     </p>
-                    <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
+                    <p className="mt-1 text-sm leading-6 text-text-secondary">
                       Connect one upstream provider, price its models, then
                       issue a child key with a team budget and a model
                       allow-list.
@@ -476,7 +476,7 @@ export default function Home() {
                     href="#workflow"
                     className={cn(
                       buttonVariants({ variant: "secondary", size: "lg" }),
-                      "h-10 rounded-lg border border-[color:color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-secondary px-4 text-sm",
+                      "h-10 rounded-lg border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-secondary px-4 text-sm",
                     )}
                   >
                     See onboarding sequence
@@ -491,7 +491,7 @@ export default function Home() {
           id="audit"
           className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
         >
-          <Card className="bg-[color:color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
+          <Card className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
             <CardHeader className="gap-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-2">
@@ -519,17 +519,15 @@ export default function Home() {
                 <div key={row.path}>
                   <div className="grid gap-3 rounded-2xl border border-border bg-secondary/70 p-4 md:grid-cols-[minmax(0,1fr)_150px_120px_auto] md:items-center">
                     <div className="space-y-1">
-                      <p className="font-mono text-xs leading-5 text-[color:var(--text-secondary)]">
+                      <p className="font-mono text-xs leading-5 text-text-secondary">
                         {row.path}
                       </p>
                       <p className="text-sm font-medium text-foreground">
                         {row.event}
                       </p>
                     </div>
-                    <p className="text-sm text-[color:var(--text-secondary)]">
-                      {row.actor}
-                    </p>
-                    <p className="text-sm text-[color:var(--text-tertiary)]">
+                    <p className="text-sm text-text-secondary">{row.actor}</p>
+                    <p className="text-sm text-text-tertiary">
                       07:3{index} UTC
                     </p>
                     <Badge
@@ -547,7 +545,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[color:color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
+          <Card className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
             <CardHeader>
               <Badge
                 variant="neutral"
@@ -572,7 +570,7 @@ export default function Home() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-border bg-secondary/70 px-4 py-3 text-sm leading-6 text-[color:var(--text-secondary)]"
+                  className="rounded-2xl border border-border bg-secondary/70 px-4 py-3 text-sm leading-6 text-text-secondary"
                 >
                   {item}
                 </div>
@@ -588,12 +586,10 @@ export default function Home() {
 function MiniPanel({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-secondary/70 p-4">
-      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
         {title}
       </p>
-      <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
-        {value}
-      </p>
+      <p className="mt-2 text-sm leading-6 text-text-secondary">{value}</p>
     </div>
   );
 }
@@ -604,9 +600,7 @@ function AudiencePanel({ title, detail }: { title: string; detail: string }) {
       <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
         {title}
       </p>
-      <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
-        {detail}
-      </p>
+      <p className="mt-2 text-sm leading-6 text-text-secondary">{detail}</p>
     </div>
   );
 }
@@ -625,34 +619,32 @@ function SignalTile({
   return (
     <div className="rounded-2xl border border-border bg-background/70 p-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+        <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
           {label}
         </p>
-        <div className="text-[color:var(--text-secondary)]">{icon}</div>
+        <div className="text-text-secondary">{icon}</div>
       </div>
       <p className="mt-3 text-base font-semibold tracking-[-0.02em] text-foreground">
         {value}
       </p>
-      <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
-        {hint}
-      </p>
+      <p className="mt-1 text-sm leading-6 text-text-secondary">{hint}</p>
     </div>
   );
 }
 
 function ProductCanvas() {
   return (
-    <Card className="overflow-hidden border-[color:color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,var(--surface-1),color-mix(in_srgb,var(--surface-2)_80%,var(--surface-1)))] shadow-[var(--shadow-hero)]">
+    <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,var(--surface-1),color-mix(in_srgb,var(--surface-2)_80%,var(--surface-1)))] shadow-hero">
       <CardContent className="p-0">
         <div className="border-b border-border px-5 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[color:var(--error)]" />
-                <span className="size-2 rounded-full bg-[color:var(--warning)]" />
-                <span className="size-2 rounded-full bg-[color:var(--success)]" />
+                <span className="size-2 rounded-full bg-error" />
+                <span className="size-2 rounded-full bg-warning" />
+                <span className="size-2 rounded-full bg-success" />
               </div>
-              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+              <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                 /org/acme-gateway
               </p>
             </div>
@@ -680,8 +672,8 @@ function ProductCanvas() {
                     className={cn(
                       "flex items-center justify-between rounded-xl px-3 py-2 text-sm transition-colors",
                       index === 1
-                        ? "bg-[color:var(--accent-subtle)] text-accent"
-                        : "text-[color:var(--text-secondary)]",
+                        ? "bg-accent-subtle text-accent"
+                        : "text-text-secondary",
                     )}
                   >
                     <span>{item}</span>
@@ -696,7 +688,7 @@ function ProductCanvas() {
                 <div className="rounded-[20px] border border-border bg-background/60 p-4">
                   <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                         Provider control
                       </p>
                       <p className="mt-1 text-base font-semibold tracking-[-0.02em] text-foreground">
@@ -707,7 +699,7 @@ function ProductCanvas() {
                       href="#providers-card"
                       className={cn(
                         buttonVariants({ variant: "secondary", size: "lg" }),
-                        "h-9 rounded-lg border border-[color:color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-secondary px-3 text-sm",
+                        "h-9 rounded-lg border border-[color-mix(in_srgb,var(--foreground)_10%,transparent)] bg-secondary px-3 text-sm",
                       )}
                     >
                       Review provider setup
@@ -743,7 +735,7 @@ function ProductCanvas() {
                           <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
                             {provider.provider}
                           </p>
-                          <p className="mt-1 font-mono text-xs text-[color:var(--text-secondary)]">
+                          <p className="mt-1 font-mono text-xs text-text-secondary">
                             {provider.endpoint}
                           </p>
                         </div>
@@ -757,7 +749,7 @@ function ProductCanvas() {
                 </div>
 
                 <div className="rounded-[20px] border border-border bg-background/60 p-4">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                     Live signals
                   </p>
                   <div className="mt-4 grid gap-3">
@@ -782,7 +774,7 @@ function ProductCanvas() {
                         key={item.label}
                         className="rounded-2xl border border-border bg-secondary/60 p-4"
                       >
-                        <p className="text-sm text-[color:var(--text-secondary)]">
+                        <p className="text-sm text-text-secondary">
                           {item.label}
                         </p>
                         <div className="mt-2 flex items-center justify-between gap-3">
@@ -801,7 +793,7 @@ function ProductCanvas() {
                 <div className="rounded-[20px] border border-border bg-background/60 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                         Policy coverage
                       </p>
                       <p className="mt-1 text-base font-semibold tracking-[-0.02em] text-foreground">
@@ -830,7 +822,7 @@ function ProductCanvas() {
                     ].map((bar) => (
                       <div key={bar.label} className="space-y-3">
                         <div className="flex items-center justify-between gap-3 text-sm">
-                          <span className="text-[color:var(--text-secondary)]">
+                          <span className="text-text-secondary">
                             {bar.label}
                           </span>
                           <span className="font-medium text-foreground">
@@ -851,7 +843,7 @@ function ProductCanvas() {
                 </div>
 
                 <div className="rounded-[20px] border border-border bg-background/60 p-4">
-                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-[color:var(--text-tertiary)]">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                     Child key queue
                   </p>
                   <div className="mt-4 space-y-3">
@@ -862,7 +854,7 @@ function ProductCanvas() {
                     ].map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl border border-border bg-secondary/60 px-3 py-3 font-mono text-xs text-[color:var(--text-secondary)]"
+                        className="rounded-2xl border border-border bg-secondary/60 px-3 py-3 font-mono text-xs text-text-secondary"
                       >
                         {item}
                       </div>
