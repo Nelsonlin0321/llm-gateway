@@ -34,9 +34,9 @@ export const metadata: Metadata = {
 };
 
 const portalHeaderNavItems = [
-  { label: "Providers", href: "/providers-card" },
-  { label: "Pricing", href: "/pricing-card" },
-  { label: "Keys", href: "/keys-card" },
+  { label: "Providers", href: "/providers" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Keys", href: "/keys" },
   { label: "Policies", href: "/workflow" },
   { label: "Analytics", href: "/analytics" },
 ] as const;
