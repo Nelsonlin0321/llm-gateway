@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Framer - Component Library</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/lucide-static@1.8.0/font/lucide.css"
+    />
+    <style>
+      :root {
+        --background: #050608;
+        --bg: var(--background);
+        --surface1: #0d0f14;
+        --surface2: #1e222b;
+        --surface3: #373b47;
+        --border: #1e222b;
+        --border-visible: #373b47;
+        --text1: #ffffff;
+        --text2: #d8d9de;
+        --text3: #7c8190;
+        --text4: #5b6070;
+        --accent: #0a84ff;
+        --accent-subtle: #041220;
+        --success: #2fbe74;
+        --success-bg: #12482b;
+        --warning: #e7a93d;
+        --warning-bg: #6a4512;
+        --error: #f25555;
+        --error-bg: #6b1717;
+        --font-display: "Outfit", system-ui, sans-serif;
+        --font-body: "Inter", system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --radius-element: 4px;
+        --radius-control: 8px;
+        --radius-component: 16px;
+        --radius-container: 24px;
+        --radius-pill: 999px;
+        --shadow-1: 0 14px 28px rgba(0, 0, 0, 0.22);
+        --shadow-2: 0 20px 48px rgba(0, 0, 0, 0.3);
+        --shadow-3: 0 32px 72px rgba(0, 0, 0, 0.42);
+      }
+      [data-theme="light"] {
+        --background: #ffffff;
+        --bg: var(--background);
+        --surface1: #f6f6f7;
+        --surface2: #ebebee;
+        --surface3: #d8d9de;
+        --border: #ebebee;
+        --border-visible: #d8d9de;
+        --text1: #050608;
+        --text2: #5b6070;
+        --text3: #7c8190;
+        --text4: #a9adb8;
+        --accent: #0067d9;
+        --accent-subtle: #edf7ff;
+        --success: #2fbe74;
+        --success-bg: #eef9f3;
+        --warning: #e7a93d;
+        --warning-bg: #fff7e8;
+        --error: #f25555;
+        --error-bg: #fff0f0;
+        --shadow-1: 0 10px 30px rgba(9, 12, 18, 0.06);
+        --shadow-2: 0 18px 42px rgba(9, 12, 18, 0.1);
+        --shadow-3: 0 24px 64px rgba(9, 12, 18, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--background);
+        color: var(--text1);
+        font-family: var(--font-body);
+        transition:
+          background 220ms ease,
+          color 220ms ease;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      p,
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      .cl-shell {
+        display: flex;
+        min-height: 100vh;
+      }
+      .cl-toc {
+        width: 240px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        padding: 40px 24px;
+        border-right: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+      }
+      .cl-brand {
+        font-family: var(--font-display);
+        font-size: 20px;
+        letter-spacing: -0.03em;
+        margin-bottom: 20px;
+      }
+      .cl-toc nav {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .cl-toc-category {
+        font-size: 11px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text3);
+        padding: 12px 0 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .cl-toc-category.active {
+        color: var(--text1);
+      }
+      .cl-toc-sub {
+        font-size: 13px;
+        color: var(--text2);
+        padding: 4px 0 4px 12px;
+        display: block;
+      }
+      .cl-toc-sub.active,
+      .cl-toc-sub:hover {
+        color: var(--text1);
+      }
+
+      .cl-main {
+        flex: 1;
+        padding: 48px;
+        max-width: 960px;
+        overflow-y: auto;
+      }
+      .cl-category-panel {
+        display: none;
+      }
+      .cl-category-panel.active {
+        display: block;
+      }
+
+      .cl-component-group {
+        margin-bottom: 64px;
+        scroll-margin-top: 40px;
+      }
+      .cl-component-group h3 {
+        font-family: var(--font-display);
+        font-size: 28px;
+        letter-spacing: -0.03em;
+        margin-bottom: 6px;
+      }
+      .cl-component-group > p {
+        color: var(--text2);
+        font-size: 14px;
+        margin-bottom: 24px;
+      }
+      .cl-canvas {
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        border-radius: var(--radius-component);
+        padding: 32px;
+        margin-bottom: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .cl-variant {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 140px;
+      }
+      .cl-variant-label {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text3);
+      }
+      .cl-spec-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .cl-spec-table th,
+      .cl-spec-table td {
+        text-align: left;
+        padding: 10px 0;
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+      }
+      .cl-spec-table th {
+        color: var(--text3);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .cl-code {
+        font-family: var(--font-mono);
+        color: var(--text1);
+      }
+
+      .cl-color-chip {
+        width: 80px;
+        height: 48px;
+        border-radius: 12px;
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+      }
+      .cl-type-display {
+        font-family: var(--font-display);
+        font-size: 42px;
+        letter-spacing: -0.03em;
+      }
+      .cl-type-heading {
+        font-family: var(--font-display);
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+      .cl-type-body {
+        font-size: 16px;
+        color: var(--text2);
+      }
+      .cl-type-mono {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--text2);
+      }
+
+      .cl-button {
+        background: transparent;
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+        color: var(--text1);
+        padding: 10px 16px;
+        border-radius: var(--radius-control);
+        font-family: var(--font-body);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .cl-button.primary {
+        background: var(--text1);
+        border-color: color-mix(in srgb, var(--text1) 12%, transparent);
+        color: var(--background);
+        border-radius: var(--radius-control);
+        box-shadow: none;
+      }
+      .cl-button.ghost {
+        border-color: transparent;
+        color: var(--text2);
+      }
+      .cl-button.destructive {
+        background: var(--error);
+        border-color: var(--error);
+        color: #fafafa;
+      }
+      .cl-button.is-hover {
+        box-shadow: var(--shadow-2);
+      }
+      .cl-button.is-focused {
+        box-shadow: 0 0 0 3px var(--accent-subtle);
+      }
+      .cl-button.is-disabled {
+        opacity: 0.4;
+      }
+
+      .cl-input {
+        width: 260px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        border-radius: var(--radius-control);
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+        background: var(--surface2);
+        color: var(--text2);
+        font-size: 14px;
+      }
+      .cl-input.is-focused {
+        border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+        box-shadow: 0 0 0 3px var(--accent-subtle);
+      }
+      .cl-input.is-error {
+        border-color: var(--error);
+      }
+
+      .cl-card {
+        width: 260px;
+        padding: 20px;
+        border-radius: var(--radius-component);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-1);
+      }
+      .cl-card-title {
+        font-family: var(--font-display);
+        font-size: 20px;
+        letter-spacing: -0.02em;
+        margin-bottom: 8px;
+      }
+      .cl-card-copy {
+        color: var(--text2);
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      .cl-card-meta {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text3);
+      }
+
+      .cl-tabbar {
+        display: inline-flex;
+        gap: 16px;
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+        padding-bottom: 8px;
+      }
+      .cl-tab {
+        background: transparent;
+        border: none;
+        color: var(--text2);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        padding: 0;
+        cursor: pointer;
+      }
+      .cl-tab.active {
+        color: var(--text1);
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
+
+      .cl-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        line-height: 1;
+        border-radius: var(--radius-pill);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .cl-badge.info {
+        background: var(--accent-subtle);
+        color: var(--accent);
+      }
+      .cl-badge.success {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .cl-badge.warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+      }
+      .cl-badge.error {
+        background: var(--error-bg);
+        color: var(--error);
+      }
+
+      .cl-modal {
+        width: 320px;
+        padding: 24px;
+        border-radius: var(--radius-container);
+        background: var(--surface1);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        box-shadow: var(--shadow-3);
+      }
+      .cl-modal-title {
+        font-family: var(--font-display);
+        font-size: 24px;
+        letter-spacing: -0.03em;
+        margin-bottom: 10px;
+      }
+      .cl-modal-copy {
+        font-size: 14px;
+        color: var(--text2);
+        margin-bottom: 16px;
+      }
+      .cl-modal-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .floating-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 999px;
+        background: var(--surface1);
+        border: 1.5px solid var(--border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        transition:
+          background 500ms ease,
+          border-color 500ms ease;
+      }
+      .mode-btn {
+        height: 32px;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        font-family: var(--font-body);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text3);
+        transition:
+          background 200ms ease,
+          color 200ms ease;
+        outline: none;
+      }
+      .mode-btn:hover {
+        color: var(--text1);
+      }
+      .mode-btn.active {
+        background: var(--surface3);
+        color: var(--text1);
+      }
+      .mode-btn i {
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cl-shell">
+      <aside class="cl-toc">
+        <div class="cl-brand">Framer</div>
+        <nav>
+          <div class="cl-toc-category active" data-cat="foundations">
+            Foundations
+          </div>
+          <a class="cl-toc-sub active" href="#colors" data-cat="foundations"
+            >Colors</a
+          >
+          <a class="cl-toc-sub" href="#typography" data-cat="foundations"
+            >Typography</a
+          >
+          <div class="cl-toc-category" data-cat="actions">Actions</div>
+          <a class="cl-toc-sub" href="#buttons" data-cat="actions">Buttons</a>
+          <a class="cl-toc-sub" href="#inputs" data-cat="actions">Inputs</a>
+          <div class="cl-toc-category" data-cat="display">Display</div>
+          <a class="cl-toc-sub" href="#cards" data-cat="display">Cards</a>
+          <a class="cl-toc-sub" href="#tabs" data-cat="display">Tabs</a>
+          <div class="cl-toc-category" data-cat="feedback">Feedback</div>
+          <a class="cl-toc-sub" href="#badges" data-cat="feedback">Badges</a>
+          <a class="cl-toc-sub" href="#modal" data-cat="feedback">Modal</a>
+        </nav>
+      </aside>
+
+      <main class="cl-main">
+        <section id="cat-foundations" class="cl-category-panel active">
+          <div id="colors" class="cl-component-group">
+            <h3>Colors</h3>
+            <p>
+              Near-black surfaces, clean text contrast, and one publish-blue
+              accent.
+            </p>
+            <div class="cl-canvas">
+              <div class="cl-variant">
+                <div class="cl-variant-label">Background</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--background)"
+                ></div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Surface 1</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--surface1)"
+                ></div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Surface 3</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--surface3)"
+                ></div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Accent</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--accent)"
+                ></div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Success</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--success)"
+                ></div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Warning</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--warning)"
+                ></div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Error</div>
+                <div
+                  class="cl-color-chip"
+                  style="background: var(--error)"
+                ></div>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Token</th>
+                <th>Value</th>
+                <th>Role</th>
+              </tr>
+              <tr>
+                <td>`--background`</td>
+                <td class="cl-code">#050608 / #FFFFFF</td>
+                <td>Main canvas</td>
+              </tr>
+              <tr>
+                <td>`--surface1`</td>
+                <td class="cl-code">#0D0F14 / #F6F6F7</td>
+                <td>Primary cards</td>
+              </tr>
+              <tr>
+                <td>`--accent`</td>
+                <td class="cl-code">#0A84FF</td>
+                <td>Publish and active state</td>
+              </tr>
+            </table>
+          </div>
+
+          <div id="typography" class="cl-component-group">
+            <h3>Typography</h3>
+            <p>
+              Display is strong and wide. Body stays neutral. Mono carries
+              shortcuts and traces.
+            </p>
+            <div class="cl-canvas">
+              <div class="cl-variant">
+                <div class="cl-variant-label">Display</div>
+                <div class="cl-type-display">
+                  Create with AI. Stay in control.
+                </div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Heading</div>
+                <div class="cl-type-heading">Bloom homepage</div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Body</div>
+                <div class="cl-type-body">
+                  Generate layouts, refine copy, and publish from one visual
+                  editor.
+                </div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Mono</div>
+                <div class="cl-type-mono">cmd+k · /home · hero-image.png</div>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Role</th>
+                <th>Font</th>
+                <th>Use</th>
+              </tr>
+              <tr>
+                <td>Display</td>
+                <td class="cl-code">Outfit 600</td>
+                <td>Hero and section titles</td>
+              </tr>
+              <tr>
+                <td>Body</td>
+                <td class="cl-code">Inter 400</td>
+                <td>Copy and UI text</td>
+              </tr>
+              <tr>
+                <td>Mono</td>
+                <td class="cl-code">IBM Plex Mono 500</td>
+                <td>Shortcuts and identifiers</td>
+              </tr>
+            </table>
+          </div>
+        </section>
+
+        <section id="cat-actions" class="cl-category-panel">
+          <div id="buttons" class="cl-component-group">
+            <h3>Buttons</h3>
+            <p>
+              White primary CTA for the main conversion, tighter rounded
+              controls elsewhere.
+            </p>
+            <div class="cl-canvas">
+              <div class="cl-variant">
+                <div class="cl-variant-label">Primary</div>
+                <button class="cl-button primary">Get started for free</button>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Secondary</div>
+                <button class="cl-button">Download app</button>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Ghost</div>
+                <button class="cl-button ghost">Watch demo</button>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Destructive</div>
+                <button class="cl-button destructive">Delete draft</button>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Hover</div>
+                <button class="cl-button primary is-hover">Hover State</button>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Focused</div>
+                <button class="cl-button primary is-focused">
+                  Focused CTA
+                </button>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Disabled</div>
+                <button class="cl-button primary is-disabled">Disabled</button>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>Primary radius</td>
+                <td class="cl-code">8px</td>
+              </tr>
+              <tr>
+                <td>Control radius</td>
+                <td class="cl-code">8px</td>
+              </tr>
+              <tr>
+                <td>Primary shadow</td>
+                <td class="cl-code">none</td>
+              </tr>
+            </table>
+          </div>
+
+          <div id="inputs" class="cl-component-group">
+            <h3>Inputs</h3>
+            <p>
+              Inputs stay dark, framed, and compact, never soft or consumer-
+              looking.
+            </p>
+            <div class="cl-canvas">
+              <div class="cl-variant">
+                <div class="cl-variant-label">Default</div>
+                <div class="cl-input">Search pages, layers, assets</div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Focused</div>
+                <div class="cl-input is-focused">Vertical Hero Layout</div>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Error</div>
+                <div class="cl-input is-error">Missing image attachment</div>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>Height</td>
+                <td class="cl-code">40px</td>
+              </tr>
+              <tr>
+                <td>Background</td>
+                <td class="cl-code">var(--surface2)</td>
+              </tr>
+              <tr>
+                <td>Focus ring</td>
+                <td class="cl-code">0 0 0 3px var(--accent-subtle)</td>
+              </tr>
+            </table>
+          </div>
+        </section>
+
+        <section id="cat-display" class="cl-category-panel">
+          <div id="cards" class="cl-component-group">
+            <h3>Cards</h3>
+            <p>Cards are rounded, framed, and screenshot-ready.</p>
+            <div class="cl-canvas">
+              <div class="cl-card">
+                <div class="cl-card-title">Agent update</div>
+                <div class="cl-card-copy">
+                  Switched the hero to a vertical stack and replaced the cover
+                  image.
+                </div>
+                <div class="cl-card-meta">14:42 UTC · Home</div>
+              </div>
+              <div class="cl-card">
+                <div class="cl-card-title">Publish check</div>
+                <div class="cl-card-copy">
+                  One draft page still needs review before the main branch can
+                  ship.
+                </div>
+                <div class="cl-card-meta">branch review · main</div>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>Radius</td>
+                <td class="cl-code">16px</td>
+              </tr>
+              <tr>
+                <td>Padding</td>
+                <td class="cl-code">20px to 24px</td>
+              </tr>
+              <tr>
+                <td>Shadow</td>
+                <td class="cl-code">var(--shadow-1)</td>
+              </tr>
+            </table>
+          </div>
+
+          <div id="tabs" class="cl-component-group">
+            <h3>Tabs</h3>
+            <p>Tabs stay low-noise. Active state gets the accent line.</p>
+            <div class="cl-canvas">
+              <div class="cl-tabbar">
+                <button class="cl-tab active">Agent</button>
+                <button class="cl-tab">Style</button>
+                <button class="cl-tab">Pages</button>
+                <button class="cl-tab">Assets</button>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>Font</td>
+                <td class="cl-code">Inter 12px</td>
+              </tr>
+              <tr>
+                <td>Active indicator</td>
+                <td class="cl-code">inset 0 -2px 0 var(--accent)</td>
+              </tr>
+            </table>
+          </div>
+        </section>
+
+        <section id="cat-feedback" class="cl-category-panel">
+          <div id="badges" class="cl-component-group">
+            <h3>Badges</h3>
+            <p>Status colors are semantic and stable across the system.</p>
+            <div class="cl-canvas">
+              <div class="cl-variant">
+                <div class="cl-variant-label">Info</div>
+                <span class="cl-badge info">publish ready</span>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Success</div>
+                <span class="cl-badge success">live</span>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Warning</div>
+                <span class="cl-badge warning">editing</span>
+              </div>
+              <div class="cl-variant">
+                <div class="cl-variant-label">Error</div>
+                <span class="cl-badge error">needs review</span>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Variant</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>Info</td>
+                <td class="cl-code">var(--accent-subtle) / var(--accent)</td>
+              </tr>
+              <tr>
+                <td>Success</td>
+                <td class="cl-code">var(--success-bg) / var(--success)</td>
+              </tr>
+              <tr>
+                <td>Error</td>
+                <td class="cl-code">var(--error-bg) / var(--error)</td>
+              </tr>
+            </table>
+          </div>
+
+          <div id="modal" class="cl-component-group">
+            <h3>Modal</h3>
+            <p>
+              Large radius shell, strong shadow, and a single decisive primary
+              action.
+            </p>
+            <div class="cl-canvas">
+              <div class="cl-modal">
+                <div class="cl-modal-title">Rotate project key</div>
+                <div class="cl-modal-copy">
+                  Generate a new project-scoped key and revoke the current
+                  credential after a 5 minute overlap window.
+                </div>
+                <div class="cl-modal-actions">
+                  <button class="cl-button">Cancel</button>
+                  <button class="cl-button primary">Rotate Key</button>
+                </div>
+              </div>
+            </div>
+            <table class="cl-spec-table">
+              <tr>
+                <th>Property</th>
+                <th>Value</th>
+              </tr>
+              <tr>
+                <td>Radius</td>
+                <td class="cl-code">24px</td>
+              </tr>
+              <tr>
+                <td>Shadow</td>
+                <td class="cl-code">var(--shadow-3)</td>
+              </tr>
+              <tr>
+                <td>Backdrop</td>
+                <td class="cl-code">rgba(9, 9, 11, 0.72)</td>
+              </tr>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="floating-bar">
+      <button class="mode-btn" data-mode="light">
+        <i class="icon icon-sun"></i> Light
+      </button>
+      <button class="mode-btn" data-mode="dark">
+        <i class="icon icon-moon"></i> Dark
+      </button>
+    </div>
+
+    <script>
+      function switchCategory(cat) {
+        document
+          .querySelectorAll(".cl-category-panel")
+          .forEach((panel) => panel.classList.remove("active"));
+        document
+          .querySelectorAll(".cl-toc-category")
+          .forEach((item) => item.classList.remove("active"));
+        const panel = document.getElementById("cat-" + cat);
+        const header = document.querySelector(
+          '.cl-toc-category[data-cat="' + cat + '"]',
+        );
+        if (panel) panel.classList.add("active");
+        if (header) header.classList.add("active");
+      }
+
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.documentElement.dataset.theme = btn.dataset.mode;
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+      document
+        .querySelector('.mode-btn[data-mode="dark"]')
+        .classList.add("active");
+
+      document.querySelectorAll(".cl-toc-category").forEach((item) => {
+        item.addEventListener("click", () => switchCategory(item.dataset.cat));
+      });
+
+      document.querySelectorAll(".cl-toc-sub").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          switchCategory(link.dataset.cat);
+          document
+            .querySelectorAll(".cl-toc-sub")
+            .forEach((node) => node.classList.remove("active"));
+          link.classList.add("active");
+          const target = document.querySelector(link.getAttribute("href"));
+          if (target)
+            requestAnimationFrame(() =>
+              target.scrollIntoView({ behavior: "smooth" }),
+            );
+        });
+      });
+
+      document.querySelectorAll("a").forEach((a) => {
+        if (a.closest(".cl-toc")) return;
+        a.addEventListener("click", (e) => e.preventDefault());
+      });
+    </script>
+  </body>
+</html>

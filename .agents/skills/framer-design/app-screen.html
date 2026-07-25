@@ -1,0 +1,889 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Framer - App Screen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/lucide-static@1.8.0/font/lucide.css"
+    />
+    <style>
+      :root {
+        --background: #050608;
+        --bg: var(--background);
+        --surface1: #0d0f14;
+        --surface2: #1e222b;
+        --surface3: #373b47;
+        --border: #1e222b;
+        --border-visible: #373b47;
+        --text1: #ffffff;
+        --text2: #d8d9de;
+        --text3: #7c8190;
+        --text4: #5b6070;
+        --accent: #0a84ff;
+        --accent-subtle: #041220;
+        --success: #2fbe74;
+        --success-bg: #12482b;
+        --warning: #e7a93d;
+        --warning-bg: #6a4512;
+        --error: #f25555;
+        --error-bg: #6b1717;
+        --font-display: "Outfit", system-ui, sans-serif;
+        --font-body: "Inter", system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --radius-element: 4px;
+        --radius-control: 8px;
+        --radius-component: 16px;
+        --radius-container: 24px;
+        --radius-pill: 999px;
+        --shadow-1: 0 14px 28px rgba(0, 0, 0, 0.22);
+        --shadow-2: 0 20px 48px rgba(0, 0, 0, 0.3);
+        --shadow-3: 0 32px 72px rgba(0, 0, 0, 0.42);
+      }
+      [data-theme="light"] {
+        --background: #ffffff;
+        --bg: var(--background);
+        --surface1: #f6f6f7;
+        --surface2: #ebebee;
+        --surface3: #d8d9de;
+        --border: #ebebee;
+        --border-visible: #d8d9de;
+        --text1: #050608;
+        --text2: #5b6070;
+        --text3: #7c8190;
+        --text4: #a9adb8;
+        --accent: #0067d9;
+        --accent-subtle: #edf7ff;
+        --success: #2fbe74;
+        --success-bg: #eef9f3;
+        --warning: #e7a93d;
+        --warning-bg: #fff7e8;
+        --error: #f25555;
+        --error-bg: #fff0f0;
+        --shadow-1: 0 10px 30px rgba(9, 12, 18, 0.06);
+        --shadow-2: 0 18px 42px rgba(9, 12, 18, 0.1);
+        --shadow-3: 0 24px 64px rgba(9, 12, 18, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        background: var(--background);
+        color: var(--text1);
+        font-family: var(--font-body);
+        padding: 40px 24px 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        transition:
+          background 220ms ease,
+          color 220ms ease;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(
+          circle at top center,
+          rgba(10, 132, 255, 0.1),
+          transparent 30%
+        );
+        filter: blur(46px);
+        pointer-events: none;
+      }
+      body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          transparent 20%
+        );
+        pointer-events: none;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      p,
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      .window {
+        position: relative;
+        z-index: 1;
+        width: min(1320px, 100%);
+        border-radius: var(--radius-container);
+        overflow: hidden;
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+        box-shadow: var(--shadow-3);
+      }
+      .win-bar {
+        height: 38px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        background: color-mix(in srgb, var(--surface2) 90%, transparent);
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+      }
+      .win-light {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--text4);
+      }
+      .win-url {
+        margin-left: 12px;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+        padding: 7px 12px;
+        border-radius: var(--radius-pill);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 88%, transparent);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text2);
+      }
+      .win-url strong {
+        color: var(--text1);
+        font-weight: 500;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 248px 1fr;
+        min-height: 760px;
+        background: var(--bg);
+      }
+      .sidebar {
+        border-right: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 86%, transparent);
+        padding: 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 18px;
+        letter-spacing: -0.03em;
+      }
+      .brand-mark {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        transform: rotate(45deg);
+        background: var(--accent);
+        box-shadow: 0 0 14px rgba(37, 99, 235, 0.3);
+      }
+      .sidebar-group-label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text3);
+      }
+      .sidebar-item {
+        display: grid;
+        grid-template-columns: 8px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: transparent;
+        position: relative;
+        cursor: pointer;
+      }
+      .sidebar-item:hover {
+        background: color-mix(in srgb, var(--surface2) 84%, transparent);
+      }
+      .sidebar-item.active {
+        background: color-mix(
+          in srgb,
+          var(--accent-subtle) 70%,
+          var(--surface2)
+        );
+        outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      }
+      .sidebar-item.active::before {
+        content: "";
+        position: absolute;
+        left: -16px;
+        top: 10px;
+        bottom: 10px;
+        width: 2px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+      .sidebar-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--success);
+      }
+      .sidebar-dot.warn {
+        background: var(--warning);
+      }
+      .sidebar-dot.error {
+        background: var(--error);
+      }
+      .sidebar-name {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text1);
+      }
+      .sidebar-meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text3);
+      }
+
+      .main {
+        padding: 20px 24px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+      }
+      .breadcrumb {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text3);
+      }
+      .breadcrumb strong {
+        color: var(--text1);
+        font-weight: 500;
+      }
+      .topbar-actions {
+        margin-left: auto;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        line-height: 1;
+        border-radius: var(--radius-pill);
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+        background: color-mix(in srgb, var(--surface2) 88%, transparent);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text2);
+        white-space: nowrap;
+      }
+      .chip.primary {
+        background: var(--accent);
+        color: #fafafa;
+        border-color: var(--accent);
+      }
+      .chip.info {
+        background: var(--accent-subtle);
+        color: var(--accent);
+        border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+      }
+
+      .title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .title-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text3);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .screen-title {
+        font-family: var(--font-display);
+        font-size: 34px;
+        line-height: 1.02;
+        letter-spacing: -0.03em;
+      }
+      .screen-copy {
+        color: var(--text2);
+        font-size: 15px;
+        line-height: 1.6;
+        max-width: 50ch;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .stat {
+        padding: 20px;
+        border-radius: var(--radius-component);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-1);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text3);
+        margin-bottom: 14px;
+      }
+      .stat-value {
+        font-family: var(--font-display);
+        font-size: 36px;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        margin-bottom: 8px;
+      }
+      .stat-note {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text2);
+      }
+      .stat-note.good {
+        color: var(--success);
+      }
+      .stat-note.warn {
+        color: var(--warning);
+      }
+
+      .content-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 0.95fr;
+        gap: 16px;
+      }
+      .panel {
+        padding: 20px;
+        border-radius: var(--radius-component);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-1);
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .panel-title {
+        font-family: var(--font-display);
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+      .panel-meta {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text3);
+      }
+      .chart-svg {
+        width: 100%;
+        height: 220px;
+      }
+      .chart-grid-line {
+        stroke: color-mix(in srgb, var(--text1) 8%, transparent);
+        stroke-width: 1;
+      }
+      .chart-line {
+        stroke: var(--accent);
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .chart-line-b {
+        stroke: var(--success);
+        stroke-width: 2;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0.9;
+      }
+      .chart-label {
+        fill: var(--text4);
+        font-family: var(--font-mono);
+        font-size: 10px;
+      }
+
+      .feed {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .feed-row {
+        display: grid;
+        grid-template-columns: 72px 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+        font-family: var(--font-mono);
+        font-size: 12px;
+      }
+      .feed-row:last-child {
+        border-bottom: none;
+      }
+      .feed-time {
+        color: var(--text4);
+      }
+      .feed-copy {
+        color: var(--text1);
+      }
+      .feed-copy strong {
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .feed-state {
+        color: var(--text3);
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      .table th,
+      .table td {
+        padding: 12px 0;
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+        text-align: left;
+      }
+      .table th {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text3);
+      }
+      .table td {
+        color: var(--text2);
+      }
+      .table td strong {
+        color: var(--text1);
+        font-weight: 500;
+        font-family: var(--font-mono);
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: var(--radius-pill);
+        line-height: 1;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .status-badge.success {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .status-badge.warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+      }
+      .status-badge.error {
+        background: var(--error-bg);
+        color: var(--error);
+      }
+      .status-badge.info {
+        background: var(--accent-subtle);
+        color: var(--accent);
+      }
+
+      .fake-cursor {
+        position: absolute;
+        left: 230px;
+        top: 233px;
+        width: 18px;
+        height: 20px;
+        z-index: 4;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.35));
+        pointer-events: none;
+      }
+
+      .floating-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 999px;
+        background: var(--surface1);
+        border: 1.5px solid var(--border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+      .mode-btn {
+        height: 32px;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        font-family: var(--font-body);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text3);
+        transition:
+          background 200ms ease,
+          color 200ms ease;
+        outline: none;
+      }
+      .mode-btn:hover {
+        color: var(--text1);
+      }
+      .mode-btn.active {
+        background: var(--surface3);
+        color: var(--text1);
+      }
+
+      @media (max-width: 1100px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+        .sidebar {
+          display: none;
+        }
+        .stats,
+        .content-grid {
+          grid-template-columns: 1fr;
+        }
+        .fake-cursor {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="window">
+      <div class="win-bar">
+        <span class="win-light"></span>
+        <span class="win-light"></span>
+        <span class="win-light"></span>
+        <div class="win-url">
+          <i class="icon icon-lock"></i
+          ><strong>framer.com</strong>/canvas/bloom/home
+        </div>
+      </div>
+
+      <div class="app">
+        <aside class="sidebar">
+          <div class="brand"><span class="brand-mark"></span>Framer</div>
+          <div class="sidebar-group-label">Pages</div>
+          <div class="sidebar-item active">
+            <span class="sidebar-dot"></span>
+            <span class="sidebar-name">Home</span>
+            <span class="sidebar-meta">main</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-dot"></span>
+            <span class="sidebar-name">/research</span>
+            <span class="sidebar-meta">4 pages</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-dot"></span>
+            <span class="sidebar-name">/commitments</span>
+            <span class="sidebar-meta">2 pages</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-dot warn"></span>
+            <span class="sidebar-name">/news</span>
+            <span class="sidebar-meta">editing</span>
+          </div>
+          <div class="sidebar-item">
+            <span class="sidebar-dot error"></span>
+            <span class="sidebar-name">/legal</span>
+            <span class="sidebar-meta">review</span>
+          </div>
+        </aside>
+
+        <main class="main">
+          <div class="topbar">
+            <div class="breadcrumb">site / <strong>bloom</strong> / home</div>
+            <div class="topbar-actions">
+              <div class="chip info">Agent</div>
+              <div class="chip">main</div>
+              <div class="chip primary">Publish</div>
+            </div>
+          </div>
+
+          <div class="title-row">
+            <div class="title-stack">
+              <div class="eyebrow">Editor Workspace</div>
+              <div class="screen-title">
+                Design the Bloom homepage with one canvas, one agent, and one
+                publish surface.
+              </div>
+              <div class="screen-copy">
+                The page tree sits on the left, the live site fills the center,
+                and the agent trace stays visible on the right. The system keeps
+                actions compact, typography bold, and publish blue reserved for
+                the moments that matter.
+              </div>
+            </div>
+          </div>
+
+          <section class="stats">
+            <div class="stat">
+              <div class="stat-label">Published Pages</div>
+              <div class="stat-value">86</div>
+              <div class="stat-note good">12 updated this week</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Agent Edits</div>
+              <div class="stat-value">7</div>
+              <div class="stat-note">layers changed on the hero</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Version</div>
+              <div class="stat-value">main</div>
+              <div class="stat-note warn">draft branch ready</div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Uptime</div>
+              <div class="stat-value">99.99%</div>
+              <div class="stat-note">global hosting live</div>
+            </div>
+          </section>
+
+          <section class="content-grid">
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">Canvas Activity</div>
+                <div class="panel-meta">latest editing session</div>
+              </div>
+              <svg
+                class="chart-svg"
+                viewBox="0 0 640 220"
+                preserveAspectRatio="none"
+              >
+                <line
+                  class="chart-grid-line"
+                  x1="0"
+                  y1="30"
+                  x2="640"
+                  y2="30"
+                ></line>
+                <line
+                  class="chart-grid-line"
+                  x1="0"
+                  y1="108"
+                  x2="640"
+                  y2="108"
+                ></line>
+                <line
+                  class="chart-grid-line"
+                  x1="0"
+                  y1="188"
+                  x2="640"
+                  y2="188"
+                ></line>
+                <path
+                  class="chart-line"
+                  d="M0,170 L40,162 L80,154 L120,150 L160,144 L200,152 L240,136 L280,128 L320,126 L360,118 L400,110 L440,102 L480,108 L520,88 L560,78 L600,64 L640,58"
+                ></path>
+                <path
+                  class="chart-line-b"
+                  d="M0,190 L40,188 L80,184 L120,180 L160,176 L200,170 L240,166 L280,162 L320,154 L360,150 L400,144 L440,138 L480,132 L520,124 L560,118 L600,110 L640,102"
+                ></path>
+                <text class="chart-label" x="0" y="214">draft</text>
+                <text class="chart-label" x="295" y="214">review</text>
+                <text class="chart-label" x="610" y="214">publish</text>
+              </svg>
+            </div>
+
+            <div class="panel">
+              <div class="panel-head">
+                <div class="panel-title">Recent Agent Trace</div>
+                <div class="panel-meta">latest commands</div>
+              </div>
+              <div class="feed">
+                <div class="feed-row">
+                  <span class="feed-time">14:42</span>
+                  <span class="feed-copy"
+                    ><strong>agent</strong> switched the hero to a vertical
+                    stack layout</span
+                  >
+                  <span class="feed-state">edited</span>
+                </div>
+                <div class="feed-row">
+                  <span class="feed-time">14:37</span>
+                  <span class="feed-copy"
+                    ><strong>image</strong> swapped the cover art for the
+                    attached bloom visual</span
+                  >
+                  <span class="feed-state">updated</span>
+                </div>
+                <div class="feed-row">
+                  <span class="feed-time">14:29</span>
+                  <span class="feed-copy"
+                    ><strong>pages</strong> grouped research stories under a
+                    shared section</span
+                  >
+                  <span class="feed-state">organized</span>
+                </div>
+                <div class="feed-row">
+                  <span class="feed-time">14:11</span>
+                  <span class="feed-copy"
+                    ><strong>publish</strong> found one broken link in the legal
+                    footer</span
+                  >
+                  <span class="feed-state">blocked</span>
+                </div>
+                <div class="feed-row">
+                  <span class="feed-time">13:55</span>
+                  <span class="feed-copy"
+                    ><strong>analytics</strong> confirmed homepage conversion is
+                    up 35%</span
+                  >
+                  <span class="feed-state">live</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Page Table</div>
+              <div class="panel-meta">
+                Current state, owner, and publish readiness
+              </div>
+            </div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>Status</th>
+                  <th>Owner</th>
+                  <th>Mode</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Home</strong></td>
+                  <td><span class="status-badge success">ready</span></td>
+                  <td>Design</td>
+                  <td><span class="status-badge info">main</span></td>
+                </tr>
+                <tr>
+                  <td><strong>/research</strong></td>
+                  <td><span class="status-badge success">ready</span></td>
+                  <td>Content</td>
+                  <td><span class="status-badge info">cms</span></td>
+                </tr>
+                <tr>
+                  <td><strong>/commitments</strong></td>
+                  <td><span class="status-badge success">ready</span></td>
+                  <td>Growth</td>
+                  <td><span class="status-badge info">main</span></td>
+                </tr>
+                <tr>
+                  <td><strong>/news</strong></td>
+                  <td><span class="status-badge warning">editing</span></td>
+                  <td>Editorial</td>
+                  <td><span class="status-badge info">draft</span></td>
+                </tr>
+                <tr>
+                  <td><strong>/legal</strong></td>
+                  <td><span class="status-badge error">needs review</span></td>
+                  <td>Ops</td>
+                  <td><span class="status-badge info">hold</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        </main>
+      </div>
+
+      <svg class="fake-cursor" viewBox="0 0 16 18" fill="none">
+        <path
+          d="M1 1 L1 15 L5 11 L8 17 L10.5 15.8 L7.5 9.8 L13 9.8 Z"
+          fill="#FAFAFA"
+          stroke="#09090B"
+          stroke-width="1"
+          stroke-linejoin="round"
+        ></path>
+      </svg>
+    </div>
+
+    <div class="floating-bar">
+      <button class="mode-btn" data-mode="light">
+        <i class="icon icon-sun"></i> Light
+      </button>
+      <button class="mode-btn" data-mode="dark">
+        <i class="icon icon-moon"></i> Dark
+      </button>
+    </div>
+
+    <script>
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.documentElement.dataset.theme = btn.dataset.mode;
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+      document
+        .querySelector('.mode-btn[data-mode="dark"]')
+        .classList.add("active");
+      document.querySelectorAll("a").forEach((a) => {
+        a.addEventListener("click", (e) => e.preventDefault());
+      });
+    </script>
+  </body>
+</html>

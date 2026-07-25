@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Framer - Landing Page</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/lucide-static@1.8.0/font/lucide.css"
+    />
+    <style>
+      :root {
+        --background: #050608;
+        --bg: var(--background);
+        --surface1: #0d0f14;
+        --surface2: #1e222b;
+        --surface3: #373b47;
+        --border: #1e222b;
+        --border-visible: #373b47;
+        --text1: #ffffff;
+        --text2: #d8d9de;
+        --text3: #7c8190;
+        --text4: #5b6070;
+        --accent: #0a84ff;
+        --accent-subtle: #041220;
+        --success: #2fbe74;
+        --success-bg: #12482b;
+        --warning: #e7a93d;
+        --warning-bg: #6a4512;
+        --error: #f25555;
+        --error-bg: #6b1717;
+        --font-display: "Outfit", system-ui, sans-serif;
+        --font-body: "Inter", system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+        --radius-control: 8px;
+        --radius-component: 16px;
+        --radius-container: 24px;
+        --radius-pill: 999px;
+        --shadow-1: 0 14px 28px rgba(0, 0, 0, 0.22);
+        --shadow-2: 0 20px 48px rgba(0, 0, 0, 0.3);
+        --shadow-3: 0 32px 72px rgba(0, 0, 0, 0.42);
+      }
+      [data-theme="light"] {
+        --background: #ffffff;
+        --bg: var(--background);
+        --surface1: #f6f6f7;
+        --surface2: #ebebee;
+        --surface3: #d8d9de;
+        --border: #ebebee;
+        --border-visible: #d8d9de;
+        --text1: #050608;
+        --text2: #5b6070;
+        --text3: #7c8190;
+        --text4: #a9adb8;
+        --accent: #0067d9;
+        --accent-subtle: #edf7ff;
+        --success: #2fbe74;
+        --success-bg: #eef9f3;
+        --warning: #e7a93d;
+        --warning-bg: #fff7e8;
+        --error: #f25555;
+        --error-bg: #fff0f0;
+        --shadow-1: 0 10px 30px rgba(9, 12, 18, 0.06);
+        --shadow-2: 0 18px 42px rgba(9, 12, 18, 0.1);
+        --shadow-3: 0 24px 64px rgba(9, 12, 18, 0.16);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--background);
+        color: var(--text1);
+        font-family: var(--font-body);
+        transition:
+          background 220ms ease,
+          color 220ms ease;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      p,
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      .lp-container {
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .lp-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        background: color-mix(in srgb, var(--background) 82%, transparent);
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+      }
+      .lp-header-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 72px;
+        gap: 24px;
+      }
+      .lp-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: -0.03em;
+      }
+      .lp-mark {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        background: var(--accent);
+        transform: rotate(45deg);
+        box-shadow: 0 0 16px rgba(37, 99, 235, 0.35);
+      }
+      .lp-nav {
+        display: flex;
+        gap: 20px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text2);
+      }
+      .lp-nav a:hover {
+        color: var(--text1);
+      }
+      .lp-header-cta {
+        padding: 10px 16px;
+        border-radius: var(--radius-control);
+        background: var(--text1);
+        color: var(--background);
+        font-family: var(--font-body);
+        font-weight: 600;
+        box-shadow: none;
+      }
+
+      .lp-hero {
+        position: relative;
+        overflow: hidden;
+        padding: 120px 0 96px;
+      }
+      .lp-hero-stage {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+      .lp-hero-grid {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 20%);
+        opacity: 1;
+      }
+      .lp-hero-glow {
+        position: absolute;
+        inset: -20% 30% 25% -10%;
+        background: radial-gradient(
+          circle at center,
+          color-mix(in srgb, var(--accent) 22%, transparent),
+          transparent 68%
+        );
+        filter: blur(56px);
+      }
+      .lp-device {
+        position: absolute;
+        right: 4%;
+        top: 18%;
+        width: min(520px, 46vw);
+        border-radius: var(--radius-container);
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-3);
+        overflow: hidden;
+      }
+      .lp-device-bar {
+        height: 36px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 14px;
+        border-bottom: 1px solid
+          color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface2) 90%, transparent);
+      }
+      .lp-device-bar span {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--text4);
+      }
+      .lp-device-content {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        min-height: 280px;
+      }
+      .lp-device-sidebar {
+        border-right: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: color-mix(in srgb, var(--surface2) 86%, transparent);
+      }
+      .lp-device-sidebar div {
+        height: 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--text3) 20%, transparent);
+      }
+      .lp-device-main {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .lp-device-metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .lp-device-metric {
+        height: 68px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--surface2) 88%, transparent);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+      }
+      .lp-device-chart {
+        flex: 1;
+        min-height: 120px;
+        border-radius: 14px;
+        background:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--accent) 14%, transparent),
+            transparent 70%
+          ),
+          color-mix(in srgb, var(--surface2) 88%, transparent);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+      }
+
+      .lp-hero-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 660px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      .lp-eyebrow {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text3);
+      }
+      .lp-hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(52px, 7vw, 80px);
+        line-height: 0.98;
+        letter-spacing: -0.04em;
+        max-width: 10ch;
+      }
+      .lp-hero-copy {
+        font-size: 18px;
+        line-height: 1.65;
+        color: var(--text2);
+        max-width: 36ch;
+      }
+      .lp-hero-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .lp-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: var(--radius-control);
+        background: var(--text1);
+        color: var(--background);
+        font-family: var(--font-body);
+        font-weight: 600;
+        box-shadow: none;
+      }
+      .lp-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: var(--radius-control);
+        border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+        color: var(--text2);
+        font-family: var(--font-body);
+        font-size: 13px;
+      }
+      .lp-hero-proof {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text3);
+      }
+
+      .lp-feature {
+        padding: 96px 0;
+      }
+      .lp-feature-inner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
+      }
+      .lp-feature.reverse .lp-feature-text {
+        order: 2;
+      }
+      .lp-feature.reverse .lp-feature-visual {
+        order: 1;
+      }
+      .lp-feature-title {
+        font-family: var(--font-display);
+        font-size: 40px;
+        line-height: 1.04;
+        letter-spacing: -0.03em;
+        margin: 12px 0 16px;
+        max-width: 12ch;
+      }
+      .lp-feature-copy {
+        color: var(--text2);
+        font-size: 16px;
+        line-height: 1.65;
+        max-width: 34ch;
+        margin-bottom: 20px;
+      }
+      .lp-feature-list {
+        display: grid;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text2);
+      }
+      .lp-feature-list div {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .lp-feature-list div::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+      .lp-feature-visual {
+        border-radius: var(--radius-component);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-1);
+        padding: 24px;
+        min-height: 280px;
+      }
+      .lp-visual-stack {
+        display: grid;
+        gap: 14px;
+      }
+      .lp-visual-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--surface2) 90%, transparent);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text2);
+      }
+      .lp-visual-row strong {
+        color: var(--text1);
+        font-weight: 500;
+      }
+      .lp-visual-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: var(--radius-pill);
+        background: var(--accent-subtle);
+        color: var(--accent);
+        font-size: 11px;
+        line-height: 1;
+      }
+      .lp-visual-chart {
+        height: 120px;
+        border-radius: 14px;
+        background:
+          linear-gradient(
+            180deg,
+            color-mix(in srgb, var(--accent) 14%, transparent),
+            transparent 72%
+          ),
+          color-mix(in srgb, var(--surface2) 90%, transparent);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        position: relative;
+        overflow: hidden;
+      }
+      .lp-visual-chart::before {
+        content: "";
+        position: absolute;
+        inset: 14px;
+        background: linear-gradient(
+          180deg,
+          transparent 0 24%,
+          color-mix(in srgb, var(--text1) 8%, transparent) 24% 25%,
+          transparent 25% 49%,
+          color-mix(in srgb, var(--text1) 8%, transparent) 49% 50%,
+          transparent 50% 74%,
+          color-mix(in srgb, var(--text1) 8%, transparent) 74% 75%,
+          transparent 75%
+        );
+      }
+      .lp-visual-chart::after {
+        content: "";
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 24px;
+        height: 56px;
+        border-radius: 999px;
+        background: linear-gradient(
+          90deg,
+          color-mix(in srgb, var(--accent) 18%, transparent),
+          color-mix(in srgb, var(--accent) 62%, transparent)
+        );
+        clip-path: polygon(
+          0% 100%,
+          0% 65%,
+          12% 68%,
+          24% 54%,
+          36% 56%,
+          48% 44%,
+          60% 48%,
+          72% 28%,
+          84% 34%,
+          100% 0%,
+          100% 100%
+        );
+      }
+
+      .lp-pricing {
+        padding: 96px 0;
+      }
+      .lp-pricing-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      .lp-price-card {
+        padding: 28px;
+        border-radius: var(--radius-component);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-1);
+      }
+      .lp-price-name {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text3);
+        margin-bottom: 16px;
+      }
+      .lp-price-value {
+        font-family: var(--font-display);
+        font-size: 44px;
+        letter-spacing: -0.03em;
+        margin-bottom: 8px;
+      }
+      .lp-price-copy {
+        color: var(--text2);
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+      }
+      .lp-price-list {
+        display: grid;
+        gap: 10px;
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--text2);
+      }
+
+      .lp-cta {
+        position: relative;
+        overflow: hidden;
+        padding: 96px 0 120px;
+      }
+      .lp-cta-stage {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle at center,
+          color-mix(in srgb, var(--accent) 10%, transparent),
+          transparent 64%
+        );
+        filter: blur(36px);
+        opacity: 0.8;
+      }
+      .lp-cta-block {
+        position: relative;
+        z-index: 1;
+        padding: 36px;
+        border-radius: var(--radius-container);
+        border: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        background: color-mix(in srgb, var(--surface1) 92%, transparent);
+        box-shadow: var(--shadow-2);
+        text-align: center;
+      }
+      .lp-cta-block h2 {
+        font-family: var(--font-display);
+        font-size: 48px;
+        line-height: 1.02;
+        letter-spacing: -0.04em;
+        max-width: 11ch;
+        margin: 0 auto 16px;
+      }
+      .lp-cta-block p {
+        color: var(--text2);
+        max-width: 40ch;
+        margin: 0 auto 20px;
+        line-height: 1.65;
+      }
+
+      .lp-footer {
+        border-top: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+        padding: 36px 0 96px;
+      }
+      .lp-footer-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr 1fr;
+        gap: 20px;
+      }
+      .lp-footer-title {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text3);
+        margin-bottom: 12px;
+      }
+      .lp-footer-links {
+        display: grid;
+        gap: 10px;
+        color: var(--text2);
+        font-size: 14px;
+      }
+
+      .floating-bar {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border-radius: 999px;
+        background: var(--surface1);
+        border: 1.5px solid var(--border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+        transition:
+          background 500ms ease,
+          border-color 500ms ease;
+      }
+      .mode-btn {
+        height: 32px;
+        border-radius: 999px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        font-family: var(--font-body);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text3);
+        transition:
+          background 200ms ease,
+          color 200ms ease;
+        outline: none;
+      }
+      .mode-btn:hover {
+        color: var(--text1);
+      }
+      .mode-btn.active {
+        background: var(--surface3);
+        color: var(--text1);
+      }
+
+      @media (max-width: 980px) {
+        .lp-nav {
+          display: none;
+        }
+        .lp-device {
+          position: relative;
+          right: auto;
+          top: auto;
+          width: 100%;
+          margin-top: 40px;
+        }
+        .lp-hero {
+          padding-top: 88px;
+        }
+        .lp-feature-inner,
+        .lp-pricing-grid,
+        .lp-footer-grid {
+          grid-template-columns: 1fr;
+        }
+        .lp-feature.reverse .lp-feature-text,
+        .lp-feature.reverse .lp-feature-visual {
+          order: initial;
+        }
+        .lp-container {
+          padding: 0 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="lp-header">
+      <div class="lp-container lp-header-inner">
+        <a href="#" class="lp-brand"><span class="lp-mark"></span>Framer</a>
+        <nav class="lp-nav">
+          <a href="#">Product</a>
+          <a href="#">Community</a>
+          <a href="#">Resources</a>
+          <a href="#">Pricing</a>
+          <a href="#">Enterprise</a>
+        </nav>
+        <a href="#" class="lp-header-cta">Sign up</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="lp-hero">
+        <div class="lp-hero-stage">
+          <div class="lp-hero-grid"></div>
+          <div class="lp-hero-glow"></div>
+          <div class="lp-device">
+            <div class="lp-device-bar">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="lp-device-content">
+              <div class="lp-device-sidebar">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+              </div>
+              <div class="lp-device-main">
+                <div class="lp-device-metric-row">
+                  <div class="lp-device-metric"></div>
+                  <div class="lp-device-metric"></div>
+                  <div class="lp-device-metric"></div>
+                </div>
+                <div class="lp-device-chart"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="lp-container">
+          <div class="lp-hero-content">
+            <div class="lp-eyebrow">AI Website Builder</div>
+            <h1 class="lp-hero-title">
+              Create websites with AI. Keep every decision editable.
+            </h1>
+            <p class="lp-hero-copy">
+              Prompt a full layout, refine the structure on canvas, and publish
+              when the site feels right. Framer keeps the chrome quiet so the
+              page, the screenshot, and the publish action stay in focus.
+            </p>
+            <div class="lp-hero-actions">
+              <a href="#" class="lp-primary"
+                >Get started for free <i class="icon icon-arrow-right"></i
+              ></a>
+              <a href="#" class="lp-secondary"
+                >Download app <i class="icon icon-arrow-right"></i
+              ></a>
+            </div>
+            <div class="lp-hero-proof">
+              <span>Canvas-native AI</span>
+              <span>CMS agents</span>
+              <span>99.99% uptime</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lp-feature">
+        <div class="lp-container lp-feature-inner">
+          <div class="lp-feature-text">
+            <div class="lp-eyebrow">Design With An Agent</div>
+            <h2 class="lp-feature-title">
+              Start from a prompt, then keep the whole canvas under your hands.
+            </h2>
+            <p class="lp-feature-copy">
+              Generate layouts, sections, and copy directly inside the editor.
+              Nothing ships as a black box. Every layer stays visible, movable,
+              and editable after the first AI pass.
+            </p>
+            <div class="lp-feature-list">
+              <div>prompt-driven first draft</div>
+              <div>live layout edits on the same canvas</div>
+              <div>agent output that stays inspectable</div>
+            </div>
+          </div>
+          <div class="lp-feature-visual">
+            <div class="lp-visual-stack">
+              <div class="lp-visual-row">
+                <strong>Hero</strong
+                ><span class="lp-visual-pill">vertical stack</span>
+              </div>
+              <div class="lp-visual-row">
+                <strong>Canvas</strong
+                ><span class="lp-visual-pill">live edit</span>
+              </div>
+              <div class="lp-visual-row">
+                <strong>Agent</strong
+                ><span class="lp-visual-pill">7 layers changed</span>
+              </div>
+              <div class="lp-visual-chart"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lp-feature reverse">
+        <div class="lp-container lp-feature-inner">
+          <div class="lp-feature-text">
+            <div class="lp-eyebrow">CMS And Publishing</div>
+            <h2 class="lp-feature-title">
+              Keep content, layout, and launch in one flow.
+            </h2>
+            <p class="lp-feature-copy">
+              Agents can set up collections, generate drafts, and update
+              sections while the CMS stays connected to the same visual surface.
+              Publish from the same product where the edits happen.
+            </p>
+            <div class="lp-feature-list">
+              <div>collections and drafts stay in sync</div>
+              <div>analytics and A/B testing built in</div>
+              <div>launch from editor to live URL</div>
+            </div>
+          </div>
+          <div class="lp-feature-visual">
+            <div class="lp-visual-stack">
+              <div class="lp-visual-row">
+                <strong>20</strong><span>CMS collections</span>
+              </div>
+              <div class="lp-visual-row">
+                <strong>90d</strong><span>analytics history</span>
+              </div>
+              <div class="lp-visual-row">
+                <strong>Live</strong><span>staging to publish</span>
+              </div>
+              <div class="lp-visual-chart"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lp-feature">
+        <div class="lp-container lp-feature-inner">
+          <div class="lp-feature-text">
+            <div class="lp-eyebrow">Design System In Motion</div>
+            <h2 class="lp-feature-title">
+              Bold type, compact controls, and one signal color that means go.
+            </h2>
+            <p class="lp-feature-copy">
+              Framer stays nearly monochrome until action matters. White CTAs,
+              blue publish states, and dense product frames do more for the
+              brand than decorative gradients ever could.
+            </p>
+            <div class="lp-feature-list">
+              <div>black stage with product-first hero</div>
+              <div>rounded 8px controls and compact panels</div>
+              <div>publish blue reserved for state and action</div>
+            </div>
+          </div>
+          <div class="lp-feature-visual">
+            <div class="lp-visual-stack">
+              <div class="lp-visual-row">
+                <strong>Outfit</strong><span>display type</span>
+              </div>
+              <div class="lp-visual-row">
+                <strong>Inter</strong><span>body and UI</span>
+              </div>
+              <div class="lp-visual-row">
+                <strong>#0A84FF</strong><span>publish signal</span>
+              </div>
+              <div class="lp-visual-chart"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lp-pricing">
+        <div class="lp-container">
+          <div class="lp-eyebrow">Pricing</div>
+          <h2 class="lp-feature-title" style="max-width: none">
+            Plans that scale from a first site to a flagship .com.
+          </h2>
+          <div class="lp-pricing-grid">
+            <div class="lp-price-card">
+              <div class="lp-price-name">Launch</div>
+              <div class="lp-price-value">$75</div>
+              <div class="lp-price-copy">
+                Publish a business site with AI tools, CMS collections, and room
+                to grow without adding extra platform complexity.
+              </div>
+              <div class="lp-price-list">
+                <div>15,000 pages</div>
+                <div>200 GB bandwidth</div>
+                <div>20 CMS collections</div>
+              </div>
+            </div>
+            <div class="lp-price-card">
+              <div class="lp-price-name">Scale</div>
+              <div class="lp-price-value">$200</div>
+              <div class="lp-price-copy">
+                More pages, more collections, and more room for a site that is
+                becoming an active growth surface.
+              </div>
+              <div class="lp-price-list">
+                <div>30,000 pages</div>
+                <div>30 CMS collections</div>
+                <div>extended AI access</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lp-cta">
+        <div class="lp-cta-stage"></div>
+        <div class="lp-container">
+          <div class="lp-cta-block">
+            <h2>Prompt the first draft. Publish the final site.</h2>
+            <p>
+              Framer gives design teams one place to explore layout, refine
+              structure, manage content, and ship without handing the work off
+              to another surface.
+            </p>
+            <div class="lp-hero-actions" style="justify-content: center">
+              <a href="#" class="lp-primary"
+                >Get started for free <i class="icon icon-arrow-right"></i
+              ></a>
+              <a href="#" class="lp-secondary">Watch demo</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="lp-footer">
+      <div class="lp-container lp-footer-grid">
+        <div>
+          <div class="lp-brand"><span class="lp-mark"></span>Framer</div>
+          <p class="lp-feature-copy" style="margin-top: 12px; margin-bottom: 0">
+            AI website builder for teams that want the first draft faster and
+            the final result fully under control.
+          </p>
+        </div>
+        <div>
+          <div class="lp-footer-title">Product</div>
+          <div class="lp-footer-links">
+            <a href="#">AI</a>
+            <a href="#">Agents</a>
+            <a href="#">Pricing</a>
+            <a href="#">CMS</a>
+          </div>
+        </div>
+        <div>
+          <div class="lp-footer-title">Resources</div>
+          <div class="lp-footer-links">
+            <a href="#">Community</a>
+            <a href="#">Stories</a>
+            <a href="#">Downloads</a>
+          </div>
+        </div>
+        <div>
+          <div class="lp-footer-title">Company</div>
+          <div class="lp-footer-links">
+            <a href="#">Enterprise</a>
+            <a href="#">Security</a>
+            <a href="#">Analytics</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div class="floating-bar">
+      <button class="mode-btn" data-mode="light">
+        <i class="icon icon-sun"></i> Light
+      </button>
+      <button class="mode-btn" data-mode="dark">
+        <i class="icon icon-moon"></i> Dark
+      </button>
+    </div>
+
+    <script>
+      document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.documentElement.dataset.theme = btn.dataset.mode;
+          document
+            .querySelectorAll(".mode-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+      document
+        .querySelector('.mode-btn[data-mode="dark"]')
+        .classList.add("active");
+      document.querySelectorAll("a").forEach((a) => {
+        a.addEventListener("click", (e) => e.preventDefault());
+      });
+    </script>
+  </body>
+</html>

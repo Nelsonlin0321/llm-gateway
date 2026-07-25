@@ -2,7 +2,7 @@
 
 ## Overview
 
-Gateway Portal is a Next.js application for organizations that operate an LLM gateway and need a secure self-service control plane for API access, cost governance, and usage analytics.
+llm-gateway.io is a Next.js open source application for organizations that operate an LLM gateway and need a secure self-service control plane for API access, cost governance, and usage analytics.
 
 The portal allows a customer to configure one or more upstream provider accounts by storing a master API URL and API key, define model pricing for cost calculation, and create downstream child API keys for teams, users, projects, or applications. Each child key can be governed with limits such as rate limits, model access rules, and spending budgets. The product also provides analytics dashboards so administrators can understand token usage, request volume, latency, and cost across different business dimensions.
 

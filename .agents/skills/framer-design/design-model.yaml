@@ -1,0 +1,266 @@
+name: "Framer"
+description: "AI website builder for designers and teams. Black stage, white type, compact rounded controls, and electric blue only when something is ready to ship."
+philosophy: "Framer should feel like a design tool that already knows how to ship. The page is dark, almost blank, and confident enough to let the product screenshot do the persuasion. Typography is bold and geometric, controls stay compact and rounded, and the only loud color arrives when the system wants to signal action or publish state."
+primary_mode: "dark"
+brand_source: "Observed from https://www.framer.com/ai/, https://www.framer.com/features/, https://www.framer.com/pricing/, https://www.framer.com/enterprise/, and the provided screenshot"
+brand_domain: "AI website builder / visual editor / publishing platform"
+brand_type: "ui-rich"
+mono_for_code: true
+mono_for_metrics: false
+
+primitives:
+  colors:
+    neutral:
+      50: "#FFFFFF"
+      100: "#F6F6F7"
+      200: "#EBEBEE"
+      300: "#D8D9DE"
+      400: "#A9ADB8"
+      500: "#7C8190"
+      600: "#5B6070"
+      700: "#373B47"
+      800: "#1E222B"
+      900: "#0D0F14"
+      950: "#050608"
+    brand:
+      50: "#EDF7FF"
+      100: "#D8EEFF"
+      200: "#B7DEFF"
+      300: "#84C6FF"
+      400: "#42A2FF"
+      500: "#0A84FF"
+      600: "#0067D9"
+      700: "#004FA8"
+      800: "#06366D"
+      900: "#052043"
+      950: "#041220"
+    red:
+      50: "#FFF0F0"
+      500: "#F25555"
+      900: "#6B1717"
+    green:
+      50: "#EEF9F3"
+      500: "#2FBE74"
+      900: "#12482B"
+    amber:
+      50: "#FFF7E8"
+      500: "#E7A93D"
+      900: "#6A4512"
+  spacing: [0, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96]
+  radii: [0, 4, 6, 8, 12, 16, 24, 999]
+
+tokens:
+  colors:
+    dark:
+      background: "{neutral.950}"
+      surface1: "{neutral.900}"
+      surface2: "{neutral.800}"
+      surface3: "{neutral.700}"
+      border: "{neutral.800}"
+      border_visible: "{neutral.700}"
+      text1: "{neutral.50}"
+      text2: "{neutral.300}"
+      text3: "{neutral.500}"
+      text4: "{neutral.600}"
+      accent: "{brand.500}"
+      accent_subtle: "{brand.950}"
+    light:
+      background: "{neutral.50}"
+      surface1: "{neutral.100}"
+      surface2: "{neutral.200}"
+      surface3: "{neutral.300}"
+      border: "{neutral.200}"
+      border_visible: "{neutral.300}"
+      text1: "{neutral.950}"
+      text2: "{neutral.600}"
+      text3: "{neutral.500}"
+      text4: "{neutral.400}"
+      accent: "{brand.600}"
+      accent_subtle: "{brand.50}"
+    success: "{green.500}"
+    warning: "{amber.500}"
+    error: "{red.500}"
+    success_bg:
+      light: "{green.50}"
+      dark: "{green.900}"
+    warning_bg:
+      light: "{amber.50}"
+      dark: "{amber.900}"
+    error_bg:
+      light: "{red.50}"
+      dark: "{red.900}"
+
+  spacing:
+    2xs: 2
+    xs: 4
+    sm: 8
+    md: 16
+    lg: 24
+    xl: 32
+    2xl: 48
+    3xl: 64
+    4xl: 96
+
+  radii:
+    element: 4
+    control: 8
+    component: 16
+    container: 24
+    pill: 999
+
+  typography:
+    display:
+      family: "Outfit"
+      size: "64px"
+      weight: 600
+      line_height: 1.0
+      letter_spacing: "-0.04em"
+      google_fonts: "Outfit:wght@500;600;700"
+    body:
+      family: "Inter"
+      size: "15px"
+      weight: 400
+      line_height: 1.55
+      letter_spacing: "-0.01em"
+      google_fonts: "Inter:wght@400;500;600"
+    mono:
+      family: "IBM Plex Mono"
+      size: "12px"
+      weight: 500
+      google_fonts: "IBM+Plex+Mono:wght@400;500"
+
+  elevation:
+    strategy: "subtle"
+    level_1_light: "0 10px 30px rgba(9, 12, 18, 0.06)"
+    level_2_light: "0 18px 42px rgba(9, 12, 18, 0.10)"
+    level_3_light: "0 24px 64px rgba(9, 12, 18, 0.16)"
+    level_1_dark: "0 14px 28px rgba(0, 0, 0, 0.22)"
+    level_2_dark: "0 20px 48px rgba(0, 0, 0, 0.30)"
+    level_3_dark: "0 32px 72px rgba(0, 0, 0, 0.42)"
+
+  motion:
+    personality: "smooth"
+    easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+    duration_fast: "140ms"
+    duration_normal: "220ms"
+    duration_slow: "320ms"
+
+  hero_stage:
+    preset: null
+    observed_style:
+      description: "The real Framer AI surface uses an almost pure black stage, then lets the editor screenshot do the selling. There is no decorative mesh or orb. The hero subject is the canvas itself, framed by subtle border light and one electric blue publish accent."
+      where_used: ["AI page hero", "feature screenshots", "enterprise product visuals"]
+      notes: "The screenshot provided by the user shows the native product grammar clearly: left pages rail, central canvas, and a right agent panel with compact rounded controls."
+    background:
+      medium: "absent"
+      color_mode: "monochrome"
+      saturation: "flat"
+      light_source: "none"
+      falloff: "soft"
+      vignette: "off"
+      texture: "clean"
+      motion: "static"
+      intensity: "subtle"
+      safe_zone: "full-bleed"
+      color_palette: ["#050608", "#0D0F14", "#1E222B", "#0A84FF"]
+    hero:
+      subject: "device"
+      placement: "center"
+      scale: "dominant"
+      tint: "neutral"
+    relation:
+      type: "shadow-only"
+      bleed: 0
+    disclaimer: "Approximated with CSS and SVG. The real Framer product screenshots are not redistributed with this skill."
+
+  iconography:
+    observed_style:
+      description: "The site uses compact geometric utility icons with rounded ends, medium stroke, and very low visual drama. Most affordances are arrows, plus signs, chevrons, and menu controls."
+      stroke_weight: "medium"
+      corner_treatment: "soft"
+      fill_style: "outline"
+      form_language: "geometric"
+      visual_density: "minimal"
+    fallback_kit:
+      name: "Lucide"
+      weight: "default 2px"
+      match_score: "high"
+      match_reasoning: "Lucide is the closest public match to Framer's quiet utility icon language: geometric, clean, and compact without extra personality. Heroicons was the second-best option, but Lucide fits the sharper product-tool context better."
+      cdn: "https://unpkg.com/lucide-static@1.8.0/font/lucide.css"
+      icon_class_prefix: "icon icon-"
+    disclaimer: "The preview uses Lucide as a best-match fallback. Framer's production icons are not redistributed."
+
+components:
+  button_primary:
+    source: "observed"
+    background: "{neutral.50}"
+    color: "{neutral.950}"
+    padding: "10px 16px"
+    radius: "{radii.control}"
+    font_weight: 600
+    font_size: "15px"
+    border: "1px solid rgba(255,255,255,0.08)"
+    shadow: "none"
+    hover:
+      background: "{neutral.100}"
+  button_secondary:
+    source: "observed"
+    background: "{neutral.800}"
+    color: "{neutral.50}"
+    padding: "10px 16px"
+    radius: "{radii.control}"
+    font_weight: 500
+    border: "1px solid rgba(255,255,255,0.10)"
+    shadow: "none"
+  card_feature:
+    source: "observed"
+    background: "{neutral.900}"
+    color: "{neutral.50}"
+    padding: "16px"
+    radius: "{radii.component}"
+    border: "1px solid rgba(255,255,255,0.08)"
+    shadow: "{elevation.level_1_dark}"
+  input:
+    source: "derived"
+    background: "{neutral.800}"
+    color: "{neutral.50}"
+    padding: "10px 14px"
+    radius: "{radii.control}"
+    border: "1px solid rgba(255,255,255,0.10)"
+    focus_ring: "0 0 0 3px rgba(10, 132, 255, 0.18)"
+    justification: "Derived from the search bars and compact property controls visible inside the editor screenshot and product imagery."
+  tag:
+    source: "observed"
+    background: "{neutral.800}"
+    color: "{neutral.300}"
+    padding: "6px 10px"
+    radius: "{radii.pill}"
+    border: "1px solid rgba(255,255,255,0.08)"
+  nav_tab:
+    source: "observed"
+    background: "transparent"
+    color: "{neutral.300}"
+    border: "0px solid transparent"
+    active_color: "{neutral.50}"
+    active_border: "{brand.500}"
+
+voice:
+  tone: "confident, product-led, precise"
+  cadence: "short claims, direct verbs, almost no hype adjectives, concrete publish-oriented nouns"
+  samples:
+    - "Create with AI. Stay in control."
+    - "Prompt. Refine. Publish."
+    - "Generate layouts on canvas, then edit every pixel."
+
+app_screen:
+  archetype: "editor"
+  frame: "desktop"
+  frame_params:
+    title: "Framer - Bloom homepage"
+  content_seed: "A Framer editing workspace for the Bloom site. The left rail lists pages, the central canvas shows a dark hero with a vertical stack layout, and the right rail shows an agent trace refining the hero image and CTA."
+  required_tokens_checklist:
+    - "background, surface1, surface2, surface3, border, border_visible"
+    - "text1, text2, text3, text4"
+    - "accent, accent_subtle, success, warning, error"
+    - "display, body, mono typography"
+    - "radii.element, radii.control, radii.component, radii.pill"

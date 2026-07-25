@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Framer - Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/lucide-static@1.8.0/font/lucide.css">
+  <style>
+    :root {
+      --neutral-50: #FFFFFF;
+      --neutral-100: #F6F6F7;
+      --neutral-200: #EBEBEE;
+      --neutral-300: #D8D9DE;
+      --neutral-400: #A9ADB8;
+      --neutral-500: #7C8190;
+      --neutral-600: #5B6070;
+      --neutral-700: #373B47;
+      --neutral-800: #1E222B;
+      --neutral-900: #0D0F14;
+      --neutral-950: #050608;
+      --brand-50: #EDF7FF;
+      --brand-500: #0A84FF;
+      --brand-600: #0067D9;
+      --green-500: #2FBE74;
+      --green-900: #12482B;
+      --amber-500: #E7A93D;
+      --amber-900: #6A4512;
+      --red-500: #F25555;
+      --red-900: #6B1717;
+      --font-display: "Outfit", system-ui, sans-serif;
+      --font-body: "Inter", system-ui, sans-serif;
+      --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      --space-2xs: 2px;
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+      --space-4xl: 96px;
+      --radius-element: 4px;
+      --radius-control: 8px;
+      --radius-component: 16px;
+      --radius-container: 24px;
+      --radius-pill: 999px;
+      --shadow-1-light: 0 10px 30px rgba(9, 12, 18, 0.06);
+      --shadow-1-dark: 0 14px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    [data-theme="dark"] {
+      --background: #050608;
+      --bg: var(--background);
+      --surface1: #0D0F14;
+      --surface2: #1E222B;
+      --surface3: #373B47;
+      --border: #1E222B;
+      --border-visible: #373B47;
+      --text1: #FFFFFF;
+      --text2: #D8D9DE;
+      --text3: #7C8190;
+      --text4: #5B6070;
+      --accent: #0A84FF;
+      --accent-subtle: #041220;
+      --success: #2FBE74;
+      --success-bg: #12482B;
+      --warning: #E7A93D;
+      --warning-bg: #6A4512;
+      --error: #F25555;
+      --error-bg: #6B1717;
+      --shadow-1: var(--shadow-1-dark);
+      --grid-dot: rgba(255, 255, 255, 0.04);
+      --hero-glow: rgba(10, 132, 255, 0.12);
+    }
+
+    [data-theme="light"] {
+      --background: #FFFFFF;
+      --bg: var(--background);
+      --surface1: #F6F6F7;
+      --surface2: #EBEBEE;
+      --surface3: #D8D9DE;
+      --border: #EBEBEE;
+      --border-visible: #D8D9DE;
+      --text1: #050608;
+      --text2: #5B6070;
+      --text3: #7C8190;
+      --text4: #A9ADB8;
+      --accent: #0067D9;
+      --accent-subtle: #EDF7FF;
+      --success: #2FBE74;
+      --success-bg: #EEF9F3;
+      --warning: #E7A93D;
+      --warning-bg: #FFF7E8;
+      --error: #F25555;
+      --error-bg: #FFF0F0;
+      --shadow-1: var(--shadow-1-light);
+      --grid-dot: rgba(5, 6, 8, 0.06);
+      --hero-glow: rgba(10, 132, 255, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      padding: 32px;
+      background: var(--background);
+      color: var(--text1);
+      font-family: var(--font-body);
+      transition: background 220ms ease, color 220ms ease;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 20%);
+      pointer-events: none;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto 10% 35% 10%;
+      background: radial-gradient(circle at center, var(--hero-glow), transparent 70%);
+      filter: blur(48px);
+      pointer-events: none;
+    }
+    a { color: inherit; text-decoration: none; }
+    p, h1, h2, h3 { margin: 0; }
+
+    .preview-shell {
+      position: relative;
+      z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: 180px 220px 190px auto;
+      gap: 20px;
+    }
+
+    .card {
+      min-width: 0;
+      min-height: 0;
+      background: color-mix(in srgb, var(--surface1) 96%, transparent);
+      border: 1px solid color-mix(in srgb, var(--text1) 7%, transparent);
+      border-radius: var(--radius-component);
+      box-shadow: var(--shadow-1);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .hero {
+      grid-column: span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: 42px;
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+      max-width: 12ch;
+    }
+    .hero p {
+      color: var(--text2);
+      max-width: 40ch;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .cta-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    .primary-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--text1);
+      color: var(--background);
+      padding: 10px 16px;
+      border-radius: var(--radius-control);
+      font-family: var(--font-body);
+      font-weight: 600;
+      box-shadow: none;
+    }
+    .secondary-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: var(--radius-control);
+      border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+      color: var(--text2);
+      font-size: 13px;
+    }
+
+    .metric {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .metric-label, .panel-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 42px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .metric-sub {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .metric-sub.good { color: var(--success); }
+    .metric-sub.warn { color: var(--warning); }
+
+    .provider-list {
+      grid-column: span 1;
+      grid-row: span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .provider-item {
+      display: grid;
+      grid-template-columns: 8px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--surface2) 88%, transparent);
+    }
+    .provider-item.active {
+      outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      background: color-mix(in srgb, var(--accent-subtle) 70%, var(--surface2));
+    }
+    .provider-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--success);
+      box-shadow: 0 0 12px color-mix(in srgb, var(--success) 80%, transparent);
+    }
+    .provider-dot.warn { background: var(--warning); box-shadow: none; }
+    .provider-dot.error { background: var(--error); box-shadow: none; }
+    .provider-name {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text1);
+    }
+    .provider-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text3);
+    }
+
+    .chart {
+      grid-column: span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .chart svg {
+      width: 100%;
+      height: 118px;
+    }
+    .grid-line {
+      stroke: color-mix(in srgb, var(--text1) 8%, transparent);
+      stroke-width: 1;
+    }
+    .line {
+      stroke: var(--accent);
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .line-b {
+      stroke: var(--success);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.8;
+    }
+
+    .requests {
+      grid-column: span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .request-row {
+      display: grid;
+      grid-template-columns: 72px 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--text1) 8%, transparent);
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    .request-row:last-child { border-bottom: none; }
+    .request-route { color: var(--text1); }
+    .request-model { color: var(--text2); }
+    .request-cost { color: var(--accent); }
+    .request-latency { color: var(--text3); }
+
+    .token-key {
+      grid-column: span 2;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text3);
+    }
+    .swatch-chip {
+      width: 100%;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+    }
+    .type-row {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .type-display {
+      font-family: var(--font-display);
+      font-size: 26px;
+      letter-spacing: -0.03em;
+    }
+    .type-body {
+      font-size: 15px;
+      color: var(--text2);
+    }
+    .type-mono {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text2);
+    }
+    .spacing-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .space-box {
+      background: color-mix(in srgb, var(--accent) 65%, var(--surface2));
+      border-radius: 6px;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid color-mix(in srgb, var(--text1) 10%, transparent);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text1);
+      background: color-mix(in srgb, var(--surface2) 90%, transparent);
+    }
+    .action-pill.primary {
+      background: color-mix(in srgb, var(--accent) 18%, var(--surface2));
+      color: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .status-pill {
+      border-radius: var(--radius-pill);
+      padding: 8px 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+    }
+    .status-pill.success { background: var(--success-bg); color: var(--success); }
+    .status-pill.warning { background: var(--warning-bg); color: var(--warning); }
+    .status-pill.error { background: var(--error-bg); color: var(--error); }
+
+    .floating-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--surface1);
+      border: 1.5px solid var(--border);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      transition: background 500ms ease, border-color 500ms ease;
+    }
+    .mode-btn {
+      height: 32px;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text3);
+      transition: background 200ms ease, color 200ms ease;
+      outline: none;
+    }
+    .mode-btn:hover { color: var(--text1); }
+    .mode-btn.active {
+      background: var(--surface3);
+      color: var(--text1);
+    }
+    .mode-btn i { font-size: 14px; }
+
+    @media (max-width: 960px) {
+      .preview-shell {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+      }
+      .hero, .chart, .requests, .token-key { grid-column: span 2; }
+      .provider-list { grid-row: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-shell">
+    <section class="card hero">
+      <div>
+        <div class="panel-label">Framer AI</div>
+        <h1>Create with AI. Stay in control from canvas to publish.</h1>
+        <p>Generate layouts, rewrite copy, and swap visuals directly on the canvas. The stage stays quiet so the product frame, the type, and one publish-blue signal can do the work.</p>
+      </div>
+      <div class="cta-row">
+        <a href="#" class="primary-cta">Get started for free <i class="icon icon-arrow-right"></i></a>
+        <a href="#" class="secondary-cta">Download app <i class="icon icon-arrow-right"></i></a>
+      </div>
+    </section>
+
+    <section class="card metric">
+      <div class="metric-label">Pages Published</div>
+      <div class="metric-value">12,447</div>
+      <div class="metric-sub good">community templates live</div>
+    </section>
+
+    <section class="card metric">
+      <div class="metric-label">Site Uptime</div>
+      <div class="metric-value">99.99%</div>
+      <div class="metric-sub warn">good under launch traffic</div>
+    </section>
+
+    <section class="card provider-list">
+      <div class="panel-label">Page Stack</div>
+      <div class="provider-item active">
+        <span class="provider-dot"></span>
+        <span class="provider-name">Home / Bloom</span>
+        <span class="provider-meta">main</span>
+      </div>
+      <div class="provider-item">
+        <span class="provider-dot"></span>
+        <span class="provider-name">/research</span>
+        <span class="provider-meta">child</span>
+      </div>
+      <div class="provider-item">
+        <span class="provider-dot"></span>
+        <span class="provider-name">/commitments</span>
+        <span class="provider-meta">child</span>
+      </div>
+      <div class="provider-item">
+        <span class="provider-dot warn"></span>
+        <span class="provider-name">/news</span>
+        <span class="provider-meta">editing</span>
+      </div>
+      <div class="provider-item">
+        <span class="provider-dot error"></span>
+        <span class="provider-name">/legal</span>
+        <span class="provider-meta">needs review</span>
+      </div>
+    </section>
+
+    <section class="card chart">
+      <div class="panel-label">Canvas Activity</div>
+      <svg viewBox="0 0 520 118" preserveAspectRatio="none">
+        <line class="grid-line" x1="0" y1="16" x2="520" y2="16"></line>
+        <line class="grid-line" x1="0" y1="58" x2="520" y2="58"></line>
+        <line class="grid-line" x1="0" y1="102" x2="520" y2="102"></line>
+        <path class="line" d="M0,78 L35,74 L70,70 L105,64 L140,68 L175,60 L210,58 L245,54 L280,48 L315,44 L350,40 L385,44 L420,36 L455,30 L490,34 L520,26"></path>
+        <path class="line-b" d="M0,92 L35,90 L70,89 L105,86 L140,84 L175,82 L210,78 L245,76 L280,74 L315,70 L350,66 L385,68 L420,60 L455,56 L490,52 L520,48"></path>
+      </svg>
+      <div class="metric-sub">Blue tracks canvas edits. The second line tracks agent refinement passes.</div>
+    </section>
+
+    <section class="card requests">
+      <div class="panel-label">Recent Agent Trace</div>
+      <div class="request-row">
+        <span>14:42:19</span>
+        <span class="request-route">Home / hero section</span>
+        <span class="request-model">vertical hero layout</span>
+        <span class="request-cost">edited 7 layers</span>
+      </div>
+      <div class="request-row">
+        <span>14:42:11</span>
+        <span class="request-route">Home / hero image</span>
+        <span class="request-model">swapped attachment</span>
+        <span class="request-latency">removed 2 layers</span>
+      </div>
+      <div class="request-row">
+        <span>14:41:57</span>
+        <span class="request-route">News / page cluster</span>
+        <span class="request-model">generated CMS draft</span>
+        <span class="request-latency">12 new items</span>
+      </div>
+      <div class="request-row">
+        <span>14:41:42</span>
+        <span class="request-route">Publish / preflight</span>
+        <span class="request-model">checked broken links</span>
+        <span class="request-latency">ready to ship</span>
+      </div>
+    </section>
+
+    <section class="card token-key">
+      <div class="panel-label">Token Key</div>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch-chip" style="background: var(--background);"></div><span>bg</span></div>
+        <div class="swatch"><div class="swatch-chip" style="background: var(--surface1);"></div><span>s1</span></div>
+        <div class="swatch"><div class="swatch-chip" style="background: var(--surface3);"></div><span>s3</span></div>
+        <div class="swatch"><div class="swatch-chip" style="background: var(--text1);"></div><span>t1</span></div>
+        <div class="swatch"><div class="swatch-chip" style="background: var(--accent);"></div><span>accent</span></div>
+        <div class="swatch"><div class="swatch-chip" style="background: var(--success);"></div><span>success</span></div>
+        <div class="swatch"><div class="swatch-chip" style="background: var(--error);"></div><span>error</span></div>
+      </div>
+      <div class="type-row">
+        <div class="type-display">Aa Display</div>
+        <div class="type-body">Aa Body keeps the product chrome quiet and readable.</div>
+        <div class="type-mono">cmd+k / home / bloom / publish</div>
+      </div>
+      <div class="spacing-row">
+        <div class="space-box" style="width: 4px; height: 4px;"></div>
+        <div class="space-box" style="width: 8px; height: 8px;"></div>
+        <div class="space-box" style="width: 16px; height: 16px;"></div>
+        <div class="space-box" style="width: 24px; height: 24px;"></div>
+        <div class="space-box" style="width: 32px; height: 32px;"></div>
+      </div>
+    </section>
+
+    <section class="card actions">
+      <div class="panel-label">Quick Actions</div>
+      <div class="action-pill primary"><i class="icon icon-wand-sparkles"></i> start with agents</div>
+      <div class="action-pill"><i class="icon icon-layout-template"></i> insert section</div>
+      <div class="action-pill"><i class="icon icon-send"></i> publish site</div>
+    </section>
+
+    <section class="card">
+      <div class="panel-label">Release States</div>
+      <div class="status-grid" style="margin-top: 16px;">
+        <div class="status-pill success">ready</div>
+        <div class="status-pill warning">editing</div>
+        <div class="status-pill error">needs review</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="floating-bar">
+    <button class="mode-btn" data-mode="light" aria-label="Light mode">
+      <i class="icon icon-sun"></i> Light
+    </button>
+    <button class="mode-btn" data-mode="dark" aria-label="Dark mode">
+      <i class="icon icon-moon"></i> Dark
+    </button>
+  </div>
+
+  <script>
+    document.querySelectorAll('.mode-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.documentElement.dataset.theme = btn.dataset.mode;
+        document.querySelectorAll('.mode-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+    document.querySelector('.mode-btn[data-mode="dark"]').classList.add('active');
+    document.querySelectorAll('a').forEach((a) => {
+      a.addEventListener('click', (e) => e.preventDefault());
+    });
+  </script>
+</body>
+</html>

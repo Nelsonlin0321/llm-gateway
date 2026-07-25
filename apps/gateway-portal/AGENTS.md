@@ -4,9 +4,9 @@
 
 ## What We Are Building
 
-`gateway-portal` is a Next.js application that acts as the self-service control plane for an LLM gateway platform.
+`gateway-portal` is a Next.js open source application that acts as the self-service control plane for an LLM gateway platform.
 
-The product is for organizations that need to:
+The product is for individual users or organizations that need to:
 
 - configure upstream provider connections with a master API URL and API key
 - manage model pricing for input and output token cost calculation
@@ -66,6 +66,19 @@ When working in this app, optimize for:
 - extensible support for multiple providers
 - dashboards that make usage and spend easy to understand
 
+## Recommended Tech Stack
+
+When adding features to this app, prefer this stack by default:
+
+- UI: 
+    - Tailwind CSS
+    - shadcn/ui components: How to install component: 
+        if you're working on the root directory of the project, run `npx shadcn@latest add card -c apps/gateway-portal`
+- State management: React Context for simple shared state, TanStack React Query for server state, and Zustand for client-side app state where Context becomes cumbersome
+- ORM: Prisma
+- Auth: Better Auth
+- Backend integration: prefer Server Actions first when the workflow fits Next.js well
+
 ## Current State
 
 This app currently starts from a minimal Next.js scaffold. New work should move it toward a production-ready admin portal for LLM gateway management rather than a generic demo site.
@@ -79,3 +92,4 @@ This app currently starts from a minimal Next.js scaffold. New work should move 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 
 <!-- END:nextjs-agent-rules -->
+
