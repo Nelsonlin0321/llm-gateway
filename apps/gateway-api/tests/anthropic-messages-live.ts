@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { signChildKeyToken } from "../src/child-keys/index.js";
 import { anthropicCompatibleProviders } from "../src/providers.js";
+import { mintTestChildApiKey } from "./child-keys/mint-test-key.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:8080").replace(
@@ -44,7 +44,7 @@ async function getLiveChildApiKey(): Promise<string> {
   }
 
   const issuedAt = Math.floor(Date.now() / 1000);
-  return signChildKeyToken({
+  return mintTestChildApiKey({
     key_id: "live-test-key",
     name: "live-test",
     tags: { env: "test" },

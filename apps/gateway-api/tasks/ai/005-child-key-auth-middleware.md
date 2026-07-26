@@ -30,8 +30,8 @@ Public routes (`/`, `/health`) remain unauthenticated.
 
 - `src/child-keys/crypto.ts` — encrypt/decrypt for DB secrets
 - `src/child-keys/jwt.ts` — verify/decode plain `sk_` JWT
-- `src/child-keys/sign.ts` — sign (tests/tooling)
 - `src/child-keys/service.ts` — auth orchestration
+- `tests/child-keys/mint-test-key.ts` — test-only key minting (not production)
 - `src/child-keys/middleware.ts` — Hono middleware
 - `src/index.ts` — wire middleware
 - `tests/child-keys/auth.test.ts`

@@ -1,26 +1,24 @@
 import { SignJWT } from "jose";
 
-import { CHILD_KEY_PREFIX, withChildKeyPrefix } from "./jwt.js";
-import type { ChildKeyJwtPayload } from "./types.js";
+import { CHILD_KEY_PREFIX } from "../../src/child-keys/jwt.js";
+import type { ChildKeyJwtPayload } from "../../src/child-keys/types.js";
 
-function getJwtSigningSecret(): Uint8Array {
+/**
+ * Mint a plain `sk_…` child API key for tests only.
+ * Production key issuance lives in gateway-portal, not gateway-api.
+ */
+export async function mintTestChildApiKey(
+  payload: ChildKeyJwtPayload,
+): Promise<string> {
   const secret = process.env.JWT_SIGNING_SECRET;
 
   if (!secret) {
     throw new Error(
-      "JWT_SIGNING_SECRET is not configured. Add it to the environment before signing child API keys.",
+      "JWT_SIGNING_SECRET is not configured. Set it to mint test child API keys.",
     );
   }
 
-  return new TextEncoder().encode(secret);
-}
-
-/** Sign a child-key JWT (`sk_<jwt>`). Used by tests and local tooling. */
-export async function signChildKeyToken(
-  payload: ChildKeyJwtPayload,
-): Promise<string> {
   const issuedAt = Math.trunc(payload.issued_at);
-
   const claims: Record<string, unknown> = {
     key_id: payload.key_id,
     name: payload.name,
@@ -47,8 +45,6 @@ export async function signChildKeyToken(
     signer = signer.setExpirationTime(Math.trunc(payload.exp));
   }
 
-  const jwt = await signer.sign(getJwtSigningSecret());
-  return withChildKeyPrefix(jwt);
+  const jwt = await signer.sign(new TextEncoder().encode(secret));
+  return `${CHILD_KEY_PREFIX}${jwt}`;
 }
-
-export { CHILD_KEY_PREFIX };

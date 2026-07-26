@@ -8,9 +8,9 @@ import {
   encryptApiKey,
   extractBearerToken,
   requirePlainChildApiKey,
-  signChildKeyToken,
   verifyChildKeyToken,
 } from "../../src/child-keys/index.js";
+import { mintTestChildApiKey } from "./mint-test-key.js";
 
 const secret = "gateway-api-child-key-test-secret";
 const encryptSecret = "gateway-api-child-key-encrypt-secret";
@@ -19,7 +19,7 @@ async function mintKey(overrides: { exp?: number } = {}) {
   process.env.JWT_SIGNING_SECRET = secret;
   const issuedAt = Math.floor(Date.now() / 1000);
 
-  return signChildKeyToken({
+  return mintTestChildApiKey({
     key_id: "key-test-1",
     name: "test-key",
     tags: { env: "test", project: "gateway" },
@@ -83,7 +83,7 @@ test("authenticateChildApiKey rejects missing Authorization", async () => {
 test("authenticateChildApiKey rejects expired JWT", async () => {
   process.env.JWT_SIGNING_SECRET = secret;
   const issuedAt = Math.floor(Date.now() / 1000) - 120;
-  const apiKey = await signChildKeyToken({
+  const apiKey = await mintTestChildApiKey({
     key_id: "key-expired",
     name: "expired",
     tags: {},
