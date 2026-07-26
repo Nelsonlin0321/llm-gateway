@@ -14,8 +14,8 @@ type PortalHeaderProps = {
 
 export function PortalHeader({ navItems }: PortalHeaderProps) {
   return (
-    <header className="rounded-lg border border-border bg-surface-1 px-3 py-2.5 sm:px-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <header className="w-full border-b border-border bg-surface-1">
+      <div className="flex w-full flex-col gap-3 px-4 py-2.5 sm:px-6 sm:flex-row sm:items-center sm:justify-between lg:px-8">
         <div className="flex items-center gap-3">
           <div className="flex size-8 items-center justify-center rounded-md bg-accent text-[11px] font-bold tracking-tight text-accent-foreground">
             GW
@@ -43,16 +43,7 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
           </nav>
           <div className="flex items-center gap-2">
             <Link
-              href="/#audit"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "sm" }),
-                "text-text-secondary",
-              )}
-            >
-              Audit trail
-            </Link>
-            <Link
-              href="/#providers-card"
+              href="/workspace/overview"
               className={cn(buttonVariants({ variant: "default", size: "sm" }))}
             >
               Launch portal

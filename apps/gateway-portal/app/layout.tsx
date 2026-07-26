@@ -37,11 +37,12 @@ export const metadata: Metadata = {
 };
 
 const portalHeaderNavItems = [
-  { label: "Providers", href: "/providers" },
-  { label: "Pricing", href: "/pricing" },
-  { label: "Keys", href: "/keys" },
-  { label: "Policies", href: "/workflow" },
-  { label: "Analytics", href: "/analytics" },
+  { label: "Home", href: "/" },
+  // { label: "Providers", href: "/providers" },
+  // { label: "Pricing", href: "/pricing" },
+  // { label: "Keys", href: "/keys" },
+  // { label: "Policies", href: "/workflow" },
+  // { label: "Analytics", href: "/analytics" },
 ] as const;
 
 export default function RootLayout({
@@ -56,9 +57,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-background font-sans text-foreground">
         <ReactHotToastProvider>
-          <div className="mx-auto w-full max-w-8xl px-4 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pt-6">
-            <PortalHeader navItems={portalHeaderNavItems} />
-          </div>
+          <PortalHeader navItems={portalHeaderNavItems} />
           {children}
         </ReactHotToastProvider>
       </body>
