@@ -1,6 +1,10 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
+import {
+  requireChildKeyAuth,
+  type ChildKeyAuthVariables,
+} from "./child-keys/index.js";
 import { proxyToOpenai } from "./proxy-openai.js";
 import {
   anthropicCompatibleProviders,
@@ -8,7 +12,7 @@ import {
 } from "./providers.js";
 import { proxyToAnthropic } from "./proxy-anthropic.js";
 
-const app = new Hono();
+const app = new Hono<{ Variables: ChildKeyAuthVariables }>();
 
 app.use("*", logger());
 
@@ -16,7 +20,8 @@ app.get("/", (c) => {
   return c.json({
     name: "llm-gateway",
     status: "ok",
-    docs: "POST /openai/* or /anthropic/* with model set to provider/model",
+    docs: "POST /openai/* or /anthropic/* with Authorization: Bearer sk_<child_api_key> and model set to provider/model",
+    auth: "Bearer plain child API key required (sk_… from portal create/reveal; not the encrypted DB value)",
     "openai-compatible": Object.fromEntries(
       Object.entries(openaiCompatibleProviders).map(([id, p]) => [
         id,
@@ -41,6 +46,10 @@ app.get("/", (c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
+
+// Proxy routes require a valid child API key.
+app.use("/openai/*", requireChildKeyAuth);
+app.use("/anthropic/*", requireChildKeyAuth);
 app.post("/openai/*", proxyToOpenai);
 app.post("/anthropic/*", proxyToAnthropic);
 

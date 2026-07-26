@@ -111,6 +111,12 @@ export async function buildChildKeyCreateData(
   const tags = input.tags ?? {};
   const issuedAt = unixTimestampSeconds();
 
+  const expiresAtDate = input.expiresAt ? new Date(input.expiresAt) : null;
+  const exp =
+    expiresAtDate && !Number.isNaN(expiresAtDate.getTime())
+      ? Math.floor(expiresAtDate.getTime() / 1000)
+      : undefined;
+
   const apiKey = await signChildKeyToken({
     key_id: id,
     name: input.name,
@@ -119,6 +125,7 @@ export async function buildChildKeyCreateData(
     user_email: input.userEmail,
     creator_email: creator.email,
     issued_at: issuedAt,
+    exp,
   });
 
   const data: Prisma.ChildKeyCreateInput = {
@@ -129,7 +136,7 @@ export async function buildChildKeyCreateData(
     userEmail: input.userEmail,
     tags,
     isActive: true,
-    expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+    expiresAt: expiresAtDate,
     issuedAt,
     creator: {
       connect: { id: creator.id },

@@ -1,9 +1,6 @@
-import { decodeJwt, jwtVerify, SignJWT, type JWTPayload } from "jose";
+import { decodeJwt, jwtVerify, type JWTPayload } from "jose";
 
-import {
-  normalizeChildKeyTags,
-  type ChildKeyJwtPayload,
-} from "@/lib/child-key/schema";
+import type { ChildKeyJwtPayload, ChildKeyTags } from "./types.js";
 
 export const CHILD_KEY_PREFIX = "sk_";
 
@@ -12,7 +9,7 @@ function getJwtSigningSecret(): Uint8Array {
 
   if (!secret) {
     throw new Error(
-      "JWT_SIGNING_SECRET is not configured. Add it to the environment before managing child API keys.",
+      "JWT_SIGNING_SECRET is not configured. Add it to the environment before verifying child API keys.",
     );
   }
 
@@ -33,8 +30,25 @@ export function withChildKeyPrefix(jwt: string): string {
   return `${CHILD_KEY_PREFIX}${jwt}`;
 }
 
-export function unixTimestampSeconds(date: Date = new Date()): number {
-  return Math.floor(date.getTime() / 1000);
+function normalizeTags(value: unknown): ChildKeyTags {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const tags: ChildKeyTags = {};
+  for (const [rawKey, rawValue] of Object.entries(
+    value as Record<string, unknown>,
+  )) {
+    const key = rawKey.trim();
+    if (!key || typeof rawValue !== "string") {
+      continue;
+    }
+    const trimmed = rawValue.trim();
+    if (trimmed) {
+      tags[key] = trimmed;
+    }
+  }
+  return tags;
 }
 
 function parseIssuedAt(payload: JWTPayload): number {
@@ -45,7 +59,6 @@ function parseIssuedAt(payload: JWTPayload): number {
     return Math.trunc(payload.issued_at);
   }
 
-  // Legacy tokens may only have standard JWT `iat`.
   if (typeof payload.iat === "number" && Number.isFinite(payload.iat)) {
     return Math.trunc(payload.iat);
   }
@@ -82,7 +95,7 @@ export function parseChildKeyJwtPayload(
       typeof payload.policy_id === "string" && payload.policy_id.length > 0
         ? payload.policy_id
         : undefined,
-    tags: normalizeChildKeyTags(payload.tags),
+    tags: normalizeTags(payload.tags),
     user_email: payload.user_email,
     creator_email: payload.creator_email,
     issued_at: parseIssuedAt(payload),
@@ -93,44 +106,10 @@ export function parseChildKeyJwtPayload(
   };
 }
 
-/** Sign a child-key JWT and return `sk_<jwt>`. */
-export async function signChildKeyToken(
-  payload: ChildKeyJwtPayload,
-): Promise<string> {
-  const issuedAt = Math.trunc(payload.issued_at);
-
-  const claims: Record<string, unknown> = {
-    key_id: payload.key_id,
-    name: payload.name,
-    tags: payload.tags ?? {},
-    user_email: payload.user_email,
-    creator_email: payload.creator_email,
-    issued_at: issuedAt,
-  };
-
-  if (payload.policy_id) {
-    claims.policy_id = payload.policy_id;
-  }
-
-  let signer = new SignJWT(claims)
-    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setSubject(payload.key_id)
-    .setIssuedAt(issuedAt);
-
-  if (
-    typeof payload.exp === "number" &&
-    Number.isFinite(payload.exp) &&
-    payload.exp > issuedAt
-  ) {
-    signer = signer.setExpirationTime(Math.trunc(payload.exp));
-  }
-
-  const jwt = await signer.sign(getJwtSigningSecret());
-
-  return withChildKeyPrefix(jwt);
-}
-
-/** Verify signature with JWT_SIGNING_SECRET and return the typed payload. */
+/**
+ * Verify signature with JWT_SIGNING_SECRET and return typed claims.
+ * Rejects expired tokens when the JWT includes a standard `exp` claim.
+ */
 export async function verifyChildKeyToken(
   token: string,
 ): Promise<ChildKeyJwtPayload> {
@@ -141,10 +120,7 @@ export async function verifyChildKeyToken(
   return parseChildKeyJwtPayload(payload);
 }
 
-/**
- * Decode the JWT payload without verifying the signature.
- * Prefer `verifyChildKeyToken` when authenticity matters.
- */
+/** Decode JWT claims without verifying the signature (tests / debugging). */
 export function decodeChildKeyToken(token: string): ChildKeyJwtPayload {
   const jwt = stripChildKeyPrefix(token);
   return parseChildKeyJwtPayload(decodeJwt(jwt));

@@ -160,6 +160,8 @@ export type ChildKeyJwtPayload = {
   creator_email: string;
   /** Unix timestamp (seconds). Changes on each key rotation. */
   issued_at: number;
+  /** Optional absolute expiry (Unix seconds). Embedded as JWT `exp`. */
+  exp?: number;
 };
 
 export type ChildKeyListItem = {
