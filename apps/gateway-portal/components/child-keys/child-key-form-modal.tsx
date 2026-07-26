@@ -16,6 +16,8 @@ type TagRow = {
 type FormValues = {
   name: string;
   userEmail: string;
+  /** Date-only value from the picker (`YYYY-MM-DD`), optional. */
+  expiresAt: string;
 };
 
 type FormSubmitEvent = Parameters<
@@ -55,7 +57,26 @@ function emptyValues(defaultUserEmail: string): FormValues {
   return {
     name: "",
     userEmail: defaultUserEmail,
+    expiresAt: "",
   };
+}
+
+/** Earliest selectable day (today) for the date picker. */
+function minExpirationDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Convert a date-only picker value to an ISO timestamp at end of local day
+ * so the key remains valid through the selected calendar day.
+ */
+function expirationDateToIso(dateOnly: string): string {
+  const endOfLocalDay = new Date(`${dateOnly}T23:59:59.999`);
+  return endOfLocalDay.toISOString();
 }
 
 function emptyTagRows(): TagRow[] {
@@ -125,10 +146,16 @@ export function ChildKeyFormModal({
       tags[key] = value;
     }
 
+    const expiresAt =
+      values.expiresAt.trim().length > 0
+        ? expirationDateToIso(values.expiresAt.trim())
+        : undefined;
+
     const parsed = createChildKeyInputSchema.safeParse({
       name: values.name,
       userEmail: values.userEmail,
       tags,
+      expiresAt,
     });
 
     if (!parsed.success) {
@@ -224,6 +251,42 @@ export function ChildKeyFormModal({
                 <span className="font-mono">user_email</span>.
               </p>
               <FieldError errors={fieldErrors.userEmail} />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label
+                  htmlFor="child-key-expires-at"
+                  className={fieldLabelClassName}
+                >
+                  Expiration date
+                </label>
+                {values.expiresAt ? (
+                  <button
+                    type="button"
+                    className="text-xs font-medium text-text-secondary transition-colors hover:text-text-primary"
+                    onClick={() => updateValue("expiresAt", "")}
+                    disabled={isSubmitting}
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              <input
+                id="child-key-expires-at"
+                type="date"
+                value={values.expiresAt}
+                min={minExpirationDate()}
+                onChange={(event) =>
+                  updateValue("expiresAt", event.target.value)
+                }
+                className={`${inputClassName} [color-scheme:dark]`}
+              />
+              <p className="text-xs text-text-tertiary">
+                Optional. Leave empty for a key that does not expire. Valid
+                through the end of the selected day.
+              </p>
+              <FieldError errors={fieldErrors.expiresAt} />
             </div>
 
             <div className="space-y-3">

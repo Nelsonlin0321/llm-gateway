@@ -136,6 +136,10 @@ export const createChildKeyInputSchema = z.object({
     .refine(
       (value) => value === undefined || !Number.isNaN(Date.parse(value)),
       "Enter a valid expiration date.",
+    )
+    .refine(
+      (value) => value === undefined || Date.parse(value) > Date.now(),
+      "Expiration must be in the future.",
     ),
 });
 

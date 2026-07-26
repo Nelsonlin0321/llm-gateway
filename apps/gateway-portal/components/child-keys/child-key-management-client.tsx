@@ -271,6 +271,9 @@ export function ChildKeyManagementClient({
                       <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                         Created {formatDate(key.createdAt)} · Updated{" "}
                         {formatDate(key.updatedAt)}
+                        {key.expiresAt
+                          ? ` · Expires ${formatDate(key.expiresAt)}`
+                          : " · No expiration"}
                       </p>
                     </div>
 
