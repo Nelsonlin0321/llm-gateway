@@ -4,14 +4,6 @@ export const compatibilityTypes = ["openai", "anthropic"] as const;
 
 export const providerNamePattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-const priceSchema = z.preprocess((value) => {
-  if (value === "" || value === null || value === undefined) {
-    return undefined;
-  }
-
-  return value;
-}, z.coerce.number().finite().min(0, "Price cannot be negative.").optional());
-
 const apiUrlSchema = z
   .string()
   .trim()
@@ -36,9 +28,6 @@ const baseProviderSchema = z.object({
   compatibilityType: z.enum(compatibilityTypes, {
     error: "Choose a supported compatibility type.",
   }),
-  inputPrice: priceSchema,
-  inputCachePrice: priceSchema,
-  outputPrice: priceSchema,
   isActive: z.coerce.boolean().default(true),
 });
 

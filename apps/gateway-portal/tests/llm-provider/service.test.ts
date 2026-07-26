@@ -17,9 +17,6 @@ test("buildProviderCreateData encrypts the API key before persistence", () => {
       apiUrl: "https://api.openai.com/v1",
       apiKey: "provider-secret",
       compatibilityType: "openai",
-      inputPrice: 1,
-      inputCachePrice: 0.5,
-      outputPrice: 2,
       isActive: true,
     },
     "user-1",
@@ -28,10 +25,7 @@ test("buildProviderCreateData encrypts the API key before persistence", () => {
   assert.equal(data.creatorId, "user-1");
   assert.equal(data.name, "openai");
   assert.notEqual(data.encryptedApiKey, "provider-secret");
-  assert.equal(
-    decryptApiKeyForProxy(data.encryptedApiKey),
-    "provider-secret",
-  );
+  assert.equal(decryptApiKeyForProxy(data.encryptedApiKey), "provider-secret");
 });
 
 test("buildProviderUpdateData preserves the encrypted API key when no new key is supplied", () => {
@@ -43,9 +37,6 @@ test("buildProviderUpdateData preserves the encrypted API key when no new key is
       apiUrl: "https://api.openai.com/v1",
       apiKey: "existing-secret",
       compatibilityType: "openai",
-      inputPrice: undefined,
-      inputCachePrice: undefined,
-      outputPrice: undefined,
       isActive: true,
     },
     "user-1",
@@ -56,16 +47,12 @@ test("buildProviderUpdateData preserves the encrypted API key when no new key is
     name: "openai",
     apiUrl: "https://api.openai.com/v1",
     compatibilityType: "openai",
-    inputPrice: 3,
-    inputCachePrice: 1,
-    outputPrice: 4,
     isActive: false,
     apiKey: undefined,
   });
 
   assert.equal(data.encryptedApiKey, existingEncryptedKey);
   assert.equal(data.isActive, false);
-  assert.equal(data.outputPrice, 4);
 });
 
 test("buildProvidersWhereClause defaults to active providers only", () => {
