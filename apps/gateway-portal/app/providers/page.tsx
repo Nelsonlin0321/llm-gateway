@@ -13,8 +13,8 @@ import {
 import { requireSession } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
-import { ProviderManagementSkeleton } from "@/components/providers/provider-management-skeleton";
-import { ProvidersManagementSection } from "@/components/providers/providers-management-section";
+import { ProviderManagementSkeleton } from "@/components/llm-providers/provider-management-skeleton";
+import { ProvidersManagementSection } from "@/components/llm-providers/providers-management-section";
 
 export default async function ProvidersPage() {
   const session = await requireSession();

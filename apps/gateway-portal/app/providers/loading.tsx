@@ -1,4 +1,4 @@
-import { ProviderManagementSkeleton } from "@/components/providers/provider-management-skeleton";
+import { ProviderManagementSkeleton } from "@/components/llm-providers/provider-management-skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 

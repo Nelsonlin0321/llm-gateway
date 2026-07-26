@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 import { createProvider } from "@/app/server-actions/llm-provider/create-provider";
 import { deleteProvider } from "@/app/server-actions/llm-provider/delete-provider";
 import { updateProvider } from "@/app/server-actions/llm-provider/update-provider";
-import { ProviderFormModal } from "@/components/providers/provider-form-modal";
+import { ProviderFormModal } from "@/components/llm-providers/provider-form-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
