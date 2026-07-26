@@ -12,7 +12,9 @@ import {
   type ProviderActionResult,
 } from "./shared";
 
-export async function deleteProvider(id: string): Promise<ProviderActionResult> {
+export async function deleteProvider(
+  id: string,
+): Promise<ProviderActionResult> {
   const session = await requireSession();
 
   if (!id.trim()) {
@@ -32,11 +34,8 @@ export async function deleteProvider(id: string): Promise<ProviderActionResult> 
   }
 
   try {
-    const provider = await prisma.lLMProvider.update({
+    const provider = await prisma.lLMProvider.delete({
       where: { id },
-      data: {
-        isActive: false,
-      },
       select: providerSelect,
     });
 

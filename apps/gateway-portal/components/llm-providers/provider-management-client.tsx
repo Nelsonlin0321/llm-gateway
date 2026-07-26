@@ -9,6 +9,15 @@ import { createProvider } from "@/app/server-actions/llm-provider/create-provide
 import { deleteProvider } from "@/app/server-actions/llm-provider/delete-provider";
 import { updateProvider } from "@/app/server-actions/llm-provider/update-provider";
 import { ProviderFormModal } from "@/components/llm-providers/provider-form-modal";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -46,6 +55,8 @@ export function ProviderManagementClient({
 }: ProviderManagementClientProps) {
   const router = useRouter();
   const [modalState, setModalState] = useState<ModalState>(null);
+  const [providerPendingDelete, setProviderPendingDelete] =
+    useState<ProviderListItem | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -107,17 +118,13 @@ export function ProviderManagementClient({
     });
   };
 
-  const handleDelete = async (provider: ProviderListItem) => {
-    const confirmed = window.confirm(
-      `Delete ${provider.name}? This is a soft delete and the provider will be marked inactive.`,
-    );
-
-    if (!confirmed) {
+  const handleDelete = async () => {
+    if (!providerPendingDelete) {
       return;
     }
 
-    setDeletingId(provider.id);
-    const result = await deleteProvider(provider.id);
+    setDeletingId(providerPendingDelete.id);
+    const result = await deleteProvider(providerPendingDelete.id);
     setDeletingId(null);
 
     if (!result.ok) {
@@ -126,6 +133,7 @@ export function ProviderManagementClient({
     }
 
     toast.success(result.message);
+    setProviderPendingDelete(null);
     router.refresh();
   };
 
@@ -145,7 +153,7 @@ export function ProviderManagementClient({
         <MetricCard
           label="Inactive"
           value={stats.inactive.toString()}
-          detail="Disabled or soft deleted"
+          detail="Disabled providers"
         />
         <MetricCard
           label="OpenAI"
@@ -236,7 +244,7 @@ export function ProviderManagementClient({
                       variant="destructive"
                       size="sm"
                       disabled={deletingId === provider.id}
-                      onClick={() => handleDelete(provider)}
+                      onClick={() => setProviderPendingDelete(provider)}
                     >
                       <Trash2 className="size-4" />
                       {deletingId === provider.id ? "Deleting..." : "Delete"}
@@ -277,6 +285,40 @@ export function ProviderManagementClient({
           );
         }}
       />
+
+      <AlertDialog
+        open={providerPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) {
+            setProviderPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {providerPendingDelete?.name ?? "provider"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes the provider record and removes it from
+              routing. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleDelete()}
+              disabled={providerPendingDelete === null || deletingId !== null}
+            >
+              {deletingId !== null ? "Deleting..." : "Delete provider"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
