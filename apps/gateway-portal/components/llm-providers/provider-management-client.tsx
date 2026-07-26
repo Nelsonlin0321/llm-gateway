@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { PencilLine, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Boxes, PencilLine, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -19,7 +20,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ import {
   type ProviderListItem,
   updateProviderInputSchema,
 } from "@/lib/llm-provider/schema";
+import { cn } from "@/lib/utils";
 
 type ProviderManagementClientProps = {
   providers: ProviderListItem[];
@@ -229,7 +231,16 @@ export function ProviderManagementClient({
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-2 self-start lg:self-center">
+                  <div className="flex shrink-0 flex-wrap items-center gap-2 self-start lg:self-center">
+                    <Link
+                      href={`/workspace/${provider.id}/models`}
+                      className={cn(
+                        buttonVariants({ variant: "secondary", size: "sm" }),
+                      )}
+                    >
+                      <Boxes className="size-4" />
+                      Models
+                    </Link>
                     <Button
                       type="button"
                       variant="secondary"

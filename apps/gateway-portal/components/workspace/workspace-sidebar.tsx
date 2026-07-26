@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  Boxes,
   ChevronRight,
   CreditCard,
   KeyRound,
@@ -30,6 +31,13 @@ const workspaceNavigation = [
     href: "/workspace/providers",
     icon: PlugZap,
     match: (pathname: string) => pathname.startsWith("/workspace/providers"),
+  },
+  {
+    label: "Models",
+    href: "/workspace/providers",
+    icon: Boxes,
+    match: (pathname: string) =>
+      /^\/workspace\/[^/]+\/models(?:\/|$)/.test(pathname),
   },
   {
     label: "Analytics",
