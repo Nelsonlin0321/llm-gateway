@@ -1,12 +1,24 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Plus } from "lucide-react";
+import { PencilLine, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import type { z } from "zod";
 
 import { createModel } from "@/app/server-actions/model/create-model";
+import { deleteModel } from "@/app/server-actions/model/delete-model";
+import { updateModel } from "@/app/server-actions/model/update-model";
 import { ModelFormModal } from "@/components/models/model-form-modal";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,17 +28,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type {
-  ModelListItem,
-  ProviderSummary,
+import {
+  createModelInputSchema,
+  updateModelInputSchema,
+  type ModelListItem,
+  type ProviderSummary,
 } from "@/lib/model/schema";
-import { createModelInputSchema } from "@/lib/model/schema";
-import type { z } from "zod";
 
 type ModelManagementClientProps = {
   provider: ProviderSummary;
   models: ModelListItem[];
 };
+
+type ModalState =
+  | { mode: "create" }
+  | { mode: "edit"; model: ModelListItem }
+  | null;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -52,8 +69,11 @@ export function ModelManagementClient({
   models,
 }: ModelManagementClientProps) {
   const router = useRouter();
-  const [modalOpen, setModalOpen] = useState(false);
+  const [modalState, setModalState] = useState<ModalState>(null);
+  const [modelPendingDelete, setModelPendingDelete] =
+    useState<ModelListItem | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     const avgInput =
@@ -86,9 +106,49 @@ export function ModelManagementClient({
       }
 
       toast.success(result.message);
-      setModalOpen(false);
+      setModalState(null);
       router.refresh();
     });
+  };
+
+  const handleUpdate = async (
+    model: ModelListItem,
+    values: Omit<z.infer<typeof updateModelInputSchema>, "id">,
+  ) => {
+    startSubmitting(async () => {
+      const result = await updateModel({
+        id: model.id,
+        ...values,
+      });
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.message);
+      setModalState(null);
+      router.refresh();
+    });
+  };
+
+  const handleDelete = async () => {
+    if (!modelPendingDelete) {
+      return;
+    }
+
+    setDeletingId(modelPendingDelete.id);
+    const result = await deleteModel(modelPendingDelete.id);
+    setDeletingId(null);
+
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(result.message);
+    setModelPendingDelete(null);
+    router.refresh();
   };
 
   return (
@@ -120,7 +180,7 @@ export function ModelManagementClient({
               spend and routing stay accurate.
             </CardDescription>
           </div>
-          <Button onClick={() => setModalOpen(true)}>
+          <Button onClick={() => setModalState({ mode: "create" })}>
             <Plus className="size-4" />
             Add model
           </Button>
@@ -172,6 +232,28 @@ export function ModelManagementClient({
                       Updated {formatDate(model.updatedAt)}
                     </p>
                   </div>
+
+                  <div className="flex shrink-0 flex-wrap items-center gap-2 self-start lg:self-center">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setModalState({ mode: "edit", model })}
+                    >
+                      <PencilLine className="size-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={deletingId === model.id}
+                      onClick={() => setModelPendingDelete(model)}
+                    >
+                      <Trash2 className="size-4" />
+                      {deletingId === model.id ? "Deregistering..." : "Deregister"}
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -180,17 +262,75 @@ export function ModelManagementClient({
       </Card>
 
       <ModelFormModal
-        open={modalOpen}
+        key={
+          modalState?.mode === "edit"
+            ? `edit-${modalState.model.id}`
+            : modalState?.mode === "create"
+              ? "create"
+              : "closed"
+        }
+        open={modalState !== null}
+        mode={modalState?.mode ?? "create"}
         providerId={provider.id}
         providerName={provider.name}
+        model={modalState?.mode === "edit" ? modalState.model : undefined}
         isSubmitting={isSubmitting}
         onClose={() => {
           if (!isSubmitting) {
-            setModalOpen(false);
+            setModalState(null);
           }
         }}
-        onSubmit={handleCreate}
+        onSubmit={async (values) => {
+          if (modalState?.mode === "edit") {
+            return handleUpdate(
+              modalState.model,
+              values as Omit<z.infer<typeof updateModelInputSchema>, "id">,
+            );
+          }
+
+          return handleCreate(
+            values as z.infer<typeof createModelInputSchema>,
+          );
+        }}
       />
+
+      <AlertDialog
+        open={modelPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) {
+            setModelPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Deregister {modelPendingDelete?.name ?? "model"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes{" "}
+              <span className="font-mono text-text-primary">
+                {modelPendingDelete?.alias ?? "this model"}
+              </span>{" "}
+              and its pricing metadata from this provider. Routing that depends
+              on this alias will stop working. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleDelete()}
+              disabled={modelPendingDelete === null || deletingId !== null}
+            >
+              {deletingId !== null ? "Deregistering..." : "Deregister model"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

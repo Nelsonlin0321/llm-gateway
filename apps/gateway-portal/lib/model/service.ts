@@ -5,8 +5,10 @@ import {
   buildModelAlias,
   createModelInputSchema,
   getModelsInputSchema,
+  updateModelInputSchema,
   type CreateModelInput,
   type ModelListItem,
+  type UpdateModelInput,
 } from "@/lib/model/schema";
 
 type ModelRecord = Pick<
@@ -26,6 +28,10 @@ export function validateCreateModelInput(input: unknown) {
   return createModelInputSchema.safeParse(input);
 }
 
+export function validateUpdateModelInput(input: unknown) {
+  return updateModelInputSchema.safeParse(input);
+}
+
 export function validateGetModelsInput(input: unknown) {
   return getModelsInputSchema.safeParse(input);
 }
@@ -42,6 +48,19 @@ export function buildModelCreateData(
     outputPrice: input.outputPrice,
     inputCachePrice: input.inputCachePrice,
     providerId: input.providerId,
+  };
+}
+
+export function buildModelUpdateData(
+  input: UpdateModelInput,
+  providerName: string,
+) {
+  return {
+    name: input.name,
+    alias: buildModelAlias(providerName, input.alias),
+    inputPrice: input.inputPrice,
+    outputPrice: input.outputPrice,
+    inputCachePrice: input.inputCachePrice,
   };
 }
 

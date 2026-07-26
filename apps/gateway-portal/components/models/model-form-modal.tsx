@@ -5,7 +5,14 @@ import { X } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { createModelInputSchema } from "@/lib/model/schema";
+import {
+  createModelInputSchema,
+  parseModelAliasSuffix,
+  updateModelInputSchema,
+  type ModelListItem,
+} from "@/lib/model/schema";
+
+type ModelFormMode = "create" | "edit";
 
 type ModelFormValues = {
   name: string;
@@ -20,13 +27,17 @@ type FormSubmitEvent = Parameters<
 >[0];
 
 type ModelFormModalProps = {
+  mode: ModelFormMode;
   open: boolean;
   providerId: string;
   providerName: string;
+  model?: ModelListItem;
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (
-    values: z.infer<typeof createModelInputSchema>,
+    values:
+      | z.infer<typeof createModelInputSchema>
+      | z.infer<typeof updateModelInputSchema>,
   ) => Promise<void>;
 };
 
@@ -36,30 +47,52 @@ const inputClassName =
 const fieldLabelClassName =
   "text-sm font-medium tracking-[-0.01em] text-text-primary";
 
-const emptyValues: ModelFormValues = {
-  name: "",
-  alias: "",
-  inputPrice: "",
-  outputPrice: "",
-  inputCachePrice: "",
-};
+function getInitialValues(
+  providerName: string,
+  model?: ModelListItem,
+): ModelFormValues {
+  if (!model) {
+    return {
+      name: "",
+      alias: "",
+      inputPrice: "",
+      outputPrice: "",
+      inputCachePrice: "",
+    };
+  }
+
+  return {
+    name: model.name,
+    alias: parseModelAliasSuffix(providerName, model.alias),
+    inputPrice: String(model.inputPrice),
+    outputPrice: String(model.outputPrice),
+    inputCachePrice: String(model.inputCachePrice),
+  };
+}
 
 export function ModelFormModal({
+  mode,
   open,
   providerId,
   providerName,
+  model,
   isSubmitting,
   onClose,
   onSubmit,
 }: ModelFormModalProps) {
-  const [values, setValues] = useState<ModelFormValues>(emptyValues);
+  const [values, setValues] = useState<ModelFormValues>(() =>
+    getInitialValues(providerName, model),
+  );
   const [fieldErrors, setFieldErrors] = useState<
     Record<string, string[] | undefined>
   >({});
 
   const title = useMemo(
-    () => `Register model · ${providerName}`,
-    [providerName],
+    () =>
+      mode === "create"
+        ? `Register model · ${providerName}`
+        : `Edit ${model?.name ?? "model"} · ${providerName}`,
+    [mode, model?.name, providerName],
   );
 
   if (!open) {
@@ -80,15 +113,24 @@ export function ModelFormModal({
     event.preventDefault();
 
     const aliasSuffix = values.alias.trim() || values.name.trim();
-
-    const parsed = createModelInputSchema.safeParse({
-      providerId,
+    const fields = {
       name: values.name,
       alias: aliasSuffix,
       inputPrice: values.inputPrice,
       outputPrice: values.outputPrice,
       inputCachePrice: values.inputCachePrice,
-    });
+    };
+
+    const parsed =
+      mode === "create"
+        ? createModelInputSchema.safeParse({
+            providerId,
+            ...fields,
+          })
+        : updateModelInputSchema.safeParse({
+            id: model?.id,
+            ...fields,
+          });
 
     if (!parsed.success) {
       setFieldErrors(z.flattenError(parsed.error as z.ZodError).fieldErrors);
@@ -97,11 +139,14 @@ export function ModelFormModal({
 
     setFieldErrors({});
     await onSubmit(parsed.data);
-    setValues(emptyValues);
+
+    if (mode === "create") {
+      setValues(getInitialValues(providerName));
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--or-ink)_72%,transparent)] p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--or-ink)_72%,transparent)] p-4">
       <div
         role="dialog"
         aria-modal="true"
@@ -202,7 +247,10 @@ export function ModelFormModal({
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="model-input-price" className={fieldLabelClassName}>
+              <label
+                htmlFor="model-input-price"
+                className={fieldLabelClassName}
+              >
                 Input price / 1M tokens
               </label>
               <input
@@ -285,7 +333,13 @@ export function ModelFormModal({
               className="w-full sm:w-auto"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Registering..." : "Register model"}
+              {isSubmitting
+                ? mode === "create"
+                  ? "Registering..."
+                  : "Saving..."
+                : mode === "create"
+                  ? "Register model"
+                  : "Save changes"}
             </Button>
           </div>
         </form>

@@ -5,11 +5,15 @@ import {
   buildModelAlias,
   createModelInputSchema,
   getModelsInputSchema,
+  parseModelAliasSuffix,
+  updateModelInputSchema,
 } from "@/lib/model/schema";
 import {
   buildModelCreateData,
+  buildModelUpdateData,
   validateCreateModelInput,
   validateGetModelsInput,
+  validateUpdateModelInput,
 } from "@/lib/model/service";
 
 test("createModelInputSchema requires positive prices and non-empty names", () => {
@@ -122,4 +126,49 @@ test("getModelsInputSchema requires providerId", () => {
     validateGetModelsInput({ providerId: "provider-1" }).success,
     true,
   );
+});
+
+test("updateModelInputSchema requires id and positive prices", () => {
+  const valid = validateUpdateModelInput({
+    id: "model-1",
+    name: "gpt-4.1",
+    alias: "gpt-4.1-mini",
+    inputPrice: 1.5,
+    outputPrice: 6,
+    inputCachePrice: 0.75,
+  });
+  assert.equal(valid.success, true);
+
+  const missingId = updateModelInputSchema.safeParse({
+    name: "gpt-4.1",
+    alias: "gpt-4.1",
+    inputPrice: 1,
+    outputPrice: 1,
+    inputCachePrice: 1,
+  });
+  assert.equal(missingId.success, false);
+});
+
+test("buildModelUpdateData and parseModelAliasSuffix keep provider prefix correct", () => {
+  assert.equal(
+    parseModelAliasSuffix("minimax", "minimax/gpt-4.1"),
+    "gpt-4.1",
+  );
+  assert.equal(parseModelAliasSuffix("minimax", "legacy"), "legacy");
+
+  const data = buildModelUpdateData(
+    {
+      id: "model-1",
+      name: "gpt-4.1",
+      alias: "gpt-4.1-mini",
+      inputPrice: 1.5,
+      outputPrice: 6,
+      inputCachePrice: 0.75,
+    },
+    "minimax",
+  );
+
+  assert.equal(data.alias, "minimax/gpt-4.1-mini");
+  assert.equal(data.name, "gpt-4.1");
+  assert.equal(data.inputPrice, 1.5);
 });
