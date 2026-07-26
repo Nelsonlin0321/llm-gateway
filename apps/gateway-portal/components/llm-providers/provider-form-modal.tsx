@@ -242,36 +242,6 @@ export function ProviderFormModal({
                 Active provider
               </label>
             </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="provider-input-price"
-                className={fieldLabelClassName}
-              >
-                Input price / 1M tokens
-              </label>
-              <FieldError errors={fieldErrors.inputPrice} />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="provider-cache-price"
-                className={fieldLabelClassName}
-              >
-                Input cache price / 1M tokens
-              </label>
-              <FieldError errors={fieldErrors.inputCachePrice} />
-            </div>
-
-            <div className="space-y-2 sm:col-span-2">
-              <label
-                htmlFor="provider-output-price"
-                className={fieldLabelClassName}
-              >
-                Output price / 1M tokens
-              </label>
-              <FieldError errors={fieldErrors.outputPrice} />
-            </div>
           </div>
 
           <div className="flex flex-col-reverse gap-2.5 border-t border-border pt-4 sm:flex-row sm:justify-end">

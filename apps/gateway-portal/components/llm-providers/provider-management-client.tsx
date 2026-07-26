@@ -1,14 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import {
-  CheckCircle2,
-  KeyRound,
-  PencilLine,
-  Plus,
-  Power,
-  Trash2,
-} from "lucide-react";
+import { PencilLine, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -37,14 +30,6 @@ type ProviderManagementClientProps = {
 
 type ModalState =
   { mode: "create" } | { mode: "edit"; provider: ProviderListItem } | null;
-
-function formatPrice(value: number | null) {
-  if (value === null) {
-    return "Not set";
-  }
-
-  return `$${value.toFixed(4)}`;
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -203,85 +188,61 @@ export function ProviderManagementClient({
               </p>
             </div>
           ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
-              {providers.map((provider) => (
-                <Card
+            <div className="overflow-hidden rounded-[22px] border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background">
+              {providers.map((provider, index) => (
+                <div
                   key={provider.id}
-                  className="border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background shadow-none"
+                  className={[
+                    "flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between",
+                    index > 0
+                      ? "border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
+                      : "",
+                  ].join(" ")}
                 >
-                  <CardHeader className="gap-3">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <CardTitle className="text-[1.15rem]">
-                            {provider.name}
-                          </CardTitle>
-                          <Badge
-                            variant={provider.isActive ? "success" : "warning"}
-                          >
-                            {provider.isActive ? "Active" : "Inactive"}
-                          </Badge>
-                          <Badge
-                            variant="neutral"
-                            className="font-mono uppercase"
-                          >
-                            {provider.compatibilityType}
-                          </Badge>
-                        </div>
-                        <CardDescription className="break-all font-mono text-[12px] leading-5">
-                          {provider.apiUrl}
-                        </CardDescription>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() =>
-                            setModalState({ mode: "edit", provider })
-                          }
-                        >
-                          <PencilLine className="size-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          disabled={deletingId === provider.id}
-                          onClick={() => handleDelete(provider)}
-                        >
-                          <Trash2 className="size-4" />
-                          {deletingId === provider.id
-                            ? "Deleting..."
-                            : "Delete"}
-                        </Button>
-                      </div>
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CardTitle className="text-[1.05rem]">
+                        {provider.name}
+                      </CardTitle>
+                      <Badge
+                        variant={provider.isActive ? "success" : "warning"}
+                      >
+                        {provider.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                      <Badge variant="neutral" className="font-mono uppercase">
+                        {provider.compatibilityType}
+                      </Badge>
                     </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-3">
-                    <div className="grid gap-2.5 sm:grid-cols-2">
-                      <InfoChip
-                        icon={KeyRound}
-                        label="Stored key"
-                        value={
-                          provider.hasStoredApiKey ? "Encrypted" : "Missing"
-                        }
-                      />
-                      <InfoChip
-                        icon={Power}
-                        label="Routing status"
-                        value={provider.isActive ? "Enabled" : "Disabled"}
-                      />
-                    </div>
-
+                    <CardDescription className="break-all font-mono text-[12px] leading-5">
+                      {provider.apiUrl}
+                    </CardDescription>
                     <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                       Last updated {formatDate(provider.updatedAt)}
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2 self-start lg:self-center">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setModalState({ mode: "edit", provider })}
+                    >
+                      <PencilLine className="size-4" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={deletingId === provider.id}
+                      onClick={() => handleDelete(provider)}
+                    >
+                      <Trash2 className="size-4" />
+                      {deletingId === provider.id ? "Deleting..." : "Delete"}
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -341,25 +302,5 @@ function MetricCard({
         <p className="text-sm leading-5 text-text-secondary">{detail}</p>
       </CardContent>
     </Card>
-  );
-}
-
-function InfoChip({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: typeof CheckCircle2;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-[16px] border border-border bg-surface-1 px-3.5 py-3">
-      <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.08em] text-text-tertiary uppercase">
-        <Icon className="size-4" />
-        {label}
-      </div>
-      <p className="mt-2 text-sm font-medium text-text-primary">{value}</p>
-    </div>
   );
 }
