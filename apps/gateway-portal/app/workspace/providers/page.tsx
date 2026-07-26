@@ -10,17 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireSession } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
 import { ProviderManagementSkeleton } from "@/components/llm-providers/provider-management-skeleton";
 import { ProvidersManagementSection } from "@/components/llm-providers/providers-management-section";
 
-export default async function ProvidersPage() {
-  const session = await requireSession();
-
+export default function ProvidersPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-8xl flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
+    <section className="flex flex-col gap-5">
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)]">
         <Card className="overflow-hidden border-border bg-surface-1">
           <CardHeader className="gap-4">
@@ -30,7 +27,7 @@ export default async function ProvidersPage() {
                 Encrypted provider vault
               </Badge>
               <Badge variant="neutral" className="font-mono">
-                /providers
+                /workspace/providers
               </Badge>
             </div>
             <div className="space-y-3">
@@ -47,19 +44,19 @@ export default async function ProvidersPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-2.5 sm:flex-row">
             <Link
-              href="/dashboard"
+              href="/workspace"
               className={cn(
                 buttonVariants({ variant: "secondary", size: "default" }),
                 "px-4",
               )}
             >
               <ArrowLeft className="size-4" />
-              Back to dashboard
+              Back to workspace
             </Link>
             <div className="rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-text-secondary">
-              Signed in as{" "}
+              Editing settings for{" "}
               <span className="font-medium text-text-primary">
-                {session.user.name || session.user.email}
+                Default Workspace
               </span>
             </div>
           </CardContent>
@@ -98,7 +95,7 @@ export default async function ProvidersPage() {
       <Suspense fallback={<ProviderManagementSkeleton />}>
         <ProvidersManagementSection />
       </Suspense>
-    </main>
+    </section>
   );
 }
 

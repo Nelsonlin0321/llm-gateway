@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <main className="mx-auto flex min-h-screen w-full flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="flex flex-col gap-6">
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
         <Card className="overflow-hidden border-border bg-surface-1">
           <CardHeader className="gap-5">
@@ -52,6 +52,6 @@ export default function Loading() {
       </section>
 
       <ProviderManagementSkeleton />
-    </main>
+    </div>
   );
 }

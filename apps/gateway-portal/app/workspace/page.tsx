@@ -3,13 +3,10 @@ import Link from "next/link";
 import {
   BarChart3,
   ChevronRight,
-  CreditCard,
   KeyRound,
-  LayoutGrid,
   PlugZap,
   ShieldCheck,
   Sparkles,
-  UserRound,
   Wallet,
   Waypoints,
 } from "lucide-react";
@@ -23,55 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireSession } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
-
-const workspaceNavigation = [
-  {
-    label: "Overview",
-    href: "/workspace",
-    icon: LayoutGrid,
-    active: true,
-  },
-  {
-    label: "Providers",
-    href: "/workspace/providers",
-    icon: PlugZap,
-  },
-  {
-    label: "Analytics",
-    href: "#analytics",
-    icon: BarChart3,
-  },
-  {
-    label: "Guardrails",
-    href: "#guardrails",
-    icon: ShieldCheck,
-  },
-  {
-    label: "Child Keys",
-    href: "#child-keys",
-    icon: KeyRound,
-  },
-  {
-    label: "Routing",
-    href: "#routing",
-    icon: Waypoints,
-  },
-] as const;
-
-const accountNavigation = [
-  {
-    label: "Profile",
-    href: "#profile",
-    icon: UserRound,
-  },
-  {
-    label: "Billing",
-    href: "#billing",
-    icon: CreditCard,
-  },
-] as const;
 
 const usagePanels = [
   {
@@ -187,191 +136,92 @@ const workspaceCards = [
   },
 ] as const;
 
-export default async function WorkspacePage() {
-  const session = await requireSession("/workspace");
-
+export default function WorkspacePage() {
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-73px)] w-full max-w-360 flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <Card className="border-border bg-surface-1">
-            <CardHeader className="gap-4 border-b border-border">
-              <div className="rounded-lg border border-border bg-background px-3 py-2.5">
-                <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
-                  Workspace
-                </p>
-                <div className="mt-1 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-heading text-[0.95rem] font-semibold text-text-primary">
-                      Default Workspace
-                    </p>
-                    <p className="text-xs text-text-secondary">
-                      Personal environment
-                    </p>
-                  </div>
-                  <Badge variant="info">Active</Badge>
-                </div>
+    <section className="space-y-6">
+      <Card className="border-border bg-surface-1">
+        <CardHeader className="gap-4 border-b border-border">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <Badge variant="info" className="gap-1.5">
+                  <Sparkles className="size-3.5" />
+                  Workspace overview
+                </Badge>
+                <Badge variant="neutral" className="font-mono">
+                  /workspace
+                </Badge>
               </div>
-
-              <div className="rounded-lg border border-border bg-background px-3 py-2.5">
-                <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
-                  Signed in
-                </p>
-                <p className="mt-1 text-sm font-medium text-text-primary">
-                  {session.user.name || "Workspace Admin"}
-                </p>
-                <p className="truncate text-xs text-text-secondary">
-                  {session.user.email}
+              <div className="space-y-2">
+                <h1 className="font-heading text-[2rem] leading-[0.98] font-semibold tracking-[-0.04em] text-text-primary sm:text-[2.55rem]">
+                  Default Workspace
+                </h1>
+                <p className="max-w-3xl text-sm leading-6 text-text-secondary sm:text-base">
+                  We created this workspace for you to manage provider
+                  connections, routing rules, analytics, guardrails, and child
+                  API keys from one place.
                 </p>
               </div>
-            </CardHeader>
-
-            <CardContent className="grid gap-6 pt-5">
-              <NavSection title="Workspace" items={workspaceNavigation} />
-              <NavSection title="Account" items={accountNavigation} />
-            </CardContent>
-          </Card>
-        </aside>
-
-        <section className="space-y-6">
-          <Card className="border-border bg-surface-1">
-            <CardHeader className="gap-4 border-b border-border">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <Badge variant="info" className="gap-1.5">
-                      <Sparkles className="size-3.5" />
-                      Workspace overview
-                    </Badge>
-                    <Badge variant="neutral" className="font-mono">
-                      /workspace
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <h1 className="font-heading text-[2rem] leading-[0.98] font-semibold tracking-[-0.04em] text-text-primary sm:text-[2.55rem]">
-                      Default Workspace
-                    </h1>
-                    <p className="max-w-3xl text-sm leading-6 text-text-secondary sm:text-base">
-                      We created this workspace for you to manage provider
-                      connections, routing rules, analytics, guardrails, and
-                      child API keys from one place.
-                    </p>
-                  </div>
-                </div>
-
-                <Link
-                  href="#analytics"
-                  className={cn(
-                    buttonVariants({ variant: "secondary", size: "sm" }),
-                  )}
-                >
-                  View activity
-                </Link>
-              </div>
-            </CardHeader>
-
-            <CardContent className="grid gap-4 pt-5 sm:grid-cols-2 xl:grid-cols-3">
-              <SurfaceStat
-                label="Active providers"
-                value="06"
-                description="Across OpenAI, Anthropic, Google, and internal routes."
-              />
-              <SurfaceStat
-                label="Workspace keys"
-                value="14"
-                description="Child keys issued to teams, projects, and apps."
-              />
-              <SurfaceStat
-                label="Guardrail coverage"
-                value="87%"
-                description="Requests routed through at least one active policy."
-              />
-            </CardContent>
-          </Card>
-
-          <section id="analytics" className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="font-heading text-[1.15rem] font-semibold text-text-primary">
-                  This week&apos;s usage
-                </h2>
-                <p className="text-sm text-text-secondary">
-                  UI preview metrics for spend, requests, and token volume.
-                </p>
-              </div>
-              <Button variant="ghost" size="sm">
-                View activity
-              </Button>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-3">
-              {usagePanels.map((panel) => (
-                <UsagePanel key={panel.title} {...panel} />
-              ))}
-            </div>
-          </section>
-
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {workspaceCards.map((card) => (
-              <WorkspaceFeatureCard key={card.title} {...card} />
-            ))}
-          </section>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-function NavSection({
-  title,
-  items,
-}: {
-  title: string;
-  items: ReadonlyArray<{
-    label: string;
-    href: string;
-    icon: ComponentType<{ className?: string }>;
-    active?: boolean;
-  }>;
-}) {
-  return (
-    <div className="space-y-2">
-      <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
-        {title}
-      </p>
-      <nav className="space-y-1">
-        {items.map((item) => {
-          const Icon = item.icon;
-
-          return (
             <Link
-              key={item.label}
-              href={item.href}
+              href="#analytics"
               className={cn(
-                "group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
-                item.active
-                  ? "bg-accent-subtle text-text-primary"
-                  : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
+                buttonVariants({ variant: "secondary", size: "sm" }),
               )}
             >
-              <Icon
-                className={cn(
-                  "size-4",
-                  item.active ? "text-accent" : "text-text-tertiary",
-                )}
-              />
-              <span className="flex-1">{item.label}</span>
-              <ChevronRight
-                className={cn(
-                  "size-4 transition-transform group-hover:translate-x-0.5",
-                  item.active ? "text-accent" : "text-text-tertiary",
-                )}
-              />
+              View activity
             </Link>
-          );
-        })}
-      </nav>
-    </div>
+          </div>
+        </CardHeader>
+
+        <CardContent className="grid gap-4 pt-5 sm:grid-cols-2 xl:grid-cols-3">
+          <SurfaceStat
+            label="Active providers"
+            value="06"
+            description="Across OpenAI, Anthropic, Google, and internal routes."
+          />
+          <SurfaceStat
+            label="Workspace keys"
+            value="14"
+            description="Child keys issued to teams, projects, and apps."
+          />
+          <SurfaceStat
+            label="Guardrail coverage"
+            value="87%"
+            description="Requests routed through at least one active policy."
+          />
+        </CardContent>
+      </Card>
+
+      <section id="analytics" className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-[1.15rem] font-semibold text-text-primary">
+              This week&apos;s usage
+            </h2>
+            <p className="text-sm text-text-secondary">
+              UI preview metrics for spend, requests, and token volume.
+            </p>
+          </div>
+          <Button variant="ghost" size="sm">
+            View activity
+          </Button>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-3">
+          {usagePanels.map((panel) => (
+            <UsagePanel key={panel.title} {...panel} />
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {workspaceCards.map((card) => (
+          <WorkspaceFeatureCard key={card.title} {...card} />
+        ))}
+      </section>
+    </section>
   );
 }
 
