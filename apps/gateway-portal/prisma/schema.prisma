@@ -96,7 +96,23 @@ model LLMProvider {
   creator           User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  models            Model[]
 
   @@index([creatorId, isActive])
   @@index([creatorId, name])
+}
+
+model Model {
+  id              String      @id
+  name            String // upstream model name
+  alias           String // downstream model name - route to this name
+  inputPrice      Float
+  outputPrice     Float
+  inputCachePrice Float
+  providerId      String
+  provider        LLMProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([providerId])
 }

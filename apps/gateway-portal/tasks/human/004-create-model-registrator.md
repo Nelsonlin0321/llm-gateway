@@ -8,3 +8,21 @@ Implement this feature by following below instructions:
   - Only allow the provider creator to view this page.
   - Validate the model name input price, output price, price per 1M token, input price per 1M cached token are required and must be positive numbers.
   - The model name could not be unique.
+
+This is the prisma schema for the model table:
+
+```prisma
+model Model {
+  id              String      @id
+  name            String // upstream model name
+  alias           String // downstream model name - route to this name
+  inputPrice      Float
+  outputPrice     Float
+  inputCachePrice Float
+  providerId      String
+  provider        LLMProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  @@index([providerId])
+}
+```
