@@ -118,12 +118,15 @@ model Model {
 }
 
 model ChildKey {
-  id        String   @id
-  name      String
-  key       String
-  tags      Json     @default("{}")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id
+  name         String
+  key          String
+  creatorEmail String
+  userEmail    String
+  tags         Json      @default("{}")
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@index([tags(ops: JsonbPathOps)], type: Gin)
 }
