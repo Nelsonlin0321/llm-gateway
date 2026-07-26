@@ -1,10 +1,10 @@
 import "dotenv/config";
-import type { ParsedModel, ProviderConfig } from "../providers.js";
+import type { ParsedModel, ProviderConfig } from "../providers";
 
 import {
   openaiCompatibleProviders,
   anthropicCompatibleProviders,
-} from "../providers.js";
+} from "../providers";
 
 export function parseModel(
   model: string,

@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { proxy } from "hono/proxy";
-import { prepareAnthropicPayload } from "./payload-anthropic.js";
+import { prepareAnthropicPayload } from "./payload-anthropic";
 import {
   buildUpstreamHeaders,
   buildUpstreamUrl,

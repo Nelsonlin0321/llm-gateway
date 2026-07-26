@@ -1,6 +1,6 @@
-import { parseModel } from "./shared/upstream.js";
-import type { JsonBody, PrepareResult } from "./types/payload.js";
-import { anthropicCompatibleProviders } from "./providers.js";
+import { parseModel } from "./shared/upstream";
+import type { JsonBody, PrepareResult } from "./types/payload";
+import { anthropicCompatibleProviders } from "./providers";
 
 function isRecord(value: unknown): value is JsonBody {
   return typeof value === "object" && value !== null && !Array.isArray(value);

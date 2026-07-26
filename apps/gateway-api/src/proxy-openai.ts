@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 import { proxy } from "hono/proxy";
-import { prepareOpenaiPayload } from "./payload-openai.js";
+import { prepareOpenaiPayload } from "./payload-openai";
 import {
   buildUpstreamHeaders,
   buildUpstreamUrl,

@@ -1,4 +1,4 @@
-import type { ParsedModel } from "../providers.js";
+import type { ParsedModel } from "../providers";
 
 export type JsonBody = Record<string, unknown>;
 

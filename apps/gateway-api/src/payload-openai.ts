@@ -1,7 +1,7 @@
-import { parseModel } from "./shared/upstream.js";
-import type { JsonBody, PrepareResult } from "./types/payload.js";
-import { openaiCompatibleProviders } from "./providers.js";
-import { isRecord } from "./utils.js";
+import { parseModel } from "./shared/upstream";
+import type { JsonBody, PrepareResult } from "./types/payload";
+import { openaiCompatibleProviders } from "./providers";
+import { isRecord } from "./utils";
 
 /**
  * When `stream` is true on chat completions endpoints, force

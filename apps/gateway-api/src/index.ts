@@ -5,12 +5,12 @@ import {
   requireChildKeyAuth,
   type ChildKeyAuthVariables,
 } from "./child-keys/index.js";
-import { proxyToOpenai } from "./proxy-openai.js";
+import { proxyToOpenai } from "./proxy-openai";
 import {
   anthropicCompatibleProviders,
   openaiCompatibleProviders,
-} from "./providers.js";
-import { proxyToAnthropic } from "./proxy-anthropic.js";
+} from "./providers";
+import { proxyToAnthropic } from "./proxy-anthropic";
 
 const app = new Hono<{ Variables: ChildKeyAuthVariables }>();
 
