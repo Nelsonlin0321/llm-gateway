@@ -88,10 +88,10 @@ const workspaceCards = [
     title: "Child Keys",
     description:
       "Issue workspace-scoped keys for teams, projects, and applications with budgets attached.",
-    href: "#child-keys",
+    href: "/workspace/child-keys",
     icon: KeyRound,
-    badge: "Planned",
-    badgeVariant: "neutral" as const,
+    badge: "Live",
+    badgeVariant: "success" as const,
     id: "child-keys",
   },
   {

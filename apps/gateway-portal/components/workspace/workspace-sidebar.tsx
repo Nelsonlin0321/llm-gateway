@@ -53,9 +53,9 @@ const workspaceNavigation = [
   },
   {
     label: "Child Keys",
-    href: "/workspace#child-keys",
+    href: "/workspace/child-keys",
     icon: KeyRound,
-    match: () => false,
+    match: (pathname: string) => pathname.startsWith("/workspace/child-keys"),
   },
   {
     label: "Routing",
