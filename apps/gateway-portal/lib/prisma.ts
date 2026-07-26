@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaNeon } from "@prisma/adapter-neon"; // change to be @prisma/adapter-pg if the database does not support neon serverless
 import { neonConfig } from "@neondatabase/serverless";
 
 import ws from "ws";
