@@ -1,16 +1,26 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Eye, KeyRound, Plus } from "lucide-react";
+import { Eye, KeyRound, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { z } from "zod";
 
 import { createChildKey } from "@/app/server-actions/child-key/create-child-key";
+import { deleteChildKey } from "@/app/server-actions/child-key/delete-child-key";
 import { revealChildKey } from "@/app/server-actions/child-key/reveal-child-key";
 import { toggleChildKey } from "@/app/server-actions/child-key/toggle-child-key";
 import { ChildKeyFormModal } from "@/components/child-keys/child-key-form-modal";
 import { ChildKeySecretDialog } from "@/components/child-keys/child-key-secret-dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +69,9 @@ export function ChildKeyManagementClient({
   const [isSubmitting, startSubmitting] = useTransition();
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [revealingId, setRevealingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [keyPendingDelete, setKeyPendingDelete] =
+    useState<ChildKeyListItem | null>(null);
   const [revealedSecret, setRevealedSecret] = useState<{
     apiKey: string;
     name: string;
@@ -131,6 +144,25 @@ export function ChildKeyManagementClient({
     }
 
     toast.success(result.message);
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!keyPendingDelete) {
+      return;
+    }
+
+    setDeletingId(keyPendingDelete.id);
+    const result = await deleteChildKey(keyPendingDelete.id);
+    setDeletingId(null);
+
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(result.message);
+    setKeyPendingDelete(null);
     router.refresh();
   };
 
@@ -253,6 +285,16 @@ export function ChildKeyManagementClient({
                         <Eye className="size-3.5" />
                         {revealingId === key.id ? "Revealing..." : "Reveal key"}
                       </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={deletingId === key.id}
+                        onClick={() => setKeyPendingDelete(key)}
+                      >
+                        <Trash2 className="size-3.5" />
+                        {deletingId === key.id ? "Deleting..." : "Delete"}
+                      </Button>
                       <label
                         className={cn(
                           "flex items-center gap-2 rounded-md border border-border bg-surface-1 px-3 py-2 text-sm",
@@ -309,6 +351,44 @@ export function ChildKeyManagementClient({
         mode={revealedSecret?.mode ?? "created"}
         onClose={() => setRevealedSecret(null)}
       />
+
+      <AlertDialog
+        open={keyPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) {
+            setKeyPendingDelete(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {keyPendingDelete?.name ?? "child key"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the child key and its signed secret from
+              this workspace. Any clients still using{" "}
+              <span className="font-mono text-text-primary">
+                {keyPendingDelete?.keyPreview ?? "this key"}
+              </span>{" "}
+              will fail authentication. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleDelete()}
+              disabled={keyPendingDelete === null || deletingId !== null}
+            >
+              {deletingId !== null ? "Deleting..." : "Delete child key"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

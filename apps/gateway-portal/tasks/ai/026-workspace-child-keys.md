@@ -5,7 +5,7 @@
 Implemented `/workspace/child-keys` so workspace users can create, list, and activate/deactivate child API keys.
 
 - Keys are JWTs signed with `JWT_SIGNING_SECRET`, prefixed `sk_live_`
-- JWT payload includes `key_id`, `name`, optional `policy_id`, `tags`, `user_email`, `creator_email`, timestamps
+- JWT payload includes `key_id`, `name`, optional `policy_id`, `tags`, `user_email`, `creator_email`, `issued_at` (unix seconds; changes on rotation)
 - Create flow reveals the full secret once (copy dialog); list shows masked preview
 - Tags: optional project / team / application / owner
 - Toggle active/inactive via server action without re-signing

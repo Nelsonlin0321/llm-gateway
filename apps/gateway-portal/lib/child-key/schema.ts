@@ -154,8 +154,8 @@ export type ChildKeyJwtPayload = {
   tags: ChildKeyTags;
   user_email: string;
   creator_email: string;
-  created_at: string;
-  updated_at: string;
+  /** Unix timestamp (seconds). Changes on each key rotation. */
+  issued_at: number;
 };
 
 export type ChildKeyListItem = {

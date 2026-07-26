@@ -15,7 +15,7 @@ Functionality:
   "name": "child_key_name", // this is th name of child key of prisma schema
   "policy_id": "policy_id", // this is th id of policy of  prisma schema but we haven't created it yet, optional
   "tags": {
-    // the tags from child key object of Prisma schema
+    // Example: the tags from child key object of Prisma schema
     "env": "env_name", // optional
     "project": "project_name", // optional
     "team": "team_name", // optional
@@ -23,8 +23,7 @@ Functionality:
   },
   "user_email": "user_email", // required
   "creator_email": "creator_email", // required
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
+  "issued_at": 1694502400 // issue at timestamp -> for each rotation will be different
 }
 ```
 

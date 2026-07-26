@@ -21,8 +21,7 @@ const samplePayload: ChildKeyJwtPayload = {
   },
   user_email: "dev@example.com",
   creator_email: "admin@example.com",
-  created_at: "2023-01-01T00:00:00.000Z",
-  updated_at: "2023-01-01T00:00:00.000Z",
+  issued_at: 1694502400,
 };
 
 test("signChildKeyToken prefixes sk_live_ and is verifiable", async () => {
@@ -36,6 +35,7 @@ test("signChildKeyToken prefixes sk_live_ and is verifiable", async () => {
   assert.equal(verified.name, samplePayload.name);
   assert.equal(verified.user_email, samplePayload.user_email);
   assert.equal(verified.creator_email, samplePayload.creator_email);
+  assert.equal(verified.issued_at, 1694502400);
   assert.equal(verified.tags.project, "rag");
   assert.equal(verified.tags.team, "growth");
   assert.equal(verified.tags.env, "prod");
@@ -49,6 +49,7 @@ test("decodeChildKeyToken returns payload without re-verifying", async () => {
   const decoded = decodeChildKeyToken(token);
   assert.equal(decoded.key_id, "key-123");
   assert.equal(decoded.name, "team-growth-prod");
+  assert.equal(decoded.issued_at, 1694502400);
 });
 
 test("verifyChildKeyToken rejects tokens signed with a different secret", async () => {

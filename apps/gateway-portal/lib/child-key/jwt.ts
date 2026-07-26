@@ -33,6 +33,23 @@ export function withChildKeyPrefix(jwt: string): string {
   return `${CHILD_KEY_PREFIX}${jwt}`;
 }
 
+export function unixTimestampSeconds(date: Date = new Date()): number {
+  return Math.floor(date.getTime() / 1000);
+}
+
+function parseIssuedAt(payload: JWTPayload): number {
+  if (typeof payload.issued_at === "number" && Number.isFinite(payload.issued_at)) {
+    return Math.trunc(payload.issued_at);
+  }
+
+  // Legacy tokens may only have standard JWT `iat`.
+  if (typeof payload.iat === "number" && Number.isFinite(payload.iat)) {
+    return Math.trunc(payload.iat);
+  }
+
+  throw new Error("Child key token payload is missing issued_at.");
+}
+
 export function parseChildKeyJwtPayload(
   payload: JWTPayload,
 ): ChildKeyJwtPayload {
@@ -54,12 +71,6 @@ export function parseChildKeyJwtPayload(
   ) {
     throw new Error("Child key token payload is missing creator_email.");
   }
-  if (
-    typeof payload.created_at !== "string" ||
-    typeof payload.updated_at !== "string"
-  ) {
-    throw new Error("Child key token payload is missing timestamps.");
-  }
 
   return {
     key_id: payload.key_id,
@@ -71,8 +82,7 @@ export function parseChildKeyJwtPayload(
     tags: normalizeChildKeyTags(payload.tags),
     user_email: payload.user_email,
     creator_email: payload.creator_email,
-    created_at: payload.created_at,
-    updated_at: payload.updated_at,
+    issued_at: parseIssuedAt(payload),
   };
 }
 
@@ -80,14 +90,15 @@ export function parseChildKeyJwtPayload(
 export async function signChildKeyToken(
   payload: ChildKeyJwtPayload,
 ): Promise<string> {
+  const issuedAt = Math.trunc(payload.issued_at);
+
   const claims: Record<string, unknown> = {
     key_id: payload.key_id,
     name: payload.name,
     tags: payload.tags ?? {},
     user_email: payload.user_email,
     creator_email: payload.creator_email,
-    created_at: payload.created_at,
-    updated_at: payload.updated_at,
+    issued_at: issuedAt,
   };
 
   if (payload.policy_id) {
@@ -97,7 +108,7 @@ export async function signChildKeyToken(
   const jwt = await new SignJWT(claims)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setSubject(payload.key_id)
-    .setIssuedAt()
+    .setIssuedAt(issuedAt)
     .sign(getJwtSigningSecret());
 
   return withChildKeyPrefix(jwt);

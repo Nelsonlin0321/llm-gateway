@@ -11,6 +11,7 @@ import {
 import {
   CHILD_KEY_PREFIX,
   signChildKeyToken,
+  unixTimestampSeconds,
 } from "@/lib/child-key/jwt";
 
 export { normalizeChildKeyTags };
@@ -68,9 +69,8 @@ export async function buildChildKeyCreateData(
   creator: { id: string; email: string },
 ) {
   const id = randomUUID();
-  const now = new Date();
-  const createdAt = now.toISOString();
   const tags = input.tags ?? {};
+  const issuedAt = unixTimestampSeconds();
 
   const apiKey = await signChildKeyToken({
     key_id: id,
@@ -79,8 +79,7 @@ export async function buildChildKeyCreateData(
     tags,
     user_email: input.userEmail,
     creator_email: creator.email,
-    created_at: createdAt,
-    updated_at: createdAt,
+    issued_at: issuedAt,
   });
 
   const data: Prisma.ChildKeyCreateInput = {
@@ -91,6 +90,7 @@ export async function buildChildKeyCreateData(
     tags,
     isActive: true,
     expiresAt: input.expiresAt ? new Date(input.expiresAt) : null,
+    issuedAt,
     creator: {
       connect: { id: creator.id },
     },
