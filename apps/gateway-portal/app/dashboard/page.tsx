@@ -45,7 +45,7 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto flex min-h-[calc(100vh-6rem)] w-full flex-col gap-5 px-4 py-5 sm:px-6 lg:px-8">
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
-        <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_84%,transparent))]">
+        <Card className="overflow-hidden border-border bg-surface-1">
           <CardHeader className="gap-4">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="info" className="gap-1.5">
@@ -57,7 +57,7 @@ export default function DashboardPage() {
               </Badge>
             </div>
             <div className="space-y-3">
-              <h1 className="[font-family:var(--font-display)] text-[2.3rem] leading-[0.98] font-semibold tracking-[-0.04em] text-foreground sm:text-[3rem]">
+              <h1 className="font-heading text-[2.3rem] leading-[0.98] font-semibold tracking-[-0.04em] text-foreground sm:text-[3rem]">
                 Welcome back, {user.name || "there"}.
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
               Manage providers
               <ArrowRight className="size-4" />
             </Link>
-            <div className="rounded-[16px] border border-border bg-background px-3.5 py-2.5 text-sm text-text-secondary">
+            <div className="rounded-lg border border-border bg-background px-3.5 py-2.5 text-sm text-text-secondary">
               Signed in as{" "}
               <span className="font-medium text-text-primary">
                 {user.email}
@@ -141,7 +141,7 @@ function DashboardFeature({
   description: string;
 }) {
   return (
-    <div className="rounded-[18px] border border-border bg-background px-3.5 py-3.5">
+    <div className="rounded-lg border border-border bg-background px-3.5 py-3.5">
       <div className="flex items-center gap-2 text-sm font-medium text-text-primary">
         <Icon className="size-4 text-accent" />
         {title}
@@ -163,7 +163,7 @@ function CompactStat({
   mono?: boolean;
 }) {
   return (
-    <Card className="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_82%,transparent))] shadow-none">
+    <Card className="bg-surface-1 shadow-none">
       <CardHeader className="gap-1 pb-2">
         <CardDescription className="font-mono text-[11px] uppercase tracking-[0.08em]">
           {label}

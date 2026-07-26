@@ -135,12 +135,12 @@ export default function Home() {
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto flex w-full flex-col gap-8 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
         <section className="grid gap-6 lg:grid-cols-[minmax(0,1.04fr)_minmax(0,0.96fr)]">
-          <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_84%,transparent))]">
+          <Card className="overflow-hidden border-border bg-surface-1">
             <CardHeader className="gap-5 pb-4 sm:pb-6">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="info" className="gap-1.5">
                   <Sparkles className="size-3.5" />
-                  Framer-aligned control plane
+                  OpenRouter-aligned control plane
                 </Badge>
                 <Badge
                   variant="neutral"
@@ -150,9 +150,9 @@ export default function Home() {
                 </Badge>
               </div>
               <div className="space-y-5">
-                <h1 className="max-w-3xl [font-family:var(--font-display)] text-[3rem] leading-[0.96] font-semibold tracking-tighter text-foreground sm:text-[4.4rem]">
+                <h1 className="max-w-3xl font-heading text-[2.5rem] leading-[1.08] font-bold tracking-[-0.02em] text-foreground sm:text-[3.25rem]">
                   Run every provider, policy, and token dollar from one
-                  black-stage console.
+                  ink-stage console.
                 </h1>
                 <p className="max-w-2xl text-base leading-7 tracking-[-0.01em] text-text-secondary sm:text-lg">
                   Gateway Portal is the management and analytics layer between
@@ -207,13 +207,13 @@ export default function Home() {
           {stats.map((stat) => (
             <Card
               key={stat.label}
-              className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
+              className="bg-surface-1"
             >
               <CardContent className="flex h-full flex-col gap-3 p-6">
                 <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                   {stat.label}
                 </p>
-                <p className="[font-family:var(--font-display)] text-4xl leading-none font-semibold tracking-[-0.04em]">
+                <p className="font-heading text-4xl leading-none font-semibold tracking-[-0.04em]">
                   {stat.value}
                 </p>
                 <p className="text-sm leading-6 text-text-secondary">
@@ -225,7 +225,7 @@ export default function Home() {
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <Card className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
+          <Card className="bg-surface-1">
             <CardHeader>
               <Badge
                 variant="neutral"
@@ -277,10 +277,10 @@ export default function Home() {
                 <Card
                   key={feature.title}
                   id={sectionId}
-                  className="h-full bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
+                  className="h-full bg-surface-1"
                 >
                   <CardHeader className="gap-4">
-                    <div className="flex size-10 items-center justify-center rounded-2xl border border-border bg-secondary text-foreground">
+                    <div className="flex size-10 items-center justify-center rounded-lg border border-border bg-secondary text-foreground">
                       <Icon className="size-4" />
                     </div>
                     <CardTitle className="text-[1.35rem]">
@@ -292,7 +292,7 @@ export default function Home() {
                     {feature.bullets.map((bullet) => (
                       <div
                         key={bullet}
-                        className="flex items-start gap-3 rounded-2xl border border-border bg-secondary/60 px-4 py-3 text-sm leading-6 text-text-secondary"
+                        className="flex items-start gap-3 rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm leading-6 text-text-secondary"
                       >
                         <ChevronRight className="mt-1 size-4 shrink-0 text-accent" />
                         <span>{bullet}</span>
@@ -311,7 +311,7 @@ export default function Home() {
         >
           <Card
             id="analytics"
-            className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]"
+            className="bg-surface-1"
           >
             <CardHeader>
               <Badge
@@ -332,7 +332,7 @@ export default function Home() {
             <CardContent className="grid gap-3">
               {workflowSteps.map((step, index) => (
                 <div key={step.step}>
-                  <div className="grid gap-3 rounded-2xl bg-secondary/70 p-4 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
+                  <div className="grid gap-3 rounded-lg bg-surface-2 p-4 md:grid-cols-[auto_minmax(0,1fr)] md:items-start">
                     <div className="font-mono text-[11px] uppercase tracking-[0.08em] text-accent">
                       {step.step}
                     </div>
@@ -355,7 +355,7 @@ export default function Home() {
 
           <Card
             id="launch"
-            className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_16%,var(--border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--accent-subtle)_28%,var(--surface-1)))]"
+            className="overflow-hidden border-border bg-surface-1"
           >
             <CardHeader>
               <Badge variant="info" className="w-fit gap-1.5">
@@ -399,7 +399,7 @@ export default function Home() {
                   icon={<Cloud className="size-4" />}
                 />
               </div>
-              <div className="rounded-[24px] border border-border bg-background/70 p-4">
+              <div className="rounded-xl border border-border bg-surface-1 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
@@ -430,7 +430,7 @@ export default function Home() {
           id="audit"
           className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]"
         >
-          <Card className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
+          <Card className="bg-surface-1">
             <CardHeader className="gap-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-2">
@@ -456,7 +456,7 @@ export default function Home() {
             <CardContent className="space-y-3">
               {auditRows.map((row, index) => (
                 <div key={row.path}>
-                  <div className="grid gap-3 rounded-2xl border border-border bg-secondary/70 p-4 md:grid-cols-[minmax(0,1fr)_150px_120px_auto] md:items-center">
+                  <div className="grid gap-3 rounded-lg border border-border bg-surface-2 p-4 md:grid-cols-[minmax(0,1fr)_150px_120px_auto] md:items-center">
                     <div className="space-y-1">
                       <p className="font-mono text-xs leading-5 text-text-secondary">
                         {row.path}
@@ -484,7 +484,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[color-mix(in_srgb,var(--surface-1)_92%,transparent)]">
+          <Card className="bg-surface-1">
             <CardHeader>
               <Badge
                 variant="neutral"
@@ -509,7 +509,7 @@ export default function Home() {
               ].map((item) => (
                 <div
                   key={item}
-                  className="rounded-2xl border border-border bg-secondary/70 px-4 py-3 text-sm leading-6 text-text-secondary"
+                  className="rounded-lg border border-border bg-surface-2 px-4 py-3 text-sm leading-6 text-text-secondary"
                 >
                   {item}
                 </div>
@@ -524,7 +524,7 @@ export default function Home() {
 
 function MiniPanel({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-secondary/70 p-4">
+    <div className="rounded-lg border border-border bg-surface-2 p-4">
       <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
         {title}
       </p>
@@ -535,7 +535,7 @@ function MiniPanel({ title, value }: { title: string; value: string }) {
 
 function AudiencePanel({ title, detail }: { title: string; detail: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-secondary/70 p-4">
+    <div className="rounded-lg border border-border bg-surface-2 p-4">
       <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
         {title}
       </p>
@@ -556,7 +556,7 @@ function SignalTile({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-background/70 p-4">
+    <div className="rounded-lg border border-border bg-surface-1 p-4">
       <div className="flex items-center justify-between gap-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
           {label}
@@ -573,7 +573,7 @@ function SignalTile({
 
 function ProductCanvas() {
   return (
-    <Card className="overflow-hidden border-[color-mix(in_srgb,var(--accent)_14%,var(--border))] bg-[linear-gradient(180deg,var(--surface-1),color-mix(in_srgb,var(--surface-2)_80%,var(--surface-1)))] shadow-hero">
+    <Card className="overflow-hidden border-border bg-surface-1">
       <CardContent className="p-0">
         <div className="border-b border-border px-5 py-4">
           <div className="flex items-center justify-between gap-3">
@@ -596,7 +596,7 @@ function ProductCanvas() {
 
         <div className="grid gap-4 p-4 sm:p-5">
           <div className="grid gap-4 lg:grid-cols-[188px_minmax(0,1fr)]">
-            <div className="rounded-[20px] border border-border bg-background/60 p-3">
+            <div className="rounded-lg border border-border bg-surface-1 p-3">
               <div className="space-y-2">
                 {[
                   "Overview",
@@ -624,7 +624,7 @@ function ProductCanvas() {
 
             <div className="space-y-4">
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_280px]">
-                <div className="rounded-[20px] border border-border bg-background/60 p-4">
+                <div className="rounded-lg border border-border bg-surface-1 p-4">
                   <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
@@ -668,7 +668,7 @@ function ProductCanvas() {
                     ].map((provider) => (
                       <div
                         key={provider.provider}
-                        className="grid gap-3 rounded-2xl border border-border bg-secondary/60 p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
+                        className="grid gap-3 rounded-lg border border-border bg-surface-2 p-4 sm:grid-cols-[minmax(0,1fr)_auto]"
                       >
                         <div>
                           <p className="text-sm font-semibold tracking-[-0.02em] text-foreground">
@@ -687,7 +687,7 @@ function ProductCanvas() {
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border bg-background/60 p-4">
+                <div className="rounded-lg border border-border bg-surface-1 p-4">
                   <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                     Live signals
                   </p>
@@ -711,13 +711,13 @@ function ProductCanvas() {
                     ].map((item) => (
                       <div
                         key={item.label}
-                        className="rounded-2xl border border-border bg-secondary/60 p-4"
+                        className="rounded-lg border border-border bg-surface-2 p-4"
                       >
                         <p className="text-sm text-text-secondary">
                           {item.label}
                         </p>
                         <div className="mt-2 flex items-center justify-between gap-3">
-                          <p className="[font-family:var(--font-display)] text-3xl leading-none font-semibold tracking-[-0.04em]">
+                          <p className="font-heading text-3xl leading-none font-semibold tracking-[-0.04em]">
                             {item.value}
                           </p>
                           <Badge variant="info">{item.delta}</Badge>
@@ -729,7 +729,7 @@ function ProductCanvas() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="rounded-[20px] border border-border bg-background/60 p-4">
+                <div className="rounded-lg border border-border bg-surface-1 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
@@ -781,7 +781,7 @@ function ProductCanvas() {
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-border bg-background/60 p-4">
+                <div className="rounded-lg border border-border bg-surface-1 p-4">
                   <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
                     Child key queue
                   </p>
@@ -793,7 +793,7 @@ function ProductCanvas() {
                     ].map((item) => (
                       <div
                         key={item}
-                        className="rounded-2xl border border-border bg-secondary/60 px-3 py-3 font-mono text-xs text-text-secondary"
+                        className="rounded-lg border border-border bg-surface-2 px-3 py-3 font-mono text-xs text-text-secondary"
                       >
                         {item}
                       </div>

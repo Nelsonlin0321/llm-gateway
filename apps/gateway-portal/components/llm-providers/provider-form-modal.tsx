@@ -39,7 +39,7 @@ type ProviderFormModalProps = {
 };
 
 const inputClassName =
-  "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
+  "h-10 w-full rounded-md border border-border-visible bg-transparent px-3 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
 
 const fieldLabelClassName =
   "text-sm font-medium tracking-[-0.01em] text-text-primary";
@@ -113,18 +113,18 @@ export function ProviderFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--or-ink)_72%,transparent)] p-4">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="provider-form-title"
-        className="w-full max-w-xl rounded-[24px] border border-border bg-surface-1 shadow-hero"
+        className="w-full max-w-xl rounded-xl border border-border-visible bg-popover shadow-hero"
       >
         <div className="flex items-start justify-between gap-4 border-b border-border px-5 py-4">
           <div className="space-y-1">
             <h2
               id="provider-form-title"
-              className="[font-family:var(--font-display)] text-[1.35rem] leading-[1.1] font-semibold tracking-[-0.03em]"
+              className="font-heading text-[1.25rem] leading-[1.15] font-semibold tracking-[-0.02em]"
             >
               {title}
             </h2>

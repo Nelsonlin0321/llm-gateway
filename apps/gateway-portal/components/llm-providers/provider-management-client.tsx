@@ -186,7 +186,7 @@ export function ProviderManagementClient({
         </CardHeader>
         <CardContent>
           {providers.length === 0 ? (
-            <div className="rounded-[18px] border border-dashed border-border-strong bg-background px-5 py-10 text-center">
+            <div className="rounded-lg border border-dashed border-border-strong bg-background px-5 py-10 text-center">
               <p className="text-base font-medium text-text-primary">
                 No providers configured yet.
               </p>
@@ -196,7 +196,7 @@ export function ProviderManagementClient({
               </p>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-[22px] border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background">
+            <div className="overflow-hidden rounded-lg border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background">
               {providers.map((provider, index) => (
                 <div
                   key={provider.id}
@@ -333,7 +333,7 @@ function MetricCard({
   detail: string;
 }) {
   return (
-    <Card className="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_82%,transparent))] shadow-none">
+    <Card className="bg-surface-1 shadow-none">
       <CardHeader className="gap-1 pb-2">
         <CardDescription className="font-mono text-[11px] uppercase tracking-[0.08em]">
           {label}

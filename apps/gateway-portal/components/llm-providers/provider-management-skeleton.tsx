@@ -17,10 +17,10 @@ export function ProviderManagementSkeleton() {
         {metricSkeletons.map((index) => (
           <Card
             key={index}
-            className="bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface-1)_96%,transparent),color-mix(in_srgb,var(--surface-1)_82%,transparent))] shadow-none"
+            className="bg-surface-1 shadow-none"
           >
             <CardHeader className="gap-1 pb-2">
-              <CardDescription as="div">
+              <CardDescription>
                 <Skeleton className="h-3 w-20" />
               </CardDescription>
               <CardTitle>
@@ -40,12 +40,12 @@ export function ProviderManagementSkeleton() {
             <CardTitle className="text-[1.8rem]">
               <Skeleton className="h-7 w-48" />
             </CardTitle>
-            <CardDescription as="div" className="space-y-2">
+            <CardDescription className="space-y-2">
               <Skeleton className="h-4 w-full max-w-2xl" />
               <Skeleton className="h-4 w-full max-w-xl" />
             </CardDescription>
           </div>
-          <Skeleton className="h-9 w-32 rounded-xl" />
+          <Skeleton className="h-9 w-32 rounded-md" />
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 lg:grid-cols-2">
@@ -59,15 +59,15 @@ export function ProviderManagementSkeleton() {
                     <div className="space-y-2.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <Skeleton className="h-6 w-28" />
-                        <Skeleton className="h-5 w-14 rounded-full" />
-                        <Skeleton className="h-5 w-18 rounded-full" />
+                        <Skeleton className="h-5 w-14 rounded-sm" />
+                        <Skeleton className="h-5 w-18 rounded-sm" />
                       </div>
                       <Skeleton className="h-4 w-72 max-w-full" />
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Skeleton className="h-8 w-[4.5rem] rounded-xl" />
-                      <Skeleton className="h-8 w-[5.5rem] rounded-xl" />
+                      <Skeleton className="h-8 w-[4.5rem] rounded-md" />
+                      <Skeleton className="h-8 w-[5.5rem] rounded-md" />
                     </div>
                   </div>
                 </CardHeader>
@@ -77,7 +77,7 @@ export function ProviderManagementSkeleton() {
                     {Array.from({ length: 4 }, (_, chipIndex) => (
                       <div
                         key={chipIndex}
-                        className="rounded-[16px] border border-border bg-surface-1 px-3.5 py-3"
+                        className="rounded-lg border border-border bg-surface-1 px-3.5 py-3"
                       >
                         <Skeleton className="h-3 w-24" />
                         <Skeleton className="mt-2 h-4 w-20" />
@@ -85,7 +85,7 @@ export function ProviderManagementSkeleton() {
                     ))}
                   </div>
 
-                  <div className="rounded-[16px] border border-border bg-surface-1 px-3.5 py-3">
+                  <div className="rounded-lg border border-border bg-surface-1 px-3.5 py-3">
                     <Skeleton className="h-3 w-28" />
                     <Skeleton className="mt-2 h-4 w-24" />
                   </div>

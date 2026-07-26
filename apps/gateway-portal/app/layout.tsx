@@ -1,28 +1,31 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Inter, Outfit } from "next/font/google";
+import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 
 import { PortalHeader } from "@/components/portal-header";
 import ReactHotToastProvider from "@/components/providers/react-hot-toast";
 import "./globals.css";
 
-const outfit = Outfit({
+/* OpenRouter skill: Plus Jakarta Sans (Gordita fallback) + Geist Mono */
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-display",
   display: "swap",
-  fallback: ["system-ui", "sans-serif"],
+  weight: ["400", "500", "600", "700"],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
-const inter = Inter({
+const plusJakartaBody = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
-  fallback: ["system-ui", "sans-serif"],
+  weight: ["400", "500", "600", "700"],
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
-  weight: ["400", "500"],
+  weight: ["400", "500", "600"],
   display: "swap",
   fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
 });
@@ -49,11 +52,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${inter.variable} ${ibmPlexMono.variable} dark h-full antialiased`}
+      className={`${plusJakarta.variable} ${plusJakartaBody.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="min-h-full bg-background font-sans text-foreground">
         <ReactHotToastProvider>
-          <div className="mx-auto w-full max-w-8xl px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8">
+          <div className="mx-auto w-full max-w-8xl px-4 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pt-6">
             <PortalHeader navItems={portalHeaderNavItems} />
           </div>
           {children}

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { signUp } from "@/lib/auth-client";
 
 const inputClassName =
-  "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
+  "h-10 w-full rounded-md border border-border-visible bg-transparent px-3 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
 
 type FormSubmitEvent = Parameters<
   NonNullable<ComponentProps<"form">["onSubmit"]>
