@@ -1,9 +1,19 @@
+import {
+  authorizeChildKey,
+  type ChildKeyLookup,
+} from "./authorize.js";
 import { decryptApiKeyForProxy } from "./crypto.js";
 import { CHILD_KEY_PREFIX, verifyChildKeyToken } from "./jwt.js";
 import type { ChildKeyAuthResult } from "./types.js";
 
 export { decryptApiKeyForProxy } from "./crypto.js";
 export { encryptApiKey } from "./crypto.js";
+export {
+  authorizeChildKey,
+  type ChildKeyAuthzResult,
+  type ChildKeyDbRecord,
+  type ChildKeyLookup,
+} from "./authorize.js";
 export {
   CHILD_KEY_PREFIX,
   decodeChildKeyToken,
@@ -86,10 +96,14 @@ export function extractBearerToken(
  * **Proxy steps**
  * 1. Require Bearer plain `sk_…` key
  * 2. Verify JWT signature and claims with `JWT_SIGNING_SECRET` → payload
- * 3. Reject expired tokens (`exp` claim)
+ * 3. Reject expired JWT (`exp` claim)
+ * 4. Authorize against Prisma `ChildKey` (active, expiresAt, issuedAt, secret match)
  */
 export async function authenticateChildApiKey(
   authorizationHeader: string | undefined | null,
+  options?: {
+    lookup?: ChildKeyLookup;
+  },
 ): Promise<ChildKeyAuthResult> {
   const bearer = extractBearerToken(authorizationHeader);
 
@@ -120,9 +134,10 @@ export async function authenticateChildApiKey(
     };
   }
 
+  let payload;
   try {
     // Verify JWT and decode claims (key_id, tags, emails, issued_at, exp, …).
-    const payload = await verifyChildKeyToken(plainApiKey);
+    payload = await verifyChildKeyToken(plainApiKey);
 
     if (
       typeof payload.exp === "number" &&
@@ -137,12 +152,6 @@ export async function authenticateChildApiKey(
         },
       };
     }
-
-    return {
-      ok: true,
-      plainApiKey,
-      payload,
-    };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid API key.";
 
@@ -164,4 +173,20 @@ export async function authenticateChildApiKey(
       },
     };
   }
+
+  const authz = await authorizeChildKey(
+    plainApiKey,
+    payload,
+    options?.lookup,
+  );
+
+  if (!authz.ok) {
+    return authz;
+  }
+
+  return {
+    ok: true,
+    plainApiKey,
+    payload,
+  };
 }

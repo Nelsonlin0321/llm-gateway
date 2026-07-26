@@ -25,10 +25,10 @@ export type ChildKeyAuthSuccess = {
 
 export type ChildKeyAuthFailure = {
   ok: false;
-  status: 401 | 403;
+  status: 401 | 403 | 503;
   error: {
     message: string;
-    type: "authentication_error" | "invalid_request_error";
+    type: "authentication_error" | "invalid_request_error" | "server_error";
   };
 };
 

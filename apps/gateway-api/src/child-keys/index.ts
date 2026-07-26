@@ -1,5 +1,6 @@
 export {
   authenticateChildApiKey,
+  authorizeChildKey,
   decryptApiKeyForProxy,
   decryptChildKey,
   encryptApiKey,
@@ -8,6 +9,11 @@ export {
   CHILD_KEY_PREFIX,
   decodeChildKeyToken,
   verifyChildKeyToken,
+} from "./service.js";
+export type {
+  ChildKeyAuthzResult,
+  ChildKeyDbRecord,
+  ChildKeyLookup,
 } from "./service.js";
 export { requireChildKeyAuth } from "./middleware.js";
 export type { ChildKeyAuthVariables } from "./middleware.js";

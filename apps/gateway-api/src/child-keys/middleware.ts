@@ -22,7 +22,10 @@ export const requireChildKeyAuth: MiddlewareHandler<{
   const result = await authenticateChildApiKey(c.req.header("authorization"));
 
   if (!result.ok) {
-    return c.json({ error: result.error }, result.status);
+    return c.json(
+      { error: result.error },
+      result.status as 401 | 403 | 503,
+    );
   }
 
   c.set("childKey", result.payload);
