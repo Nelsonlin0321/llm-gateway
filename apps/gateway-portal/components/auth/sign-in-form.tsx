@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ComponentProps } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,16 @@ type FormSubmitEvent = Parameters<
   NonNullable<ComponentProps<"form">["onSubmit"]>
 >[0];
 
+function safeReturnPath(next: string | null): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return "/workspace/overview";
+  }
+  return next;
+}
+
 export function SignInForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,7 +45,7 @@ export function SignInForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(safeReturnPath(searchParams.get("next")));
   };
 
   return (
