@@ -18,9 +18,9 @@ type ProviderRecord = Pick<
   | "name"
   | "apiUrl"
   | "compatibilityType"
-  | "inputPrice"
-  | "inputCachePrice"
-  | "outputPrice"
+  // | "inputPrice"
+  // | "inputCachePrice"
+  // | "outputPrice"
   | "isActive"
   | "encryptedApiKey"
   | "createdAt"
@@ -93,9 +93,9 @@ export function toProviderListItem(provider: ProviderRecord): ProviderListItem {
     name: provider.name,
     apiUrl: provider.apiUrl,
     compatibilityType: provider.compatibilityType,
-    inputPrice: provider.inputPrice ?? null,
-    inputCachePrice: provider.inputCachePrice ?? null,
-    outputPrice: provider.outputPrice ?? null,
+    // inputPrice: provider.inputPrice ?? null,
+    // inputCachePrice: provider.inputCachePrice ?? null,
+    // outputPrice: provider.outputPrice ?? null,
     isActive: provider.isActive,
     hasStoredApiKey: Boolean(provider.encryptedApiKey),
     createdAt: provider.createdAt.toISOString(),

@@ -43,10 +43,7 @@ const baseProviderSchema = z.object({
 });
 
 export const createProviderInputSchema = baseProviderSchema.extend({
-  apiKey: z
-    .string()
-    .trim()
-    .min(1, "API key is required."),
+  apiKey: z.string().trim().min(1, "API key is required."),
 });
 
 export const updateProviderInputSchema = baseProviderSchema.extend({
@@ -77,9 +74,6 @@ export type ProviderListItem = {
   name: string;
   apiUrl: string;
   compatibilityType: CompatibilityType;
-  inputPrice: number | null;
-  inputCachePrice: number | null;
-  outputPrice: number | null;
   isActive: boolean;
   hasStoredApiKey: boolean;
   createdAt: string;

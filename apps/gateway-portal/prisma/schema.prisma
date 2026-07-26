@@ -88,9 +88,9 @@ model LLMProvider {
   apiUrl            String
   encryptedApiKey   String
   compatibilityType CompatibilityType
-  inputPrice        Float? // input price per 1M tokens
-  inputCachePrice   Float? // input cache price per 1M tokens
-  outputPrice       Float? // output price per 1M tokens
+  // inputPrice        Float? // input price per 1M tokens
+  // inputCachePrice   Float? // input cache price per 1M tokens
+  // outputPrice       Float? // output price per 1M tokens
   isActive          Boolean           @default(true)
   creatorId         String
   creator           User              @relation(fields: [creatorId], references: [id], onDelete: Cascade)

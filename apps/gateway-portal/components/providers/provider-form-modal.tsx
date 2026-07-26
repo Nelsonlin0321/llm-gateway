@@ -18,9 +18,6 @@ type ProviderFormValues = {
   apiUrl: string;
   apiKey: string;
   compatibilityType: ProviderListItem["compatibilityType"];
-  inputPrice: string;
-  inputCachePrice: string;
-  outputPrice: string;
   isActive: boolean;
 };
 
@@ -44,7 +41,8 @@ type ProviderFormModalProps = {
 const inputClassName =
   "w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
 
-const fieldLabelClassName = "text-sm font-medium tracking-[-0.01em] text-text-primary";
+const fieldLabelClassName =
+  "text-sm font-medium tracking-[-0.01em] text-text-primary";
 
 function getInitialValues(provider?: ProviderListItem): ProviderFormValues {
   return {
@@ -52,9 +50,6 @@ function getInitialValues(provider?: ProviderListItem): ProviderFormValues {
     apiUrl: provider?.apiUrl ?? "",
     apiKey: "",
     compatibilityType: provider?.compatibilityType ?? "openai",
-    inputPrice: provider?.inputPrice?.toString() ?? "",
-    inputCachePrice: provider?.inputCachePrice?.toString() ?? "",
-    outputPrice: provider?.outputPrice?.toString() ?? "",
     isActive: provider?.isActive ?? true,
   };
 }
@@ -255,18 +250,6 @@ export function ProviderFormModal({
               >
                 Input price / 1M tokens
               </label>
-              <input
-                id="provider-input-price"
-                type="number"
-                min="0"
-                step="0.000001"
-                value={values.inputPrice}
-                onChange={(event) =>
-                  updateValue("inputPrice", event.target.value)
-                }
-                placeholder="Optional"
-                className={inputClassName}
-              />
               <FieldError errors={fieldErrors.inputPrice} />
             </div>
 
@@ -277,18 +260,6 @@ export function ProviderFormModal({
               >
                 Input cache price / 1M tokens
               </label>
-              <input
-                id="provider-cache-price"
-                type="number"
-                min="0"
-                step="0.000001"
-                value={values.inputCachePrice}
-                onChange={(event) =>
-                  updateValue("inputCachePrice", event.target.value)
-                }
-                placeholder="Optional"
-                className={inputClassName}
-              />
               <FieldError errors={fieldErrors.inputCachePrice} />
             </div>
 
@@ -299,18 +270,6 @@ export function ProviderFormModal({
               >
                 Output price / 1M tokens
               </label>
-              <input
-                id="provider-output-price"
-                type="number"
-                min="0"
-                step="0.000001"
-                value={values.outputPrice}
-                onChange={(event) =>
-                  updateValue("outputPrice", event.target.value)
-                }
-                placeholder="Optional"
-                className={inputClassName}
-              />
               <FieldError errors={fieldErrors.outputPrice} />
             </div>
           </div>

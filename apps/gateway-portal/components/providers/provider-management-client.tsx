@@ -275,25 +275,6 @@ export function ProviderManagementClient({
                         label="Routing status"
                         value={provider.isActive ? "Enabled" : "Disabled"}
                       />
-                      <InfoChip
-                        icon={CheckCircle2}
-                        label="Input price"
-                        value={formatPrice(provider.inputPrice)}
-                      />
-                      <InfoChip
-                        icon={CheckCircle2}
-                        label="Output price"
-                        value={formatPrice(provider.outputPrice)}
-                      />
-                    </div>
-
-                    <div className="rounded-[16px] border border-border bg-surface-1 px-3.5 py-3">
-                      <p className="text-[11px] font-medium tracking-[0.08em] text-text-tertiary uppercase">
-                        Input cache price
-                      </p>
-                      <p className="mt-1 text-sm font-medium text-text-primary">
-                        {formatPrice(provider.inputCachePrice)}
-                      </p>
                     </div>
 
                     <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
