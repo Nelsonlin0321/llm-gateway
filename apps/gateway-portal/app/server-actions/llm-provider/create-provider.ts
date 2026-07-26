@@ -65,7 +65,6 @@ export async function createProvider(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unable to create the provider.";
-
     return validationErrorResult(message);
   }
 }
