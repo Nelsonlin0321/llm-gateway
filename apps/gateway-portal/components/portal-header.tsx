@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { PortalHeaderAuth } from "@/components/portal-header-auth";
 
 type PortalHeaderNavItem = {
   label: string;
@@ -41,14 +40,7 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/workspace/overview"
-              className={cn(buttonVariants({ variant: "default", size: "sm" }))}
-            >
-              Launch portal
-            </Link>
-          </div>
+          <PortalHeaderAuth />
         </div>
       </div>
     </header>
