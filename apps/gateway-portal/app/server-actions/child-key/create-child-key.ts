@@ -45,7 +45,7 @@ export async function createChildKey(
 
     return childKeySuccess(
       childKey,
-      "Child API key created. Copy it now — it will not be shown again in full.",
+      "Child API key created. Copy it now, or reveal it later from the list.",
       apiKey,
     );
   } catch (error) {

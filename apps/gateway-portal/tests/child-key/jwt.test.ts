@@ -24,7 +24,7 @@ const samplePayload: ChildKeyJwtPayload = {
   issued_at: 1694502400,
 };
 
-test("signChildKeyToken prefixes sk_live_ and is verifiable", async () => {
+test("signChildKeyToken prefixes sk_ and is verifiable", async () => {
   process.env.JWT_SIGNING_SECRET = "test-signing-secret-for-child-keys";
 
   const token = await signChildKeyToken(samplePayload);

@@ -172,6 +172,6 @@ export type ChildKeyListItem = {
 };
 
 export type CreateChildKeyResultItem = ChildKeyListItem & {
-  /** Full `sk_live_…` token — returned only on create. */
+  /** Full `sk_…` token — returned only on create / reveal. */
   apiKey: string;
 };

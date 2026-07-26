@@ -7,6 +7,8 @@ import {
   toggleChildKeyInputSchema,
 } from "@/lib/child-key/schema";
 import {
+  decryptChildKey,
+  encryptChildKey,
   maskChildKey,
   validateCreateChildKeyInput,
   validateToggleChildKeyInput,
@@ -83,6 +85,24 @@ test("normalizeChildKeyTags keeps arbitrary string keys and drops empties", () =
     },
   );
 
-  assert.ok(maskChildKey("sk_live_abcdefghijklmnop").startsWith("sk_live_"));
-  assert.ok(maskChildKey("sk_live_abcdefghijklmnop").includes("…"));
+  assert.ok(maskChildKey("sk_abcdefghijklmnop").startsWith("sk_"));
+  assert.ok(maskChildKey("sk_abcdefghijklmnop").includes("…"));
+});
+
+test("encryptChildKey stores ciphertext; decryptChildKey restores sk_ token", () => {
+  process.env.API_ENCRYPT_KEY = "test-child-key-encryption-secret";
+
+  const plain = "sk_eyJhbGciOiJIUzI1NiJ9.payload.signature";
+  const encrypted = encryptChildKey(plain);
+
+  assert.notEqual(encrypted, plain);
+  assert.ok(!encrypted.startsWith("sk_"));
+  assert.equal(decryptChildKey(encrypted), plain);
+
+  // Plaintext must not be treated as decryptable storage.
+  assert.throws(() => decryptChildKey(plain), /invalid|decrypt/i);
+  assert.throws(
+    () => encryptChildKey("not-a-child-key"),
+    /must start with sk_/,
+  );
 });

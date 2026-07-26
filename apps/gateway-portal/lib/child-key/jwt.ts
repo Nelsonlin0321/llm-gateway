@@ -5,7 +5,7 @@ import {
   type ChildKeyJwtPayload,
 } from "@/lib/child-key/schema";
 
-export const CHILD_KEY_PREFIX = "sk_live_";
+export const CHILD_KEY_PREFIX = "sk_";
 
 function getJwtSigningSecret(): Uint8Array {
   const secret = process.env.JWT_SIGNING_SECRET;
@@ -38,7 +38,10 @@ export function unixTimestampSeconds(date: Date = new Date()): number {
 }
 
 function parseIssuedAt(payload: JWTPayload): number {
-  if (typeof payload.issued_at === "number" && Number.isFinite(payload.issued_at)) {
+  if (
+    typeof payload.issued_at === "number" &&
+    Number.isFinite(payload.issued_at)
+  ) {
     return Math.trunc(payload.issued_at);
   }
 
@@ -86,7 +89,7 @@ export function parseChildKeyJwtPayload(
   };
 }
 
-/** Sign a child-key JWT and return `sk_live_<jwt>`. */
+/** Sign a child-key JWT and return `sk_<jwt>`. */
 export async function signChildKeyToken(
   payload: ChildKeyJwtPayload,
 ): Promise<string> {

@@ -168,7 +168,7 @@ export function ChildKeyFormModal({
               Create child API key
             </h2>
             <p className="max-w-lg text-sm leading-5 text-text-secondary">
-              Generates a signed <span className="font-mono">sk_live_</span> JWT.
+              Generates a signed <span className="font-mono">sk_</span> JWT.
               Add any tags you need — env, project, team, or custom labels.
             </p>
           </div>

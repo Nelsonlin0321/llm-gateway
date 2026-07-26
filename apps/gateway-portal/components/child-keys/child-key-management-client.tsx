@@ -193,7 +193,7 @@ export function ChildKeyManagementClient({
             <CardDescription className="leading-6">
               Issue downstream credentials with free-form tags (env, project,
               team, or anything you define). Tokens are signed JWTs prefixed with{" "}
-              <span className="font-mono">sk_live_</span>.
+              <span className="font-mono">sk_</span>.
             </CardDescription>
           </div>
           <Button onClick={() => setFormOpen(true)}>

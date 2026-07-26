@@ -1,6 +1,7 @@
 "use server";
 
 import { requireSession } from "@/lib/auth-server";
+import { decryptChildKey } from "@/lib/child-key/service";
 import prisma from "@/lib/prisma";
 
 export type RevealChildKeyResult =
@@ -40,10 +41,18 @@ export async function revealChildKey(
     return { ok: false, error: "Child key not found." };
   }
 
-  return {
-    ok: true,
-    id: childKey.id,
-    name: childKey.name,
-    apiKey: childKey.key,
-  };
+  try {
+    return {
+      ok: true,
+      id: childKey.id,
+      name: childKey.name,
+      apiKey: decryptChildKey(childKey.key),
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to decrypt the child API key.";
+    return { ok: false, error: message };
+  }
 }

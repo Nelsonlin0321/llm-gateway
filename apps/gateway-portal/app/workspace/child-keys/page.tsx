@@ -35,7 +35,7 @@ export default function ChildKeysPage() {
                 Issue scoped child keys for teams, projects, and apps.
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-text-secondary sm:text-base">
-                Create signed <span className="font-mono">sk_live_</span> JWTs
+                Create signed <span className="font-mono">sk_</span> JWTs
                 with optional tags, then activate or deactivate them without
                 exposing master provider credentials.
               </p>
@@ -69,7 +69,7 @@ export default function ChildKeysPage() {
             <FeatureRow
               icon={KeyRound}
               title="Signed JWT secrets"
-              description="Tokens start with sk_live_ and are signed using JWT_SIGNING_SECRET."
+              description="Tokens start with sk_ and are signed using JWT_SIGNING_SECRET."
             />
             <FeatureRow
               icon={Tags}

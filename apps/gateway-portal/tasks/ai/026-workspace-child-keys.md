@@ -4,7 +4,7 @@
 
 Implemented `/workspace/child-keys` so workspace users can create, list, and activate/deactivate child API keys.
 
-- Keys are JWTs signed with `JWT_SIGNING_SECRET`, prefixed `sk_live_`
+- Keys are JWTs signed with `JWT_SIGNING_SECRET`, prefixed `sk_`
 - JWT payload includes `key_id`, `name`, optional `policy_id`, `tags`, `user_email`, `creator_email`, `issued_at` (unix seconds; changes on rotation)
 - Create flow reveals the full secret once (copy dialog); list shows masked preview
 - Tags: optional project / team / application / owner
@@ -49,7 +49,7 @@ npm run dev
 Manual:
 1. Open `/workspace/child-keys`
 2. Create a key with name + optional tags
-3. Copy revealed `sk_live_…` secret
+3. Copy revealed `sk_…` secret
 4. Confirm list shows name, tags, created/updated
 5. Toggle active/inactive
 
@@ -64,3 +64,10 @@ Manual:
 - Tags are no longer limited to project/team/application/owner
 - Create form supports dynamic key/value rows (env, custom labels, etc.)
 - JWT + DB store arbitrary string→string tag maps after validation
+
+## Update — encrypted storage
+
+- Child key secrets are encrypted at rest with `API_ENCRYPT_KEY` via `encryptApiKey` / `decryptApiKeyForProxy` (same AES-256-GCM scheme as provider master keys)
+- Create returns plaintext once to the client; DB only stores ciphertext
+- Reveal decrypts server-side before returning the `sk_…` token
+- No plaintext storage / no legacy pass-through — DB values are always ciphertext
