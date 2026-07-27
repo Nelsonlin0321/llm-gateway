@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Eye, KeyRound, Plus, Trash2 } from "lucide-react";
+import { Eye, KeyRound, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { z } from "zod";
@@ -9,6 +9,7 @@ import type { z } from "zod";
 import { createChildKey } from "@/app/server-actions/child-key/create-child-key";
 import { deleteChildKey } from "@/app/server-actions/child-key/delete-child-key";
 import { revealChildKey } from "@/app/server-actions/child-key/reveal-child-key";
+import { rotateChildKey } from "@/app/server-actions/child-key/rotate-child-key";
 import { toggleChildKey } from "@/app/server-actions/child-key/toggle-child-key";
 import { ChildKeyFormModal } from "@/components/child-keys/child-key-form-modal";
 import { ChildKeySecretDialog } from "@/components/child-keys/child-key-secret-dialog";
@@ -70,12 +71,15 @@ export function ChildKeyManagementClient({
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [revealingId, setRevealingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [rotatingId, setRotatingId] = useState<string | null>(null);
   const [keyPendingDelete, setKeyPendingDelete] =
+    useState<ChildKeyListItem | null>(null);
+  const [keyPendingRotate, setKeyPendingRotate] =
     useState<ChildKeyListItem | null>(null);
   const [revealedSecret, setRevealedSecret] = useState<{
     apiKey: string;
     name: string;
-    mode: "created" | "reveal";
+    mode: "created" | "rotated" | "reveal";
   } | null>(null);
 
   const stats = useMemo(() => {
@@ -163,6 +167,34 @@ export function ChildKeyManagementClient({
 
     toast.success(result.message);
     setKeyPendingDelete(null);
+    router.refresh();
+  };
+
+  const handleRotate = async () => {
+    if (!keyPendingRotate) {
+      return;
+    }
+
+    setRotatingId(keyPendingRotate.id);
+    const result = await rotateChildKey(keyPendingRotate.id);
+    setRotatingId(null);
+
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(result.message);
+    setKeyPendingRotate(null);
+
+    if (result.apiKey) {
+      setRevealedSecret({
+        apiKey: result.apiKey,
+        name: result.childKey.name,
+        mode: "rotated",
+      });
+    }
+
     router.refresh();
   };
 
@@ -290,6 +322,16 @@ export function ChildKeyManagementClient({
                       </Button>
                       <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
+                        disabled={rotatingId === key.id}
+                        onClick={() => setKeyPendingRotate(key)}
+                      >
+                        <RefreshCw className="size-3.5" />
+                        {rotatingId === key.id ? "Rotating..." : "Rotate"}
+                      </Button>
+                      <Button
+                        type="button"
                         variant="destructive"
                         size="sm"
                         disabled={deletingId === key.id}
@@ -388,6 +430,44 @@ export function ChildKeyManagementClient({
               disabled={keyPendingDelete === null || deletingId !== null}
             >
               {deletingId !== null ? "Deleting..." : "Delete child key"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={keyPendingRotate !== null}
+        onOpenChange={(open) => {
+          if (!open && rotatingId === null) {
+            setKeyPendingRotate(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Rotate {keyPendingRotate?.name ?? "child key"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This issues a new secret for the same key identity. Name, tags,
+              and expiration are kept. The current secret{" "}
+              <span className="font-mono text-text-primary">
+                {keyPendingRotate?.keyPreview ?? "this key"}
+              </span>{" "}
+              stops working immediately — update every client before or right
+              after rotating.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={rotatingId !== null}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              onClick={() => void handleRotate()}
+              disabled={keyPendingRotate === null || rotatingId !== null}
+            >
+              {rotatingId !== null ? "Rotating..." : "Rotate key"}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

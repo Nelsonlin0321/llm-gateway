@@ -178,6 +178,6 @@ export type ChildKeyListItem = {
 };
 
 export type CreateChildKeyResultItem = ChildKeyListItem & {
-  /** Full `sk_…` token — returned only on create / reveal. */
+  /** Full `sk_…` token — returned only on create / rotate / reveal. */
   apiKey: string;
 };

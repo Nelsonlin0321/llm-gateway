@@ -8,7 +8,7 @@ export type ChildKeyActionResult =
       ok: true;
       childKey: ChildKeyListItem;
       message: string;
-      /** Present only immediately after create. */
+      /** Present only immediately after create or rotate. */
       apiKey?: string;
     }
   | {

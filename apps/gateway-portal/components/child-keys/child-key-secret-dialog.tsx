@@ -10,8 +10,8 @@ type ChildKeySecretDialogProps = {
   open: boolean;
   apiKey: string;
   keyName: string;
-  /** "created" after issuance; "reveal" when re-showing a stored secret. */
-  mode?: "created" | "reveal";
+  /** "created" after issuance; "rotated" after re-issue; "reveal" for stored secret. */
+  mode?: "created" | "rotated" | "reveal";
   onClose: () => void;
 };
 
@@ -40,13 +40,23 @@ export function ChildKeySecretDialog({
   };
 
   const title =
-    mode === "reveal" ? "Child API key" : "Child key created";
+    mode === "reveal"
+      ? "Child API key"
+      : mode === "rotated"
+        ? "Child key rotated"
+        : "Child key created";
   const description =
     mode === "reveal" ? (
       <>
         Full secret for{" "}
         <span className="font-medium text-text-primary">{keyName}</span>. Treat
         this like a password — anyone with it can call the gateway.
+      </>
+    ) : mode === "rotated" ? (
+      <>
+        New secret for{" "}
+        <span className="font-medium text-text-primary">{keyName}</span>. The
+        previous secret stops working immediately — update any clients now.
       </>
     ) : (
       <>

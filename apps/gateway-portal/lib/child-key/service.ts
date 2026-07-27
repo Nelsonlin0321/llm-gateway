@@ -10,6 +10,7 @@ import {
 } from "@/lib/child-key/schema";
 import {
   CHILD_KEY_PREFIX,
+  decodeChildKeyToken,
   signChildKeyToken,
   unixTimestampSeconds,
 } from "@/lib/child-key/jwt";
@@ -19,6 +20,19 @@ import {
 } from "@/lib/llm-provider/crypto";
 
 export { normalizeChildKeyTags };
+
+/** Existing row fields needed to re-issue a rotated secret. */
+export type ChildKeyRotateSource = {
+  id: string;
+  name: string;
+  userEmail: string;
+  tags: unknown;
+  expiresAt: Date | null;
+  /** Previous issuedAt (seconds) — new value must be strictly greater. */
+  issuedAt: number;
+  /** Previous ciphertext — used to preserve policy_id from the current JWT. */
+  key: string;
+};
 
 type ChildKeyRecord = Pick<
   ChildKey,
@@ -144,4 +158,53 @@ export async function buildChildKeyCreateData(
   };
 
   return { data, apiKey, id };
+}
+
+/**
+ * Build Prisma update payload + new plaintext secret for key rotation.
+ *
+ * Keeps `id` (key_id) stable for analytics. Preserves name, tags, userEmail,
+ * and expiresAt. Issues a new JWT with a new `issued_at`, encrypts it, and
+ * overwrites the stored ciphertext so the previous secret can no longer be
+ * revealed (and fails gateway DB authz when issuedAt is checked).
+ */
+export async function buildChildKeyRotateData(
+  record: ChildKeyRotateSource,
+  creator: { email: string },
+) {
+  // Ensure issuedAt advances even if rotation happens within the same second.
+  const issuedAt = Math.max(unixTimestampSeconds(), record.issuedAt + 1);
+  const tags = normalizeChildKeyTags(record.tags);
+
+  let policyId: string | undefined;
+  try {
+    const previousPlain = decryptChildKey(record.key);
+    const previous = decodeChildKeyToken(previousPlain);
+    policyId = previous.policy_id;
+  } catch {
+    // If the previous secret cannot be decrypted/decoded, rotate without policy_id.
+  }
+
+  const exp =
+    record.expiresAt && !Number.isNaN(record.expiresAt.getTime())
+      ? Math.floor(record.expiresAt.getTime() / 1000)
+      : undefined;
+
+  const apiKey = await signChildKeyToken({
+    key_id: record.id,
+    name: record.name,
+    policy_id: policyId,
+    tags,
+    user_email: record.userEmail,
+    creator_email: creator.email,
+    issued_at: issuedAt,
+    exp,
+  });
+
+  const data: Prisma.ChildKeyUpdateInput = {
+    key: encryptChildKey(apiKey),
+    issuedAt,
+  };
+
+  return { data, apiKey, issuedAt };
 }
