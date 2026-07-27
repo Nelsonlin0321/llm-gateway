@@ -1,7 +1,4 @@
-import {
-  authorizeChildKey,
-  type ChildKeyLookup,
-} from "./authorize.js";
+import { authorizeChildKey } from "./authorize.js";
 import { decryptApiKeyForProxy } from "./crypto.js";
 import { CHILD_KEY_PREFIX, verifyChildKeyToken } from "./jwt.js";
 import type { ChildKeyAuthResult } from "./types.js";
@@ -12,7 +9,6 @@ export {
   authorizeChildKey,
   type ChildKeyAuthzResult,
   type ChildKeyDbRecord,
-  type ChildKeyLookup,
 } from "./authorize.js";
 export {
   CHILD_KEY_PREFIX,
@@ -101,9 +97,6 @@ export function extractBearerToken(
  */
 export async function authenticateChildApiKey(
   authorizationHeader: string | undefined | null,
-  options?: {
-    lookup?: ChildKeyLookup;
-  },
 ): Promise<ChildKeyAuthResult> {
   const bearer = extractBearerToken(authorizationHeader);
 
@@ -174,11 +167,7 @@ export async function authenticateChildApiKey(
     };
   }
 
-  const authz = await authorizeChildKey(
-    plainApiKey,
-    payload,
-    options?.lookup,
-  );
+  const authz = await authorizeChildKey(plainApiKey, payload);
 
   if (!authz.ok) {
     return authz;

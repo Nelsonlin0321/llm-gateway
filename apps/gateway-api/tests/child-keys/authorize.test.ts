@@ -1,27 +1,57 @@
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 import {
   authorizeChildKey,
   encryptApiKey,
   type ChildKeyDbRecord,
-  type ChildKeyLookup,
 } from "../../src/child-keys/index.js";
+import prisma from "../../src/prisma.js";
 import type { ChildKeyJwtPayload } from "../../src/child-keys/types.js";
 import { mintTestChildApiKey } from "./mint-test-key.js";
 
 const secret = "gateway-api-authorize-test-secret";
 const encryptSecret = "gateway-api-authorize-encrypt-secret";
 
-function makeLookup(record: ChildKeyDbRecord | null): ChildKeyLookup {
-  return {
-    async findById(id: string) {
-      if (!record || record.id !== id) {
-        return null;
-      }
-      return record;
-    },
-  };
+const childKeySelect = {
+  id: true,
+  key: true,
+  isActive: true,
+  expiresAt: true,
+  issuedAt: true,
+} as const;
+
+type FindUniqueHandler = (
+  id: string,
+) => ChildKeyDbRecord | null | Promise<ChildKeyDbRecord | null>;
+
+function mockFindUnique(t: TestContext, handler: FindUniqueHandler) {
+  const calls: Array<{
+    where: { id: string };
+    select: typeof childKeySelect;
+  }> = [];
+  const originalFindUnique = prisma.childKey.findUnique;
+
+  prisma.childKey.findUnique = (async (args: {
+    where: { id?: string };
+    select?: typeof childKeySelect;
+  }) => {
+    const id = args.where.id;
+    if (typeof id !== "string") {
+      throw new TypeError(
+        "Expected prisma.childKey.findUnique to receive an id.",
+      );
+    }
+    assert.deepEqual(args.select, childKeySelect);
+    calls.push({ where: { id }, select: childKeySelect });
+    return handler(id);
+  }) as unknown as typeof prisma.childKey.findUnique;
+
+  t.after(() => {
+    prisma.childKey.findUnique = originalFindUnique;
+  });
+
+  return { calls };
 }
 
 async function mintWithDb(overrides?: {
@@ -63,16 +93,20 @@ async function mintWithDb(overrides?: {
     issued_at: issuedAt,
   };
 
-  return { plainApiKey, record, payload, lookup: makeLookup(record) };
+  return { plainApiKey, record, payload };
 }
 
-test("authorizeChildKey accepts active matching key", async () => {
-  const { plainApiKey, payload, lookup } = await mintWithDb();
-  const result = await authorizeChildKey(plainApiKey, payload, lookup);
+test("authorizeChildKey accepts active matching key", async (t) => {
+  const { plainApiKey, payload, record } = await mintWithDb();
+  const findUnique = mockFindUnique(t, (id) =>
+    id === record.id ? record : null,
+  );
+  const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, true);
+  assert.equal(findUnique.calls.length, 1);
 });
 
-test("authorizeChildKey rejects missing key", async () => {
+test("authorizeChildKey rejects missing key", async (t) => {
   process.env.JWT_SIGNING_SECRET = secret;
   process.env.API_ENCRYPT_KEY = encryptSecret;
 
@@ -86,67 +120,77 @@ test("authorizeChildKey rejects missing key", async () => {
     issued_at: issuedAt,
   });
 
-  const result = await authorizeChildKey(
-    plainApiKey,
-    {
-      key_id: "missing",
-      name: "x",
-      tags: {},
-      user_email: "u@example.com",
-      creator_email: "a@example.com",
-      issued_at: issuedAt,
-    },
-    makeLookup(null),
-  );
+  const findUnique = mockFindUnique(t, () => null);
+  const result = await authorizeChildKey(plainApiKey, {
+    key_id: "missing",
+    name: "x",
+    tags: {},
+    user_email: "u@example.com",
+    creator_email: "a@example.com",
+    issued_at: issuedAt,
+  });
 
   assert.equal(result.ok, false);
+  assert.equal(findUnique.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /not found|revoked/i);
   }
 });
 
-test("authorizeChildKey rejects deactivated key", async () => {
-  const { plainApiKey, payload, lookup } = await mintWithDb({
+test("authorizeChildKey rejects deactivated key", async (t) => {
+  const { plainApiKey, payload, record } = await mintWithDb({
     isActive: false,
   });
-  const result = await authorizeChildKey(plainApiKey, payload, lookup);
+  const findUnique = mockFindUnique(t, (id) =>
+    id === record.id ? record : null,
+  );
+  const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
+  assert.equal(findUnique.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /deactivated/i);
   }
 });
 
-test("authorizeChildKey rejects expired row expiresAt", async () => {
-  const { plainApiKey, payload, lookup } = await mintWithDb({
+test("authorizeChildKey rejects expired row expiresAt", async (t) => {
+  const { plainApiKey, payload, record } = await mintWithDb({
     expiresAt: new Date(Date.now() - 60_000),
   });
-  const result = await authorizeChildKey(plainApiKey, payload, lookup);
+  const findUnique = mockFindUnique(t, (id) =>
+    id === record.id ? record : null,
+  );
+  const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
+  assert.equal(findUnique.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /expir/i);
   }
 });
 
-test("authorizeChildKey rejects rotated issuedAt mismatch", async () => {
+test("authorizeChildKey rejects rotated issuedAt mismatch", async (t) => {
   const { plainApiKey, payload, record } = await mintWithDb();
-  const rotatedLookup = makeLookup({
+  const rotatedRecord = {
     ...record,
     issuedAt: record.issuedAt + 10,
-  });
+  };
+  const findUnique = mockFindUnique(t, (id) =>
+    id === rotatedRecord.id ? rotatedRecord : null,
+  );
 
-  const result = await authorizeChildKey(plainApiKey, payload, rotatedLookup);
+  const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
+  assert.equal(findUnique.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /rotated|no longer valid/i);
   }
 });
 
-test("authorizeChildKey rejects secret mismatch", async () => {
-  const { plainApiKey, payload, lookup } = await mintWithDb({
+test("authorizeChildKey rejects secret mismatch", async (t) => {
+  const { plainApiKey, payload, record } = await mintWithDb({
     mutateStoredKey: () => {
       process.env.API_ENCRYPT_KEY = encryptSecret;
       return encryptApiKey("sk_other-secret-that-is-long-enough-xx");
@@ -154,14 +198,18 @@ test("authorizeChildKey rejects secret mismatch", async () => {
   });
 
   // stored key decrypts to different plain value → mismatch (or verify fail)
-  const result = await authorizeChildKey(plainApiKey, payload, lookup);
+  const findUnique = mockFindUnique(t, (id) =>
+    id === record.id ? record : null,
+  );
+  const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
+  assert.equal(findUnique.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
   }
 });
 
-test("authorizeChildKey returns 503 on database errors", async () => {
+test("authorizeChildKey returns 503 on database errors", async (t) => {
   process.env.JWT_SIGNING_SECRET = secret;
   process.env.API_ENCRYPT_KEY = encryptSecret;
 
@@ -175,26 +223,26 @@ test("authorizeChildKey returns 503 on database errors", async () => {
     issued_at: issuedAt,
   });
 
-  const failingLookup: ChildKeyLookup = {
-    async findById() {
-      throw new Error("connection refused");
-    },
-  };
-
-  const result = await authorizeChildKey(
-    plainApiKey,
-    {
-      key_id: "key-db-err",
-      name: "err",
-      tags: {},
-      user_email: "u@example.com",
-      creator_email: "a@example.com",
-      issued_at: issuedAt,
-    },
-    failingLookup,
-  );
+  const originalFindUnique = prisma.childKey.findUnique;
+  let callCount = 0;
+  prisma.childKey.findUnique = (async () => {
+    callCount += 1;
+    throw new Error("connection refused");
+  }) as unknown as typeof prisma.childKey.findUnique;
+  t.after(() => {
+    prisma.childKey.findUnique = originalFindUnique;
+  });
+  const result = await authorizeChildKey(plainApiKey, {
+    key_id: "key-db-err",
+    name: "err",
+    tags: {},
+    user_email: "u@example.com",
+    creator_email: "a@example.com",
+    issued_at: issuedAt,
+  });
 
   assert.equal(result.ok, false);
+  assert.equal(callCount, 1);
   if (!result.ok) {
     assert.equal(result.status, 503);
     assert.equal(result.error.type, "server_error");

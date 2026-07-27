@@ -13,7 +13,6 @@ export {
 export type {
   ChildKeyAuthzResult,
   ChildKeyDbRecord,
-  ChildKeyLookup,
 } from "./service.js";
 export { requireChildKeyAuth } from "./middleware.js";
 export type { ChildKeyAuthVariables } from "./middleware.js";

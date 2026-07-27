@@ -1,16 +1,17 @@
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 
 import {
   authenticateChildApiKey,
+  type ChildKeyDbRecord,
   decryptApiKeyForProxy,
   decryptChildKey,
   encryptApiKey,
   extractBearerToken,
   requirePlainChildApiKey,
   verifyChildKeyToken,
-  type ChildKeyLookup,
 } from "../../src/child-keys/index.js";
+import prisma from "../../src/prisma.js";
 import { mintTestChildApiKey } from "./mint-test-key.js";
 
 const secret = "gateway-api-child-key-test-secret";
@@ -32,20 +33,41 @@ async function mintKey(overrides: { exp?: number } = {}) {
   });
 }
 
-/** Lookup that accepts the presented plain key as the current DB secret. */
-async function acceptingLookup(plainApiKey: string): Promise<ChildKeyLookup> {
+function mockFindUnique(
+  t: TestContext,
+  handler: (
+    id: string,
+  ) => ChildKeyDbRecord | null | Promise<ChildKeyDbRecord | null>,
+) {
+  const calls: Array<{ where: { id: string } }> = [];
+  const originalFindUnique = prisma.childKey.findUnique;
+
+  prisma.childKey.findUnique = (async (args: { where: { id?: string } }) => {
+    const id = args.where.id;
+    if (typeof id !== "string") {
+      throw new TypeError(
+        "Expected prisma.childKey.findUnique to receive an id.",
+      );
+    }
+    calls.push({ where: { id } });
+    return handler(id);
+  }) as unknown as typeof prisma.childKey.findUnique;
+
+  t.after(() => {
+    prisma.childKey.findUnique = originalFindUnique;
+  });
+
+  return { calls };
+}
+
+async function acceptingRecord(plainApiKey: string): Promise<ChildKeyDbRecord> {
   const payload = await verifyChildKeyToken(plainApiKey);
   return {
-    async findById(id) {
-      if (id !== payload.key_id) return null;
-      return {
-        id: payload.key_id,
-        key: encryptApiKey(plainApiKey),
-        isActive: true,
-        expiresAt: null,
-        issuedAt: payload.issued_at,
-      };
-    },
+    id: payload.key_id,
+    key: encryptApiKey(plainApiKey),
+    isActive: true,
+    expiresAt: null,
+    issuedAt: payload.issued_at,
   };
 }
 
@@ -56,14 +78,17 @@ test("extractBearerToken parses Authorization header", () => {
   assert.equal(extractBearerToken("Basic x"), null);
 });
 
-test("authenticateChildApiKey accepts a plain sk_ JWT bearer token", async () => {
+test("authenticateChildApiKey accepts a plain sk_ JWT bearer token", async (t) => {
   const apiKey = await mintKey();
   assert.ok(apiKey.startsWith("sk_"));
+  const record = await acceptingRecord(apiKey);
+  const findUnique = mockFindUnique(t, (id) =>
+    id === record.id ? record : null,
+  );
 
-  const result = await authenticateChildApiKey(`Bearer ${apiKey}`, {
-    lookup: await acceptingLookup(apiKey),
-  });
+  const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
   assert.equal(result.ok, true);
+  assert.equal(findUnique.calls.length, 1);
   if (result.ok) {
     assert.equal(result.payload.key_id, "key-test-1");
     assert.equal(result.payload.user_email, "user@example.com");
@@ -72,17 +97,25 @@ test("authenticateChildApiKey accepts a plain sk_ JWT bearer token", async () =>
   }
 });
 
-test("authenticateChildApiKey rejects encrypted DB values as bearer tokens", async () => {
+test("authenticateChildApiKey rejects encrypted DB values as bearer tokens", async (t) => {
   const apiKey = await mintKey();
   const encrypted = encryptApiKey(apiKey);
   assert.notEqual(encrypted, apiKey);
   assert.equal(decryptChildKey(encrypted), apiKey);
   assert.equal(decryptApiKeyForProxy(encrypted), apiKey);
-
-  const result = await authenticateChildApiKey(`Bearer ${encrypted}`, {
-    lookup: await acceptingLookup(apiKey),
+  const originalFindUnique = prisma.childKey.findUnique;
+  let callCount = 0;
+  prisma.childKey.findUnique = (async () => {
+    callCount += 1;
+    throw new Error("DB lookup should not run for encrypted bearer tokens");
+  }) as unknown as typeof prisma.childKey.findUnique;
+  t.after(() => {
+    prisma.childKey.findUnique = originalFindUnique;
   });
+
+  const result = await authenticateChildApiKey(`Bearer ${encrypted}`);
   assert.equal(result.ok, false);
+  assert.equal(callCount, 0);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /plain secret starting with sk_/i);
@@ -98,7 +131,7 @@ test("authenticateChildApiKey rejects missing Authorization", async () => {
   }
 });
 
-test("authenticateChildApiKey rejects expired JWT", async () => {
+test("authenticateChildApiKey rejects expired JWT", async (t) => {
   process.env.JWT_SIGNING_SECRET = secret;
   process.env.API_ENCRYPT_KEY = encryptSecret;
   const issuedAt = Math.floor(Date.now() / 1000) - 120;
@@ -112,54 +145,63 @@ test("authenticateChildApiKey rejects expired JWT", async () => {
     exp: issuedAt + 30,
   });
 
-  // JWT expires before DB lookup; provide a no-op lookup that must not run.
-  const result = await authenticateChildApiKey(`Bearer ${apiKey}`, {
-    lookup: {
-      async findById() {
-        assert.fail("DB lookup should not run for an expired JWT");
-        return null;
-      },
-    },
+  const originalFindUnique = prisma.childKey.findUnique;
+  let callCount = 0;
+  prisma.childKey.findUnique = (async () => {
+    callCount += 1;
+    throw new Error("DB lookup should not run for an expired JWT");
+  }) as unknown as typeof prisma.childKey.findUnique;
+  t.after(() => {
+    prisma.childKey.findUnique = originalFindUnique;
   });
+  const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
   assert.equal(result.ok, false);
+  assert.equal(callCount, 0);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /expir/i);
   }
 });
 
-test("authenticateChildApiKey rejects invalid signatures", async () => {
+test("authenticateChildApiKey rejects invalid signatures", async (t) => {
   const apiKey = await mintKey();
-  const lookup = await acceptingLookup(apiKey);
+  const originalFindUnique = prisma.childKey.findUnique;
+  let callCount = 0;
+  prisma.childKey.findUnique = (async () => {
+    callCount += 1;
+    throw new Error("DB lookup should not run for invalid signatures");
+  }) as unknown as typeof prisma.childKey.findUnique;
+  t.after(() => {
+    prisma.childKey.findUnique = originalFindUnique;
+  });
 
   process.env.JWT_SIGNING_SECRET = "other-secret";
-  const result = await authenticateChildApiKey(`Bearer ${apiKey}`, { lookup });
+  const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
   assert.equal(result.ok, false);
+  assert.equal(callCount, 0);
   if (!result.ok) {
     assert.equal(result.status, 401);
   }
 });
 
-test("authenticateChildApiKey rejects deactivated DB key after JWT verify", async () => {
+test("authenticateChildApiKey rejects deactivated DB key after JWT verify", async (t) => {
   const apiKey = await mintKey();
   const payload = await verifyChildKeyToken(apiKey);
-
-  const result = await authenticateChildApiKey(`Bearer ${apiKey}`, {
-    lookup: {
-      async findById(id) {
-        if (id !== payload.key_id) return null;
-        return {
-          id: payload.key_id,
-          key: encryptApiKey(apiKey),
-          isActive: false,
-          expiresAt: null,
-          issuedAt: payload.issued_at,
-        };
-      },
-    },
+  const findUnique = mockFindUnique(t, (id) => {
+    if (id !== payload.key_id) return null;
+    return {
+      id: payload.key_id,
+      key: encryptApiKey(apiKey),
+      isActive: false,
+      expiresAt: null,
+      issuedAt: payload.issued_at,
+    };
   });
 
+  const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
+
   assert.equal(result.ok, false);
+  assert.equal(findUnique.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /deactivated/i);

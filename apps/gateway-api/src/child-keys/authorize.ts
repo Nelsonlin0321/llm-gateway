@@ -12,31 +12,12 @@ export type ChildKeyDbRecord = {
   issuedAt: number;
 };
 
-export type ChildKeyLookup = {
-  findById(id: string): Promise<ChildKeyDbRecord | null>;
-};
-
 export type ChildKeyAuthzSuccess = {
   ok: true;
   record: ChildKeyDbRecord;
 };
 
 export type ChildKeyAuthzResult = ChildKeyAuthzSuccess | ChildKeyAuthFailure;
-
-const defaultLookup: ChildKeyLookup = {
-  async findById(id: string) {
-    return prisma.childKey.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        key: true,
-        isActive: true,
-        expiresAt: true,
-        issuedAt: true,
-      },
-    });
-  },
-};
 
 function authzFailure(
   status: 401 | 503,
@@ -74,12 +55,20 @@ function secretsEqual(a: string, b: string): boolean {
 export async function authorizeChildKey(
   plainApiKey: string,
   payload: ChildKeyJwtPayload,
-  lookup: ChildKeyLookup = defaultLookup,
 ): Promise<ChildKeyAuthzResult> {
   let record: ChildKeyDbRecord | null;
 
   try {
-    record = await lookup.findById(payload.key_id);
+    record = await prisma.childKey.findUnique({
+      where: { id: payload.key_id },
+      select: {
+        id: true,
+        key: true,
+        isActive: true,
+        expiresAt: true,
+        issuedAt: true,
+      },
+    });
   } catch (error) {
     const detail =
       error instanceof Error ? error.message : "database unavailable";
@@ -103,10 +92,7 @@ export async function authorizeChildKey(
   }
 
   if (record.issuedAt !== payload.issued_at) {
-    return authzFailure(
-      401,
-      "API key has been rotated or is no longer valid.",
-    );
+    return authzFailure(401, "API key has been rotated or is no longer valid.");
   }
 
   try {
