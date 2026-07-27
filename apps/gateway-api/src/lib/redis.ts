@@ -15,10 +15,19 @@ export interface RedisCacheClient {
 }
 
 const REDIS_URL = process.env.REDIS_URL;
+let redisClient: RedisCacheClient | null | undefined;
 
-export const redis: RedisCacheClient | null = REDIS_URL
-  ? (new Redis(REDIS_URL) as unknown as RedisCacheClient)
-  : null;
+export function getRedisClient(): RedisCacheClient | null {
+  if (redisClient !== undefined) {
+    return redisClient;
+  }
+
+  redisClient = REDIS_URL
+    ? (new Redis(REDIS_URL) as unknown as RedisCacheClient)
+    : null;
+
+  return redisClient;
+}
 
 function reviveCachedValue(_key: string, value: unknown) {
   if (typeof value !== "string" || !ISO_DATE_TIME_RE.test(value)) {
@@ -45,7 +54,7 @@ export async function redis_cache<T>(
   key: string,
   fn: () => Promise<T>,
   ttl: number = DEFAULT_TTL,
-  client: RedisCacheClient | null = redis,
+  client: RedisCacheClient | null = getRedisClient(),
 ): Promise<T> {
   if (!client) {
     return fn();
@@ -75,4 +84,4 @@ export async function redis_cache<T>(
   return result;
 }
 
-export default redis;
+export default getRedisClient;
