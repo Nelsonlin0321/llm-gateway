@@ -4,7 +4,7 @@ import { authenticateChildApiKey } from "./service.js";
 import type { ChildKeyJwtPayload } from "./types.js";
 
 export type ChildKeyAuthVariables = {
-  childKey: ChildKeyJwtPayload;
+  childKeyPayload: ChildKeyJwtPayload;
   childApiKey: string;
 };
 
@@ -25,7 +25,7 @@ export const requireChildKeyAuth: MiddlewareHandler<{
     return c.json({ error: result.error }, result.status as 401 | 403 | 503);
   }
 
-  c.set("childKey", result.payload);
+  c.set("childKeyPayload", result.payload);
   c.set("childApiKey", result.plainApiKey);
   await next();
 };
