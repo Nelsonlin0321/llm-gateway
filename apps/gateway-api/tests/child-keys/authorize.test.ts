@@ -13,37 +13,41 @@ import { mintTestChildApiKey } from "./mint-test-key.js";
 const secret = "gateway-api-authorize-test-secret";
 const encryptSecret = "gateway-api-authorize-encrypt-secret";
 
-const childKeySelect = {
-  id: true,
-  key: true,
-  isActive: true,
-  expiresAt: true,
-  issuedAt: true,
-} as const;
+function buildChildKeyRecord(
+  overrides: Partial<ChildKeyDbRecord>,
+): ChildKeyDbRecord {
+  return {
+    id: "key-db-1",
+    name: "db-key",
+    key: "encrypted-key",
+    creatorId: "creator-1",
+    userEmail: "user@example.com",
+    isActive: true,
+    tags: { env: "test" },
+    expiresAt: null,
+    issuedAt: Math.floor(Date.now() / 1000),
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    ...overrides,
+  };
+}
 
 type FindUniqueHandler = (
   id: string,
 ) => ChildKeyDbRecord | null | Promise<ChildKeyDbRecord | null>;
 
 function mockFindUnique(t: TestContext, handler: FindUniqueHandler) {
-  const calls: Array<{
-    where: { id: string };
-    select: typeof childKeySelect;
-  }> = [];
+  const calls: Array<{ where: { id: string } }> = [];
   const originalFindUnique = prisma.childKey.findUnique;
 
-  prisma.childKey.findUnique = (async (args: {
-    where: { id?: string };
-    select?: typeof childKeySelect;
-  }) => {
+  prisma.childKey.findUnique = (async (args: { where: { id?: string } }) => {
     const id = args.where.id;
     if (typeof id !== "string") {
       throw new TypeError(
         "Expected prisma.childKey.findUnique to receive an id.",
       );
     }
-    assert.deepEqual(args.select, childKeySelect);
-    calls.push({ where: { id }, select: childKeySelect });
+    calls.push({ where: { id } });
     return handler(id);
   }) as unknown as typeof prisma.childKey.findUnique;
 
@@ -67,29 +71,24 @@ async function mintWithDb(overrides?: {
   const plainApiKey = await mintTestChildApiKey({
     key_id: "key-db-1",
     name: "db-key",
-    tags: { env: "test" },
-    user_email: "user@example.com",
-    creator_email: "admin@example.com",
     issued_at: issuedAt,
   });
 
   const encrypted = encryptApiKey(plainApiKey);
-  const record: ChildKeyDbRecord = {
+  const record: ChildKeyDbRecord = buildChildKeyRecord({
     id: "key-db-1",
+    name: "db-key",
     key: overrides?.mutateStoredKey
       ? overrides.mutateStoredKey(encrypted)
       : encrypted,
     isActive: overrides?.isActive ?? true,
     expiresAt: overrides?.expiresAt === undefined ? null : overrides.expiresAt,
     issuedAt,
-  };
+  });
 
   const payload: ChildKeyJwtPayload = {
     key_id: "key-db-1",
     name: "db-key",
-    tags: { env: "test" },
-    user_email: "user@example.com",
-    creator_email: "admin@example.com",
     issued_at: issuedAt,
   };
 
@@ -114,9 +113,6 @@ test("authorizeChildKey rejects missing key", async (t) => {
   const plainApiKey = await mintTestChildApiKey({
     key_id: "missing",
     name: "x",
-    tags: {},
-    user_email: "u@example.com",
-    creator_email: "a@example.com",
     issued_at: issuedAt,
   });
 
@@ -124,9 +120,6 @@ test("authorizeChildKey rejects missing key", async (t) => {
   const result = await authorizeChildKey(plainApiKey, {
     key_id: "missing",
     name: "x",
-    tags: {},
-    user_email: "u@example.com",
-    creator_email: "a@example.com",
     issued_at: issuedAt,
   });
 
@@ -217,9 +210,6 @@ test("authorizeChildKey returns 503 on database errors", async (t) => {
   const plainApiKey = await mintTestChildApiKey({
     key_id: "key-db-err",
     name: "err",
-    tags: {},
-    user_email: "u@example.com",
-    creator_email: "a@example.com",
     issued_at: issuedAt,
   });
 
@@ -235,9 +225,6 @@ test("authorizeChildKey returns 503 on database errors", async (t) => {
   const result = await authorizeChildKey(plainApiKey, {
     key_id: "key-db-err",
     name: "err",
-    tags: {},
-    user_email: "u@example.com",
-    creator_email: "a@example.com",
     issued_at: issuedAt,
   });
 

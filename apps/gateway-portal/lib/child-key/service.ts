@@ -119,7 +119,7 @@ export function toChildKeyListItem(record: ChildKeyRecord): ChildKeyListItem {
 
 export async function buildChildKeyCreateData(
   input: CreateChildKeyInput,
-  creator: { id: string; email: string },
+  creator: { id: string },
 ) {
   const id = randomUUID();
   const tags = input.tags ?? {};
@@ -135,9 +135,6 @@ export async function buildChildKeyCreateData(
     key_id: id,
     name: input.name,
     policy_id: input.policyId,
-    tags,
-    user_email: input.userEmail,
-    creator_email: creator.email,
     issued_at: issuedAt,
     exp,
   });
@@ -163,18 +160,13 @@ export async function buildChildKeyCreateData(
 /**
  * Build Prisma update payload + new plaintext secret for key rotation.
  *
- * Keeps `id` (key_id) stable for analytics. Preserves name, tags, userEmail,
- * and expiresAt. Issues a new JWT with a new `issued_at`, encrypts it, and
- * overwrites the stored ciphertext so the previous secret can no longer be
- * revealed (and fails gateway DB authz when issuedAt is checked).
+ * Keeps `id` (key_id) stable for analytics. Preserves name and expiresAt,
+ * issues a new JWT with a new `issued_at`, encrypts it, and overwrites the
+ * stored ciphertext so the previous secret can no longer be revealed.
  */
-export async function buildChildKeyRotateData(
-  record: ChildKeyRotateSource,
-  creator: { email: string },
-) {
+export async function buildChildKeyRotateData(record: ChildKeyRotateSource) {
   // Ensure issuedAt advances even if rotation happens within the same second.
   const issuedAt = Math.max(unixTimestampSeconds(), record.issuedAt + 1);
-  const tags = normalizeChildKeyTags(record.tags);
 
   let policyId: string | undefined;
   try {
@@ -194,9 +186,6 @@ export async function buildChildKeyRotateData(
     key_id: record.id,
     name: record.name,
     policy_id: policyId,
-    tags,
-    user_email: record.userEmail,
-    creator_email: creator.email,
     issued_at: issuedAt,
     exp,
   });

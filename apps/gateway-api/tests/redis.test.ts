@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { redis_cache, type RedisCacheClient } from "../lib/redis.js";
+import { redis_cache, type RedisCacheClient } from "../src/lib/redis.js";
 
 type CachedUser = {
   createdAt: Date;

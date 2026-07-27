@@ -1,9 +1,6 @@
 import { decodeJwt, jwtVerify, SignJWT, type JWTPayload } from "jose";
 
-import {
-  normalizeChildKeyTags,
-  type ChildKeyJwtPayload,
-} from "@/lib/child-key/schema";
+import { type ChildKeyJwtPayload } from "@/lib/child-key/schema";
 
 export const CHILD_KEY_PREFIX = "sk_";
 
@@ -45,11 +42,6 @@ function parseIssuedAt(payload: JWTPayload): number {
     return Math.trunc(payload.issued_at);
   }
 
-  // Legacy tokens may only have standard JWT `iat`.
-  if (typeof payload.iat === "number" && Number.isFinite(payload.iat)) {
-    return Math.trunc(payload.iat);
-  }
-
   throw new Error("Child key token payload is missing issued_at.");
 }
 
@@ -62,18 +54,6 @@ export function parseChildKeyJwtPayload(
   if (typeof payload.name !== "string" || payload.name.length === 0) {
     throw new Error("Child key token payload is missing name.");
   }
-  if (
-    typeof payload.user_email !== "string" ||
-    payload.user_email.length === 0
-  ) {
-    throw new Error("Child key token payload is missing user_email.");
-  }
-  if (
-    typeof payload.creator_email !== "string" ||
-    payload.creator_email.length === 0
-  ) {
-    throw new Error("Child key token payload is missing creator_email.");
-  }
 
   return {
     key_id: payload.key_id,
@@ -82,9 +62,6 @@ export function parseChildKeyJwtPayload(
       typeof payload.policy_id === "string" && payload.policy_id.length > 0
         ? payload.policy_id
         : undefined,
-    tags: normalizeChildKeyTags(payload.tags),
-    user_email: payload.user_email,
-    creator_email: payload.creator_email,
     issued_at: parseIssuedAt(payload),
     exp:
       typeof payload.exp === "number" && Number.isFinite(payload.exp)
@@ -102,9 +79,6 @@ export async function signChildKeyToken(
   const claims: Record<string, unknown> = {
     key_id: payload.key_id,
     name: payload.name,
-    tags: payload.tags ?? {},
-    user_email: payload.user_email,
-    creator_email: payload.creator_email,
     issued_at: issuedAt,
   };
 
@@ -112,10 +86,10 @@ export async function signChildKeyToken(
     claims.policy_id = payload.policy_id;
   }
 
-  let signer = new SignJWT(claims)
-    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setSubject(payload.key_id)
-    .setIssuedAt(issuedAt);
+  let signer = new SignJWT(claims).setProtectedHeader({
+    alg: "HS256",
+    typ: "JWT",
+  });
 
   if (
     typeof payload.exp === "number" &&

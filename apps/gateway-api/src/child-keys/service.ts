@@ -20,7 +20,6 @@ export type {
   ChildKeyAuthResult,
   ChildKeyAuthSuccess,
   ChildKeyJwtPayload,
-  ChildKeyTags,
 } from "./types.js";
 
 /**
@@ -129,7 +128,7 @@ export async function authenticateChildApiKey(
 
   let payload;
   try {
-    // Verify JWT and decode claims (key_id, tags, emails, issued_at, exp, …).
+    // Verify JWT and decode claims (key_id, name, policy_id, issued_at, exp).
     payload = await verifyChildKeyToken(plainApiKey);
 
     if (

@@ -21,5 +21,4 @@ export type {
   ChildKeyAuthResult,
   ChildKeyAuthSuccess,
   ChildKeyJwtPayload,
-  ChildKeyTags,
 } from "./types.js";

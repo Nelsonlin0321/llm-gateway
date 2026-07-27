@@ -32,7 +32,7 @@ test("buildChildKeyRotateData issues a new sk_ secret and advances issuedAt", as
       policyId: "policy-abc",
       expiresAt: undefined,
     },
-    { id: "user-1", email: "admin@example.com" },
+    { id: "user-1" },
   );
 
   assert.ok(created.apiKey.startsWith(CHILD_KEY_PREFIX));
@@ -49,7 +49,6 @@ test("buildChildKeyRotateData issues a new sk_ secret and advances issuedAt", as
       issuedAt: created.data.issuedAt as number,
       key: created.data.key as string,
     },
-    { email: "admin@example.com" },
   );
 
   assert.ok(rotated.apiKey.startsWith(CHILD_KEY_PREFIX));
@@ -60,11 +59,7 @@ test("buildChildKeyRotateData issues a new sk_ secret and advances issuedAt", as
   const verified = await verifyChildKeyToken(rotated.apiKey);
   assert.equal(verified.key_id, created.id);
   assert.equal(verified.name, "team-growth-prod");
-  assert.equal(verified.user_email, "dev@example.com");
-  assert.equal(verified.creator_email, "admin@example.com");
   assert.equal(verified.policy_id, "policy-abc");
-  assert.equal(verified.tags.env, "prod");
-  assert.equal(verified.tags.team, "growth");
   assert.equal(verified.issued_at, rotated.issuedAt);
 
   // New ciphertext decrypts to the new secret only.
@@ -85,7 +80,7 @@ test("buildChildKeyRotateData preserves expiresAt as JWT exp and keeps id stable
       policyId: undefined,
       expiresAt: expiresAt.toISOString(),
     },
-    { id: "user-2", email: "ops@example.com" },
+    { id: "user-2" },
   );
 
   const rotated = await buildChildKeyRotateData(
@@ -98,7 +93,6 @@ test("buildChildKeyRotateData preserves expiresAt as JWT exp and keeps id stable
       issuedAt: created.data.issuedAt as number,
       key: created.data.key as string,
     },
-    { email: "ops@example.com" },
   );
 
   const verified = await verifyChildKeyToken(rotated.apiKey);
@@ -118,7 +112,7 @@ test("encryptChildKey / decryptChildKey round-trip for rotated secret", async ()
       policyId: undefined,
       expiresAt: undefined,
     },
-    { id: "user-3", email: "admin@example.com" },
+    { id: "user-3" },
   );
 
   const cipher = encryptChildKey(created.apiKey);

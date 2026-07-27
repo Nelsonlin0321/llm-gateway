@@ -33,7 +33,6 @@ export async function createChildKey(
   try {
     const { data, apiKey } = await buildChildKeyCreateData(parsed.data, {
       id: session.user.id,
-      email: session.user.email,
     });
 
     const childKey = await prisma.childKey.create({

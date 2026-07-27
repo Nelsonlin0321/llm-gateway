@@ -17,6 +17,25 @@ import { mintTestChildApiKey } from "./mint-test-key.js";
 const secret = "gateway-api-child-key-test-secret";
 const encryptSecret = "gateway-api-child-key-encrypt-secret";
 
+function buildChildKeyRecord(
+  overrides: Partial<ChildKeyDbRecord>,
+): ChildKeyDbRecord {
+  return {
+    id: "key-test-1",
+    name: "test-key",
+    key: "encrypted-key",
+    creatorId: "creator-1",
+    userEmail: "user@example.com",
+    isActive: true,
+    tags: { env: "test", project: "gateway" },
+    expiresAt: null,
+    issuedAt: Math.floor(Date.now() / 1000),
+    createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+    ...overrides,
+  };
+}
+
 async function mintKey(overrides: { exp?: number } = {}) {
   process.env.JWT_SIGNING_SECRET = secret;
   process.env.API_ENCRYPT_KEY = encryptSecret;
@@ -25,9 +44,6 @@ async function mintKey(overrides: { exp?: number } = {}) {
   return mintTestChildApiKey({
     key_id: "key-test-1",
     name: "test-key",
-    tags: { env: "test", project: "gateway" },
-    user_email: "user@example.com",
-    creator_email: "admin@example.com",
     issued_at: issuedAt,
     exp: overrides.exp,
   });
@@ -62,13 +78,12 @@ function mockFindUnique(
 
 async function acceptingRecord(plainApiKey: string): Promise<ChildKeyDbRecord> {
   const payload = await verifyChildKeyToken(plainApiKey);
-  return {
+  return buildChildKeyRecord({
     id: payload.key_id,
+    name: payload.name,
     key: encryptApiKey(plainApiKey),
-    isActive: true,
-    expiresAt: null,
     issuedAt: payload.issued_at,
-  };
+  });
 }
 
 test("extractBearerToken parses Authorization header", () => {
@@ -91,8 +106,6 @@ test("authenticateChildApiKey accepts a plain sk_ JWT bearer token", async (t) =
   assert.equal(findUnique.calls.length, 1);
   if (result.ok) {
     assert.equal(result.payload.key_id, "key-test-1");
-    assert.equal(result.payload.user_email, "user@example.com");
-    assert.equal(result.payload.tags.env, "test");
     assert.equal(result.plainApiKey, apiKey);
   }
 });
@@ -138,9 +151,6 @@ test("authenticateChildApiKey rejects expired JWT", async (t) => {
   const apiKey = await mintTestChildApiKey({
     key_id: "key-expired",
     name: "expired",
-    tags: {},
-    user_email: "user@example.com",
-    creator_email: "admin@example.com",
     issued_at: issuedAt,
     exp: issuedAt + 30,
   });
@@ -189,13 +199,13 @@ test("authenticateChildApiKey rejects deactivated DB key after JWT verify", asyn
   const payload = await verifyChildKeyToken(apiKey);
   const findUnique = mockFindUnique(t, (id) => {
     if (id !== payload.key_id) return null;
-    return {
+    return buildChildKeyRecord({
       id: payload.key_id,
+      name: payload.name,
       key: encryptApiKey(apiKey),
       isActive: false,
-      expiresAt: null,
       issuedAt: payload.issued_at,
-    };
+    });
   });
 
   const result = await authenticateChildApiKey(`Bearer ${apiKey}`);

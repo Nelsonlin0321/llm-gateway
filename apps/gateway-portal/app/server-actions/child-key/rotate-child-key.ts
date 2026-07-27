@@ -50,9 +50,7 @@ export async function rotateChildKey(
   }
 
   try {
-    const { data, apiKey } = await buildChildKeyRotateData(existing, {
-      email: session.user.email,
-    });
+    const { data, apiKey } = await buildChildKeyRotateData(existing);
 
     const childKey = await prisma.childKey.update({
       where: { id: existing.id },

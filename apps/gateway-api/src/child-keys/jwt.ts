@@ -1,6 +1,6 @@
 import { decodeJwt, jwtVerify, type JWTPayload } from "jose";
 
-import type { ChildKeyJwtPayload, ChildKeyTags } from "./types.js";
+import type { ChildKeyJwtPayload } from "./types.js";
 
 export const CHILD_KEY_PREFIX = "sk_";
 
@@ -30,37 +30,12 @@ export function withChildKeyPrefix(jwt: string): string {
   return `${CHILD_KEY_PREFIX}${jwt}`;
 }
 
-function normalizeTags(value: unknown): ChildKeyTags {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-
-  const tags: ChildKeyTags = {};
-  for (const [rawKey, rawValue] of Object.entries(
-    value as Record<string, unknown>,
-  )) {
-    const key = rawKey.trim();
-    if (!key || typeof rawValue !== "string") {
-      continue;
-    }
-    const trimmed = rawValue.trim();
-    if (trimmed) {
-      tags[key] = trimmed;
-    }
-  }
-  return tags;
-}
-
 function parseIssuedAt(payload: JWTPayload): number {
   if (
     typeof payload.issued_at === "number" &&
     Number.isFinite(payload.issued_at)
   ) {
     return Math.trunc(payload.issued_at);
-  }
-
-  if (typeof payload.iat === "number" && Number.isFinite(payload.iat)) {
-    return Math.trunc(payload.iat);
   }
 
   throw new Error("Child key token payload is missing issued_at.");
@@ -75,18 +50,6 @@ export function parseChildKeyJwtPayload(
   if (typeof payload.name !== "string" || payload.name.length === 0) {
     throw new Error("Child key token payload is missing name.");
   }
-  if (
-    typeof payload.user_email !== "string" ||
-    payload.user_email.length === 0
-  ) {
-    throw new Error("Child key token payload is missing user_email.");
-  }
-  if (
-    typeof payload.creator_email !== "string" ||
-    payload.creator_email.length === 0
-  ) {
-    throw new Error("Child key token payload is missing creator_email.");
-  }
 
   return {
     key_id: payload.key_id,
@@ -95,9 +58,6 @@ export function parseChildKeyJwtPayload(
       typeof payload.policy_id === "string" && payload.policy_id.length > 0
         ? payload.policy_id
         : undefined,
-    tags: normalizeTags(payload.tags),
-    user_email: payload.user_email,
-    creator_email: payload.creator_email,
     issued_at: parseIssuedAt(payload),
     exp:
       typeof payload.exp === "number" && Number.isFinite(payload.exp)

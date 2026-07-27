@@ -22,9 +22,6 @@ export async function mintTestChildApiKey(
   const claims: Record<string, unknown> = {
     key_id: payload.key_id,
     name: payload.name,
-    tags: payload.tags ?? {},
-    user_email: payload.user_email,
-    creator_email: payload.creator_email,
     issued_at: issuedAt,
   };
 
@@ -32,10 +29,10 @@ export async function mintTestChildApiKey(
     claims.policy_id = payload.policy_id;
   }
 
-  let signer = new SignJWT(claims)
-    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-    .setSubject(payload.key_id)
-    .setIssuedAt(issuedAt);
+  let signer = new SignJWT(claims).setProtectedHeader({
+    alg: "HS256",
+    typ: "JWT",
+  });
 
   if (
     typeof payload.exp === "number" &&

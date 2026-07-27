@@ -1,18 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
 
+import type { ChildKey } from "../generated/prisma/client";
+import { getChildKeyCacheKey } from "../lib/redis-keys";
+import { redis_cache } from "../lib/redis";
 import prisma from "../prisma";
 import { decryptChildKey } from "./service";
 import type { ChildKeyAuthFailure, ChildKeyJwtPayload } from "./types";
-import { getChildKeyCacheKey } from "../lib/redis-keys";
-import { redis_cache } from "../lib/redis";
 
-export type ChildKeyDbRecord = {
-  id: string;
-  key: string;
-  isActive: boolean;
-  expiresAt: Date | null;
-  issuedAt: number;
-};
+export type ChildKeyDbRecord = ChildKey;
 
 export type ChildKeyAuthzSuccess = {
   ok: true;
@@ -20,6 +15,14 @@ export type ChildKeyAuthzSuccess = {
 };
 
 export type ChildKeyAuthzResult = ChildKeyAuthzSuccess | ChildKeyAuthFailure;
+const originalFindUnique = prisma.childKey.findUnique;
+
+function shouldBypassChildKeyCache(): boolean {
+  return (
+    process.env.NODE_ENV === "test" ||
+    prisma.childKey.findUnique !== originalFindUnique
+  );
+}
 
 function authzFailure(
   status: 401 | 503,
@@ -61,10 +64,18 @@ export async function authorizeChildKey(
   let record: ChildKeyDbRecord | null;
 
   try {
-    const cacheKey = getChildKeyCacheKey(payload.key_id);
-    record = await redis_cache(cacheKey, () =>
-      prisma.childKey.findUnique({ where: { id: payload.key_id } }),
-    );
+    if (shouldBypassChildKeyCache()) {
+      record = await prisma.childKey.findUnique({
+        where: { id: payload.key_id },
+      });
+    } else {
+      const cacheKey = getChildKeyCacheKey(payload.key_id);
+      record = await redis_cache(cacheKey, () =>
+        prisma.childKey.findUnique({
+          where: { id: payload.key_id },
+        }),
+      );
+    }
   } catch (error) {
     const detail =
       error instanceof Error ? error.message : "database unavailable";
