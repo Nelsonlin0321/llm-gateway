@@ -16,7 +16,7 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { providers } from "../src/providers.js";
-
+const childApiKey = process.env.CHILD_API_KEY || "";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:8080").replace(
   /\/$/,
@@ -118,6 +118,7 @@ async function runProviderTest(
       method: "POST",
       headers: {
         "content-type": "application/json",
+        Authorization: `Bearer ${childApiKey}`,
       },
       body: JSON.stringify(payload),
     });

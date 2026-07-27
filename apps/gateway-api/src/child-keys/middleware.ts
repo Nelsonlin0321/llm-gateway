@@ -19,13 +19,10 @@ export type ChildKeyAuthVariables = {
 export const requireChildKeyAuth: MiddlewareHandler<{
   Variables: ChildKeyAuthVariables;
 }> = async (c, next) => {
-  const result = await authenticateChildApiKey(c.req.header("authorization"));
+  const result = await authenticateChildApiKey(c.req.header("Authorization"));
 
   if (!result.ok) {
-    return c.json(
-      { error: result.error },
-      result.status as 401 | 403 | 503,
-    );
+    return c.json({ error: result.error }, result.status as 401 | 403 | 503);
   }
 
   c.set("childKey", result.payload);
