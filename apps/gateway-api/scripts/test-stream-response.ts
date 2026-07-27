@@ -11,7 +11,7 @@
  * Env:
  *   PROXY_BASE_URL  default http://localhost:8080
  */
-
+import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
