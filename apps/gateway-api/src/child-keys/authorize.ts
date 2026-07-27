@@ -1,8 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 
-import prisma from "../prisma.js";
-import { decryptChildKey } from "./service.js";
-import type { ChildKeyAuthFailure, ChildKeyJwtPayload } from "./types.js";
+import prisma from "../prisma";
+import { decryptChildKey } from "./service";
+import type { ChildKeyAuthFailure, ChildKeyJwtPayload } from "./types";
+import { getChildKeyCacheKey } from "../lib/redis-keys";
+import { redis_cache } from "../lib/redis";
 
 export type ChildKeyDbRecord = {
   id: string;
@@ -59,16 +61,10 @@ export async function authorizeChildKey(
   let record: ChildKeyDbRecord | null;
 
   try {
-    record = await prisma.childKey.findUnique({
-      where: { id: payload.key_id },
-      select: {
-        id: true,
-        key: true,
-        isActive: true,
-        expiresAt: true,
-        issuedAt: true,
-      },
-    });
+    const cacheKey = getChildKeyCacheKey(payload.key_id);
+    record = await redis_cache(cacheKey, () =>
+      prisma.childKey.findUnique({ where: { id: payload.key_id } }),
+    );
   } catch (error) {
     const detail =
       error instanceof Error ? error.message : "database unavailable";

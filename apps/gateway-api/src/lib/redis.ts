@@ -1,9 +1,14 @@
+import "dotenv/config";
 import Redis from "ioredis";
 
 const DEFAULT_TTL = 60 * 60 * 24 * 30;
 const ISO_DATE_TIME_RE =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/;
 
+/**
+ * Minimal Redis surface used by `redis_cache`.
+ * Compatible with ioredis: `set(key, value)` or `set(key, value, "EX", seconds)`.
+ */
 export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ...args: unknown[]): Promise<unknown>;
@@ -28,6 +33,14 @@ export function parseRedisCacheValue<T>(cached: string): T {
   return JSON.parse(cached, reviveCachedValue) as T;
 }
 
+/**
+ * Cache the result of an async loader behind a Redis key.
+ *
+ * - Cache miss / Redis errors fall through to `fn`.
+ * - Write failures still return the fresh result.
+ * - When `client` is null (no `REDIS_URL`), always calls `fn`.
+ * - TTL uses ioredis `SET key value EX seconds`.
+ */
 export async function redis_cache<T>(
   key: string,
   fn: () => Promise<T>,
@@ -50,7 +63,11 @@ export async function redis_cache<T>(
   const result = await fn();
 
   try {
-    await client.set(key, JSON.stringify(result), ttl ? { ex: ttl } : {});
+    if (ttl > 0) {
+      await client.set(key, JSON.stringify(result), "EX", ttl);
+    } else {
+      await client.set(key, JSON.stringify(result));
+    }
   } catch {
     // Returning the fresh result is still correct even if cache write fails.
   }
