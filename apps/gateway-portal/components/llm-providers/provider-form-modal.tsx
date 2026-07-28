@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ComponentProps } from "react";
+import { useMemo, useState, type ComponentProps } from "react";
 import { X } from "lucide-react";
 import { z } from "zod";
 
@@ -62,6 +62,29 @@ export function ProviderFormModal({
   onClose,
   onSubmit,
 }: ProviderFormModalProps) {
+  if (!open) {
+    return null;
+  }
+
+  return (
+    <ProviderFormModalInner
+      key={`${mode}-${provider?.id ?? "new"}`}
+      mode={mode}
+      provider={provider}
+      isSubmitting={isSubmitting}
+      onClose={onClose}
+      onSubmit={onSubmit}
+    />
+  );
+}
+
+function ProviderFormModalInner({
+  mode,
+  provider,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: Omit<ProviderFormModalProps, "open">) {
   const [values, setValues] = useState<ProviderFormValues>(
     getInitialValues(provider),
   );
@@ -75,15 +98,6 @@ export function ProviderFormModal({
         : `Edit ${provider?.name ?? "provider"}`,
     [mode, provider?.name],
   );
-
-  useEffect(() => {
-    setValues(getInitialValues(provider));
-    setFieldErrors({});
-  }, [mode, open, provider?.id]);
-
-  if (!open) {
-    return null;
-  }
 
   const updateValue = <T extends keyof ProviderFormValues>(
     key: T,
