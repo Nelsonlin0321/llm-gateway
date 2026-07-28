@@ -93,7 +93,7 @@ export function WorkspaceSidebar({
 
   return (
     <Card className="border-border bg-surface-1">
-      <CardHeader className="gap-4 border-b border-border">
+      <CardHeader className="gap-2 border-b border-border">
         <div className="rounded-lg border border-border bg-background px-3 py-2.5">
           <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
             Workspace
@@ -122,9 +122,17 @@ export function WorkspaceSidebar({
         </div>
       </CardHeader>
 
-      <CardContent className="grid gap-6 pt-5">
-        <NavSection title="Workspace" items={workspaceNavigation} pathname={pathname} />
-        <NavSection title="Account" items={accountNavigation} pathname={pathname} />
+      <CardContent className="grid gap-3 pt-2">
+        <NavSection
+          title="Workspace"
+          items={workspaceNavigation}
+          pathname={pathname}
+        />
+        <NavSection
+          title="Account"
+          items={accountNavigation}
+          pathname={pathname}
+        />
       </CardContent>
     </Card>
   );

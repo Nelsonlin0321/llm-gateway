@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ComponentProps } from "react";
+import { useEffect, useMemo, useState, type ComponentProps } from "react";
 import { X } from "lucide-react";
 import { z } from "zod";
 
@@ -76,6 +76,11 @@ export function ProviderFormModal({
     [mode, provider?.name],
   );
 
+  useEffect(() => {
+    setValues(getInitialValues(provider));
+    setFieldErrors({});
+  }, [mode, open, provider?.id]);
+
   if (!open) {
     return null;
   }
@@ -113,7 +118,7 @@ export function ProviderFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--or-ink)_72%,transparent)] p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--or-ink)_72%,transparent)] p-4">
       <div
         role="dialog"
         aria-modal="true"

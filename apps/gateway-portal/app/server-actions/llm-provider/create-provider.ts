@@ -30,21 +30,18 @@ export async function createProvider(
     );
   }
 
-  const duplicate = parsed.data.isActive
-    ? await prisma.lLMProvider.findFirst({
-        where: {
-          creatorId: session.user.id,
-          name: parsed.data.name,
-          isActive: true,
-        },
-        select: { id: true },
-      })
-    : null;
+  const duplicate = await prisma.lLMProvider.findFirst({
+    where: {
+      name: parsed.data.name,
+      compatibilityType: parsed.data.compatibilityType,
+    },
+    select: { id: true },
+  });
 
   if (duplicate) {
     return validationErrorResult(
-      "An active provider with this name already exists.",
-      { name: ["Choose a unique provider prefix."] },
+      "A provider with this name and compatibility already exists.",
+      { name: ["Choose a unique provider prefix for this compatibility."] },
     );
   }
 

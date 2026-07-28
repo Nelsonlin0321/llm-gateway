@@ -96,8 +96,8 @@ model LLMProvider {
   updatedAt         DateTime          @updatedAt
   models            Model[]
 
-  @@index([creatorId, isActive])
-  @@index([creatorId, name])
+  @@unique([name, compatibilityType])
+  @@index([creatorId])
 }
 
 model Model {

@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import type { ReactNode } from "react"
-import { Toaster } from "react-hot-toast"
+import type { ReactNode } from "react";
+import { Toaster } from "react-hot-toast";
 
 type ReactHotToastProviderProps = {
-  children: ReactNode
-}
+  children: ReactNode;
+};
 
 export function ReactHotToastProvider({
   children,
@@ -14,7 +14,7 @@ export function ReactHotToastProvider({
     <>
       {children}
       <Toaster
-        position="top-right"
+        position="top-center"
         toastOptions={{
           duration: 3200,
           style: {
@@ -23,7 +23,8 @@ export function ReactHotToastProvider({
             border: "1px solid rgba(252, 252, 254, 0.14)",
             borderRadius: "8px",
             fontSize: "14px",
-            fontFamily: "var(--font-body), ui-sans-serif, system-ui, sans-serif",
+            fontFamily:
+              "var(--font-body), ui-sans-serif, system-ui, sans-serif",
             boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
           },
           success: {
@@ -41,7 +42,7 @@ export function ReactHotToastProvider({
         }}
       />
     </>
-  )
+  );
 }
 
-export default ReactHotToastProvider
+export default ReactHotToastProvider;
