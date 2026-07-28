@@ -24,17 +24,16 @@ test("prepareAnthropicPayload strips provider prefix from the upstream model", (
   assert.equal(result.value.upstreamBody.max_tokens, 500);
 });
 
-test("prepareAnthropicPayload rejects unknown providers", () => {
+test("prepareAnthropicPayload accepts provider prefixes that will resolve later", () => {
   const result = prepareAnthropicPayload({
-    model: "unknown/MiniMax-M3",
+    model: "db-provider/MiniMax-M3",
   });
 
-  assert.equal(result.ok, false);
-  if (result.ok) {
-    throw new Error("Expected payload preparation to fail");
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    throw new Error("Expected payload preparation to succeed");
   }
 
-  assert.equal(result.error.status, 400);
-  assert.match(result.error.error.message, /provider is one of: minimax/);
-  assert.equal(result.error.error.param, "model");
+  assert.equal(result.value.parsed.providerId, "db-provider");
+  assert.equal(result.value.upstreamBody.model, "MiniMax-M3");
 });

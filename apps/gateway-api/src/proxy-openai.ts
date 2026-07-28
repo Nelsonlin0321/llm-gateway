@@ -2,12 +2,25 @@ import type { Context } from "hono";
 import { proxy } from "hono/proxy";
 import { prepareOpenaiPayload } from "./payload-openai";
 import {
-  buildUpstreamHeaders,
-  buildUpstreamUrl,
-  getProviderApiKey,
-} from "./shared/upstream.js";
+  resolveProvider,
+  type ResolveProviderResult,
+} from "./providers/resolve.js";
+import { buildUpstreamHeaders, buildUpstreamUrl } from "./shared/upstream.js";
 
-export async function proxyToOpenai(c: Context): Promise<Response> {
+type ForwardUpstream = (input: string, init: RequestInit) => Promise<Response>;
+
+export type OpenaiProxyDependencies = {
+  resolveProvider?: (providerId: string) => Promise<ResolveProviderResult>;
+  forwardUpstream?: ForwardUpstream;
+};
+
+const defaultForwardUpstream: ForwardUpstream = (input, init) =>
+  proxy(input, init);
+
+async function handleOpenaiProxy(
+  c: Context,
+  deps: OpenaiProxyDependencies,
+): Promise<Response> {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -29,38 +42,37 @@ export async function proxyToOpenai(c: Context): Promise<Response> {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
   const { parsed, upstreamBody } = prepared.value;
-  const apiKey = getProviderApiKey(parsed.provider);
-  if (!apiKey) {
-    return c.json(
-      {
-        error: {
-          message: `Provider "${parsed.providerId}" is not configured. Set ${parsed.provider.apiKeyEnv}.`,
-          type: "server_error",
-        },
-      },
-      500,
-    );
+  const resolved = await (
+    deps.resolveProvider ??
+    ((providerId: string) => resolveProvider(providerId, "openai"))
+  )(parsed.providerId);
+  if (!resolved.ok) {
+    return c.json({ error: resolved.error }, resolved.status);
   }
 
-  const upstreamUrl = buildUpstreamUrl(parsed.provider.baseUrl, requestPath);
+  const upstreamUrl = buildUpstreamUrl(resolved.value.baseUrl, requestPath);
 
   try {
-    return await proxy(upstreamUrl, {
+    return await (deps.forwardUpstream ?? defaultForwardUpstream)(upstreamUrl, {
       method: c.req.method,
-      headers: buildUpstreamHeaders(c.req.raw, apiKey),
+      headers: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
       body: JSON.stringify(upstreamBody),
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Upstream fetch failed";
     return c.json(
       {
         error: {
-          message: `Failed to reach provider "${parsed.providerId}": ${message}`,
+          message: `Failed to reach provider "${parsed.providerId}".`,
           type: "server_error",
         },
       },
       502,
     );
   }
+}
+
+export function createOpenaiProxyHandler(
+  deps: OpenaiProxyDependencies = {},
+): (c: Context) => Promise<Response> {
+  return (c) => handleOpenaiProxy(c, deps);
 }

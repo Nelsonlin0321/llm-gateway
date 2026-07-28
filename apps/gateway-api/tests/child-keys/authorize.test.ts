@@ -5,10 +5,10 @@ import {
   authorizeChildKey,
   encryptApiKey,
   type ChildKeyDbRecord,
-} from "../../src/child-keys/index.js";
-import prisma from "../../src/prisma.js";
-import type { ChildKeyJwtPayload } from "../../src/child-keys/types.js";
-import { mintTestChildApiKey } from "./mint-test-key.js";
+} from "../../src/child-keys/index";
+import prisma from "../../src/lib/prisma";
+import type { ChildKeyJwtPayload } from "../../src/child-keys/types";
+import { mintTestChildApiKey } from "./mint-test-key";
 
 const secret = "gateway-api-authorize-test-secret";
 const encryptSecret = "gateway-api-authorize-encrypt-secret";

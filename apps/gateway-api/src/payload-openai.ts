@@ -1,6 +1,5 @@
 import { parseModel } from "./shared/upstream";
 import type { JsonBody, PrepareResult } from "./types/payload";
-import { openaiCompatibleProviders } from "./providers";
 import { isRecord } from "./utils";
 
 /**
@@ -34,7 +33,7 @@ export function ensureStreamUsageOptions(
 /**
  * Validate the client JSON body and transform it for the upstream provider:
  * - require a non-empty string `model` in `provider/model` form
- * - resolve the provider from the model prefix
+ * - parse the provider prefix from the model
  * - strip the provider prefix from `model`
  * - force stream usage options for streamed chat completions requests
  */
@@ -58,13 +57,12 @@ export function prepareOpenaiPayload(
 
   const parsed = parseModel(body.model, "openai");
   if (!parsed) {
-    const known = Object.keys(openaiCompatibleProviders).join(", ");
     return {
       ok: false,
       error: {
         status: 400,
         error: {
-          message: `Unknown or invalid model "${body.model}". Use "provider/model" where provider is one of: ${known}`,
+          message: `Invalid model "${body.model}". Use "provider/model" (for example "openai/gpt-5.4-mini").`,
           type: "invalid_request_error",
           param: "model",
         },

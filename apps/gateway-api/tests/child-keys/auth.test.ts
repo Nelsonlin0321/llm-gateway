@@ -10,9 +10,9 @@ import {
   extractBearerToken,
   requirePlainChildApiKey,
   verifyChildKeyToken,
-} from "../../src/child-keys/index.js";
-import prisma from "../../src/prisma.js";
-import { mintTestChildApiKey } from "./mint-test-key.js";
+} from "../../src/child-keys/index";
+import prisma from "../../src/lib/prisma.js";
+import { mintTestChildApiKey } from "./mint-test-key";
 
 const secret = "gateway-api-child-key-test-secret";
 const encryptSecret = "gateway-api-child-key-encrypt-secret";

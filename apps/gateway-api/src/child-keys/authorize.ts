@@ -3,7 +3,7 @@ import { timingSafeEqual } from "node:crypto";
 import type { ChildKey } from "../generated/prisma/client";
 import { getChildKeyCacheKey } from "../lib/redis-keys";
 import { redis_cache } from "../lib/redis";
-import prisma from "../prisma";
+import prisma from "../lib/prisma";
 import { decryptChildKey } from "./service";
 import type { ChildKeyAuthFailure, ChildKeyJwtPayload } from "./types";
 

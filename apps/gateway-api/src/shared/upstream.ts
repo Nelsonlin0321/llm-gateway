@@ -1,14 +1,9 @@
 import "dotenv/config";
-import type { ParsedModel, ProviderConfig } from "../providers";
-
-import {
-  openaiCompatibleProviders,
-  anthropicCompatibleProviders,
-} from "../providers";
+import type { ParsedModel } from "../providers";
 
 export function parseModel(
   model: string,
-  compatibility: "openai" | "anthropic",
+  _compatibility: "openai" | "anthropic",
 ): ParsedModel | null {
   const slash = model.indexOf("/");
   if (slash <= 0 || slash === model.length - 1) {
@@ -18,16 +13,7 @@ export function parseModel(
   const providerId = model.slice(0, slash).toLowerCase();
   const bareModel = model.slice(slash + 1);
 
-  const provider =
-    compatibility === "openai"
-      ? openaiCompatibleProviders[providerId]
-      : anthropicCompatibleProviders[providerId];
-
-  if (!provider) {
-    return null;
-  }
-
-  return { providerId, model: bareModel, provider };
+  return { providerId, model: bareModel };
 }
 
 export function buildUpstreamUrl(baseUrl: string, requestPath: string): string {
@@ -69,12 +55,4 @@ export function buildUpstreamHeaders(req: Request, apiKey: string): Headers {
   headers.set("authorization", `Bearer ${apiKey}`);
   headers.set("content-type", "application/json");
   return headers;
-}
-
-export function getProviderApiKey(provider: ProviderConfig): string | null {
-  const key = process.env[provider.apiKeyEnv];
-  if (!key || key.trim() === "") {
-    return null;
-  }
-  return key;
 }

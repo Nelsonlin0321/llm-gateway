@@ -8,14 +8,12 @@
     // "ignoreDeprecations": "6.0",
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "rootDir": "./src",
     "outDir": "./dist"
   },
-  "include": ["src/**/*", "src/prisma.ts"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "scripts", "dist"]
 }

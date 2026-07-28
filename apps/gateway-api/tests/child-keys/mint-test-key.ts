@@ -1,7 +1,7 @@
 import { SignJWT } from "jose";
 
-import { CHILD_KEY_PREFIX } from "../../src/child-keys/jwt.js";
-import type { ChildKeyJwtPayload } from "../../src/child-keys/types.js";
+import { CHILD_KEY_PREFIX } from "../../src/child-keys/jwt";
+import type { ChildKeyJwtPayload } from "../../src/child-keys/types";
 
 /**
  * Mint a plain `sk_…` child API key for tests only.

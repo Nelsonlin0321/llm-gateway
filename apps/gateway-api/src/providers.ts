@@ -10,7 +10,6 @@ export type ProviderConfig = {
 export type ParsedModel = {
   providerId: string;
   model: string;
-  provider: ProviderConfig;
 };
 
 export const openaiCompatibleProviders: Record<string, ProviderConfig> = {

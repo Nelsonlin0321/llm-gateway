@@ -5,12 +5,12 @@ import {
   requireChildKeyAuth,
   type ChildKeyAuthVariables,
 } from "./child-keys/index.js";
-import { proxyToOpenai } from "./proxy-openai";
 import {
   anthropicCompatibleProviders,
   openaiCompatibleProviders,
 } from "./providers";
-import { proxyToAnthropic } from "./proxy-anthropic";
+import { createOpenaiProxyHandler } from "./proxy-openai";
+import { createAnthropicProxyHandler } from "./proxy-anthropic";
 
 const app = new Hono<{ Variables: ChildKeyAuthVariables }>();
 
@@ -50,8 +50,8 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // Proxy routes require a valid child API key.
 app.use("/openai/*", requireChildKeyAuth);
 app.use("/anthropic/*", requireChildKeyAuth);
-app.post("/openai/*", proxyToOpenai);
-app.post("/anthropic/*", proxyToAnthropic);
+app.post("/openai/*", createOpenaiProxyHandler());
+app.post("/anthropic/*", createAnthropicProxyHandler());
 
 const port = Number(process.env.PORT) || 8080;
 
