@@ -15,17 +15,17 @@ Today routing uses the static registry in `src/providers.ts` plus `getProviderAp
 
 Portal (and the gateway Prisma schema) already store master credentials on `LLMProvider`:
 
-| Field | Role |
-|-------|------|
-| `name` | Routing prefix in `model` (`{name}/{upstreamModel}`) |
-| `apiUrl` | Upstream base URL |
-| `encryptedApiKey` | AES-256-GCM ciphertext (`API_ENCRYPT_KEY`) |
-| `compatibilityType` | `openai` \| `anthropic` — must match route family |
-| `isActive` | Soft-disable |
+| Field               | Role                                                 |
+| ------------------- | ---------------------------------------------------- |
+| `name`              | Routing prefix in `model` (`{name}/{upstreamModel}`) |
+| `apiUrl`            | Upstream base URL                                    |
+| `encryptedApiKey`   | AES-256-GCM ciphertext (`API_ENCRYPT_KEY`)           |
+| `compatibilityType` | `openai` \| `anthropic` — must match route family    |
+| `isActive`          | Soft-disable                                         |
 
 Gateway already has:
 
-- `src/prisma.ts` — shared `PrismaClient` (Neon adapter)
+- `src/lib/prisma.ts` — shared `PrismaClient` (Neon adapter)
 - `prisma/schema.prisma` — `LLMProvider` model
 - `decryptApiKeyForProxy` in `src/child-keys/crypto.ts` (same scheme as portal)
 
@@ -83,25 +83,23 @@ export type ProviderLookup = {
 ### 2. Wire into model parsing / proxy
 
 - Extend or replace the static path in `parseModel` / proxy handlers so production resolution is async:
-
   - `resolveProvider(model, compatibility)` → Prisma lookup + decrypt
   - Keep static `providers.ts` only as **dev fallback** (optional env flag) or remove once DB is required
 
 - Update `proxy-openai.ts` / `proxy-anthropic.ts` (and any `/v1` surface) to:
-
   1. Parse `providerId` + bare model
   2. Call Prisma-backed resolver
   3. Use resolved `baseUrl` + decrypted `apiKey` for upstream request
 
 - Error mapping (do not leak secrets or ciphertext):
 
-  | Condition | HTTP | Message (approx.) |
-  |-----------|------|-------------------|
-  | Unknown / missing provider | 400/404 | same class as today unknown provider |
-  | Found but `isActive = false` | 400/403 | provider inactive / not available |
-  | `compatibilityType` mismatch | 400 | provider not available for this API family |
-  | Decrypt / config error | 500/502 | generic misconfiguration (no key material) |
-  | DB unavailable | 503 | fail closed, like child-key authz |
+  | Condition                    | HTTP    | Message (approx.)                          |
+  | ---------------------------- | ------- | ------------------------------------------ |
+  | Unknown / missing provider   | 400/404 | same class as today unknown provider       |
+  | Found but `isActive = false` | 400/403 | provider inactive / not available          |
+  | `compatibilityType` mismatch | 400     | provider not available for this API family |
+  | Decrypt / config error       | 500/502 | generic misconfiguration (no key material) |
+  | DB unavailable               | 503     | fail closed, like child-key authz          |
 
 ### 3. Prisma query details
 
@@ -148,7 +146,7 @@ export type ProviderLookup = {
 
 ## Related
 
-- Portal **032** — field mapping, uniqueness of `name`, encryption contract  
-- Gateway **016** — Prisma + decrypt pattern for child keys  
-- Gateway **014** — cache provider routing after this ships  
+- Portal **032** — field mapping, uniqueness of `name`, encryption contract
+- Gateway **016** — Prisma + decrypt pattern for child keys
+- Gateway **014** — cache provider routing after this ships
 - `src/prisma.ts`, `prisma/schema.prisma` (`LLMProvider`), `src/child-keys/crypto.ts`

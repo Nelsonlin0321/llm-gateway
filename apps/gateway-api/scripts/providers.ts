@@ -1,8 +1,6 @@
 export type ProviderConfig = {
   /** Upstream OpenAI-compatible base URL (may or may not include /v1). */
-  baseUrl: string;
-  /** Environment variable that holds the provider API key. */
-  apiKeyEnv: string;
+  // baseUrl: string;
   /** Example model id (without provider prefix), for docs/health. */
   exampleModel: string;
 };
@@ -14,32 +12,27 @@ export type ParsedModel = {
 
 export const openaiCompatibleProviders: Record<string, ProviderConfig> = {
   minimax: {
-    baseUrl: "https://api.minimaxi.com/v1",
-    apiKeyEnv: "MINIMAX_API_KEY",
-    exampleModel: "MiniMax-M3",
+    // baseUrl: "https://api.minimaxi.com/v1",
+    exampleModel: "minimax-m3",
   },
   openai: {
-    baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
-    apiKeyEnv: "OPENAI_API_KEY",
+    // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
     exampleModel: "gpt-5.4-mini",
   },
   deepseek: {
-    baseUrl: "https://api.deepseek.com",
-    apiKeyEnv: "DEEPSEEK_API_KEY",
+    // baseUrl: "https://api.deepseek.com",
     exampleModel: "deepseek-v4-flash",
   },
   azure: {
-    baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
-    apiKeyEnv: "AZURE_API_KEY",
+    // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
     exampleModel: "gpt-5.4-mini",
   },
 };
 
 export const anthropicCompatibleProviders: Record<string, ProviderConfig> = {
   minimax: {
-    baseUrl: "https://api.minimaxi.com/anthropic",
-    apiKeyEnv: "MINIMAX_API_KEY",
-    exampleModel: "MiniMax-M3",
+    // baseUrl: "https://api.minimaxi.com/anthropic",
+    exampleModel: "minimax-m3",
   },
 };
 

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openaiCompatibleProviders } from "../src/providers.js";
+import { openaiCompatibleProviders } from "../scripts/providers.js";
 import { mintTestChildApiKey } from "./child-keys/mint-test-key.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

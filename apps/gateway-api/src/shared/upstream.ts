@@ -1,5 +1,5 @@
 import "dotenv/config";
-import type { ParsedModel } from "../providers";
+import type { ParsedModel } from "../types/payload";
 
 export function parseModel(
   model: string,

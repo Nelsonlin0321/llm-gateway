@@ -1,4 +1,7 @@
-import type { ParsedModel } from "../providers";
+export type ParsedModel = {
+  providerId: string;
+  model: string;
+};
 
 export type JsonBody = Record<string, unknown>;
 
