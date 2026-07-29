@@ -37,6 +37,7 @@ export async function rotateChildKey(
     select: {
       id: true,
       name: true,
+      creatorId: true,
       userEmail: true,
       tags: true,
       expiresAt: true,

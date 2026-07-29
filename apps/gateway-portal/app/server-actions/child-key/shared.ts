@@ -21,6 +21,7 @@ export const childKeySelect = {
   id: true,
   name: true,
   key: true,
+  creatorId: true,
   userEmail: true,
   tags: true,
   isActive: true,
