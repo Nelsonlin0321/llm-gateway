@@ -12,6 +12,7 @@ const ISO_DATE_TIME_RE =
 export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ...args: unknown[]): Promise<unknown>;
+  del(key: string): Promise<number>;
 }
 
 const REDIS_URL = process.env.REDIS_URL;
@@ -82,6 +83,22 @@ export async function redis_cache<T>(
   }
 
   return result;
+}
+
+export async function redis_invalidate(
+  key: string,
+  client: RedisCacheClient | null = getRedisClient(),
+): Promise<boolean> {
+  if (!client) {
+    return false;
+  }
+
+  try {
+    const deleted = await client.del(key);
+    return deleted > 0;
+  } catch {
+    return false;
+  }
 }
 
 export default getRedisClient;

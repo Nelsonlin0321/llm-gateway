@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { redis_cache, type RedisCacheClient } from "../src/lib/redis.js";
+import {
+  redis_cache,
+  redis_invalidate,
+  type RedisCacheClient,
+} from "../src/lib/redis.js";
 
 type CachedUser = {
   createdAt: Date;
@@ -17,6 +21,7 @@ class FakeRedis implements RedisCacheClient {
     value: string;
     args: unknown[];
   }> = [];
+  public delCalls: string[] = [];
 
   constructor(
     private readonly overrides: {
@@ -26,6 +31,7 @@ class FakeRedis implements RedisCacheClient {
         value: string,
         ...args: unknown[]
       ) => Promise<unknown>;
+      del?: (key: string) => Promise<number>;
     } = {},
   ) {}
 
@@ -43,6 +49,15 @@ class FakeRedis implements RedisCacheClient {
     }
     this.store.set(key, value);
     return "OK";
+  }
+
+  async del(key: string): Promise<number> {
+    this.delCalls.push(key);
+    if (this.overrides.del) {
+      return this.overrides.del(key);
+    }
+    const existed = this.store.delete(key);
+    return existed ? 1 : 0;
   }
 }
 
@@ -148,4 +163,31 @@ test("redis_cache still returns fresh data when redis write fails", async () => 
 
   assert.deepEqual(result, { model: "gpt-5" });
   assert.equal(redis.setCalls.length, 1);
+});
+
+test("redis_invalidate removes cached values", async () => {
+  const redis = new FakeRedis();
+  redis.store.set("user:2", JSON.stringify({ id: 2 }));
+
+  const removed = await redis_invalidate("user:2", redis);
+
+  assert.equal(removed, true);
+  assert.equal(redis.store.has("user:2"), false);
+  assert.deepEqual(redis.delCalls, ["user:2"]);
+});
+
+test("redis_invalidate returns false on missing client", async () => {
+  const removed = await redis_invalidate("user:3", null);
+  assert.equal(removed, false);
+});
+
+test("redis_invalidate returns false when redis delete fails", async () => {
+  const redis = new FakeRedis({
+    async del() {
+      throw new Error("redis unavailable");
+    },
+  });
+
+  const removed = await redis_invalidate("user:4", redis);
+  assert.equal(removed, false);
 });
