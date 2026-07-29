@@ -12,7 +12,8 @@ const ISO_DATE_TIME_RE =
 export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ...args: unknown[]): Promise<unknown>;
-  del(key: string): Promise<number>;
+  del(...keys: string[]): Promise<number>;
+  scan(cursor: string, ...args: unknown[]): Promise<[string, string[]]>;
 }
 
 const REDIS_URL = process.env.REDIS_URL;

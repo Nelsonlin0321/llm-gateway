@@ -114,12 +114,12 @@ const defaultProviderModelLookup: ProviderModelLookup = {
       });
 
     const llmAndModel = await redis_cache(
-      getProviderModelCacheKey(
-        name,
-        modelAlias,
+      getProviderModelCacheKey({
+        providerName: name,
         compatibilityType,
-        "gateway-api",
-      ),
+        modelAlias,
+        application: "gateway-api",
+      }),
       query,
     );
 
