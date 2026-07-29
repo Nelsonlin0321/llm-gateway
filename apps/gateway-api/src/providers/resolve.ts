@@ -1,4 +1,6 @@
 import { decryptApiKeyForProxy } from "../child-keys/crypto";
+import { redis_cache } from "../lib/redis";
+import { getProviderModelCacheKey } from "../lib/redis-keys";
 import prisma from "../lib/prisma";
 
 export type ProviderCompatibility = "openai" | "anthropic";
@@ -89,26 +91,32 @@ const defaultProviderModelLookup: ProviderModelLookup = {
     modelAlias: string,
     compatibilityType: ProviderCompatibility,
   ): Promise<ProviderModelLookupRecord | null> {
-    const llmAndModel = await prisma.model.findFirst({
-      where: {
-        alias: `${name}/${modelAlias}`,
-        provider: { name, compatibilityType },
-      },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        alias: true,
-        name: true,
-        provider: {
-          select: {
-            name: true,
-            apiUrl: true,
-            encryptedApiKey: true,
-            compatibilityType: true,
-            isActive: true,
+    const query = () =>
+      prisma.model.findFirst({
+        where: {
+          alias: `${name}/${modelAlias}`,
+          provider: { name, compatibilityType },
+        },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          alias: true,
+          name: true,
+          provider: {
+            select: {
+              name: true,
+              apiUrl: true,
+              encryptedApiKey: true,
+              compatibilityType: true,
+              isActive: true,
+            },
           },
         },
-      },
-    });
+      });
+
+    const llmAndModel = await redis_cache(
+      getProviderModelCacheKey(name, modelAlias, compatibilityType),
+      query,
+    );
 
     if (!llmAndModel) {
       return null;
@@ -123,6 +131,12 @@ const defaultProviderModelLookup: ProviderModelLookup = {
     };
   },
 };
+
+// const originalFindFirst = prisma.model.findFirst;
+
+// function shouldBypassProviderModelCache(): boolean {
+//   return process.env.NODE_ENV === "test";
+// }
 
 function resolutionFailure(
   status: ResolveProviderFailure["status"],
