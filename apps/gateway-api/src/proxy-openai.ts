@@ -50,20 +50,9 @@ async function handleOpenaiProxy(
     ((providerId: string, modelAlias: string) =>
       resolveProviderModel(providerId, modelAlias, "openai"))
   )(parsed.providerId, parsed.model);
-  if (process.env.GATEWAY_DEBUG_RESOLVE === "1") {
-    console.log("resolveProviderModel", {
-      ok: resolved.ok,
-      status: resolved.ok ? undefined : resolved.status,
-      providerId: parsed.providerId,
-      modelAlias: parsed.model,
-      baseUrl: resolved.ok ? resolved.value.baseUrl : undefined,
-      upstreamModel: resolved.ok ? resolved.value.model : undefined,
-    });
-  }
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
-  console.log(JSON.stringify(resolved));
   const upstreamUrl = buildUpstreamUrl(resolved.value.baseUrl, requestPath);
 
   try {

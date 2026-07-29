@@ -61,4 +61,5 @@ npm test
 ```shell
 npx tsx scripts/openai-chat-non-stream.ts
 npx tsx scripts/openai-chat-stream.ts
+npx tsx scripts/prisma-query.ts
 ```

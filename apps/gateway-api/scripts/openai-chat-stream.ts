@@ -23,7 +23,7 @@ const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:8080").replace(
   "",
 );
 const payloadPath = join(__dirname, "sample-payload.json");
-const endpoint = `${baseUrl}/openai/v1/chat/completions`;
+const endpoint = `${baseUrl}/openai/chat/completions`;
 
 type ChatPayload = {
   model: string;
