@@ -11,8 +11,11 @@ import {
   childKeyValidationError,
   type ChildKeyActionResult,
 } from "./shared";
+import { invalidate_child_key_cache } from "@/lib/redis/invalidate";
 
-export async function deleteChildKey(id: string): Promise<ChildKeyActionResult> {
+export async function deleteChildKey(
+  id: string,
+): Promise<ChildKeyActionResult> {
   const session = await requireSession();
 
   if (!id.trim()) {
@@ -37,6 +40,7 @@ export async function deleteChildKey(id: string): Promise<ChildKeyActionResult> 
       select: childKeySelect,
     });
 
+    await invalidate_child_key_cache(id);
     revalidatePath("/workspace/child-keys");
 
     return childKeySuccess(childKey, "Child key deleted successfully.");

@@ -12,6 +12,7 @@ import {
   childKeyValidationError,
   type ChildKeyActionResult,
 } from "./shared";
+import { invalidate_child_key_cache } from "@/lib/redis/invalidate";
 
 /**
  * Re-issue a new plain `sk_…` secret for an existing child key.
@@ -59,6 +60,7 @@ export async function rotateChildKey(
       select: childKeySelect,
     });
 
+    await invalidate_child_key_cache(id);
     revalidatePath("/workspace/child-keys");
 
     return childKeySuccess(

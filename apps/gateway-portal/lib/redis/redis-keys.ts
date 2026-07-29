@@ -1,8 +1,8 @@
-type App = "gateway-api" | "gateway-portal" | "both";
+export type App = "gateway-api" | "gateway-portal" | "both";
 
 export const getChildKeyCacheKey = (
   keyId: string,
-  application: App,
+  application: App = "both",
 ): string => {
   return `child-key:${application}:${keyId}`;
 };

@@ -85,20 +85,4 @@ export async function redis_cache<T>(
   return result;
 }
 
-export async function redis_invalidate(
-  key: string,
-  client: RedisCacheClient | null = getRedisClient(),
-): Promise<boolean> {
-  if (!client) {
-    return false;
-  }
-
-  try {
-    const deleted = await client.del(key);
-    return deleted > 0;
-  } catch {
-    return false;
-  }
-}
-
 export default getRedisClient;

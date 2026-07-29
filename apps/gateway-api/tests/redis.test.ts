@@ -5,7 +5,7 @@ import {
   redis_cache,
   redis_invalidate,
   type RedisCacheClient,
-} from "../src/lib/redis.js";
+} from "../src/lib/redis-client.js";
 
 type CachedUser = {
   createdAt: Date;

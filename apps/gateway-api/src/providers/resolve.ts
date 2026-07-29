@@ -1,5 +1,5 @@
 import { decryptApiKeyForProxy } from "../child-keys/crypto";
-import { redis_cache } from "../lib/redis";
+import { redis_cache } from "../lib/redis-client";
 import { getProviderModelCacheKey } from "../lib/redis-keys";
 import prisma from "../lib/prisma";
 
