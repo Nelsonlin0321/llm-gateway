@@ -26,10 +26,6 @@ export async function mintTestChildApiKey(
     issued_at: issuedAt,
   };
 
-  if (payload.policy_id) {
-    claims.policy_id = payload.policy_id;
-  }
-
   let signer = new SignJWT(claims).setProtectedHeader({
     alg: "HS256",
     typ: "JWT",

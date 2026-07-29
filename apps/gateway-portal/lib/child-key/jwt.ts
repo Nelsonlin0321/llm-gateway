@@ -55,18 +55,17 @@ export function parseChildKeyJwtPayload(
     throw new Error("Child key token payload is missing name.");
   }
 
-  if (typeof payload.creatorId !== "string" || payload.creatorId.length === 0) {
-    throw new Error("Child key token payload is missing creatorId.");
+  if (
+    typeof payload.creator_id !== "string" ||
+    payload.creator_id.length === 0
+  ) {
+    throw new Error("Child key token payload is missing creator_id.");
   }
 
   return {
     key_id: payload.key_id,
     name: payload.name,
-    creator_id: payload.creatorId,
-    policy_id:
-      typeof payload.policy_id === "string" && payload.policy_id.length > 0
-        ? payload.policy_id
-        : undefined,
+    creator_id: payload.creator_id,
     issued_at: parseIssuedAt(payload),
     exp:
       typeof payload.exp === "number" && Number.isFinite(payload.exp)
@@ -87,10 +86,6 @@ export async function signChildKeyToken(
     creator_id: payload.creator_id,
     issued_at: issuedAt,
   };
-
-  if (payload.policy_id) {
-    claims.policy_id = payload.policy_id;
-  }
 
   let signer = new SignJWT(claims).setProtectedHeader({
     alg: "HS256",

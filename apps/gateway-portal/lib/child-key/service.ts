@@ -10,7 +10,6 @@ import {
 } from "@/lib/child-key/schema";
 import {
   CHILD_KEY_PREFIX,
-  decodeChildKeyToken,
   signChildKeyToken,
   unixTimestampSeconds,
 } from "@/lib/child-key/jwt";
@@ -31,7 +30,6 @@ export type ChildKeyRotateSource = {
   expiresAt: Date | null;
   /** Previous issuedAt (seconds) — new value must be strictly greater. */
   issuedAt: number;
-  /** Previous ciphertext — used to preserve policy_id from the current JWT. */
   key: string;
 };
 
@@ -136,7 +134,6 @@ export async function buildChildKeyCreateData(
   const apiKey = await signChildKeyToken({
     key_id: id,
     name: input.name,
-    policy_id: input.policyId,
     creator_id: creator.id,
     issued_at: issuedAt,
     exp,
@@ -171,15 +168,6 @@ export async function buildChildKeyRotateData(record: ChildKeyRotateSource) {
   // Ensure issuedAt advances even if rotation happens within the same second.
   const issuedAt = Math.max(unixTimestampSeconds(), record.issuedAt + 1);
 
-  let policyId: string | undefined;
-  try {
-    const previousPlain = decryptChildKey(record.key);
-    const previous = decodeChildKeyToken(previousPlain);
-    policyId = previous.policy_id;
-  } catch {
-    // If the previous secret cannot be decrypted/decoded, rotate without policy_id.
-  }
-
   const exp =
     record.expiresAt && !Number.isNaN(record.expiresAt.getTime())
       ? Math.floor(record.expiresAt.getTime() / 1000)
@@ -189,7 +177,6 @@ export async function buildChildKeyRotateData(record: ChildKeyRotateSource) {
     key_id: record.id,
     name: record.name,
     creator_id: record.creatorId,
-    policy_id: policyId,
     issued_at: issuedAt,
     exp,
   });

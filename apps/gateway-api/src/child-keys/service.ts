@@ -128,7 +128,7 @@ export async function authenticateChildApiKey(
 
   let payload;
   try {
-    // Verify JWT and decode claims (key_id, name, policy_id, issued_at, exp).
+    // Verify JWT and decode claims (key_id, name, creator_id, issued_at, exp).
     payload = await verifyChildKeyToken(plainApiKey);
 
     if (
