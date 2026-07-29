@@ -4,8 +4,11 @@ import test from "node:test";
 import { encryptApiKey } from "../../src/child-keys/index.js";
 import {
   resolveProvider,
+  resolveProviderModel,
   type ProviderLookup,
   type ProviderLookupRecord,
+  type ProviderModelLookup,
+  type ProviderModelLookupRecord,
 } from "../../src/providers/resolve.js";
 
 function buildLookupRecord(
@@ -22,11 +25,42 @@ function buildLookupRecord(
 }
 
 function buildLookup(
-  handler: (name: string) => Promise<ProviderLookupRecord | null>,
+  handler: (
+    name: string,
+    compatibilityType: "openai" | "anthropic",
+  ) => Promise<ProviderLookupRecord | null>,
 ): ProviderLookup {
   return {
-    findByName(name: string) {
-      return handler(name);
+    findByName(name: string, compatibilityType: "openai" | "anthropic") {
+      return handler(name, compatibilityType);
+    },
+  };
+}
+
+function buildProviderModelLookupRecord(
+  overrides: Partial<ProviderModelLookupRecord> = {},
+): ProviderModelLookupRecord {
+  return {
+    llmProvider: buildLookupRecord(),
+    llmModel: { alias: "openai/gateway-alias", name: "gpt-5.4-mini" },
+    ...overrides,
+  };
+}
+
+function buildProviderModelLookup(
+  handler: (
+    name: string,
+    modelAlias: string,
+    compatibilityType: "openai" | "anthropic",
+  ) => Promise<ProviderModelLookupRecord | null>,
+): ProviderModelLookup {
+  return {
+    findByNameAndAlias(
+      name: string,
+      modelAlias: string,
+      compatibilityType: "openai" | "anthropic",
+    ) {
+      return handler(name, modelAlias, compatibilityType);
     },
   };
 }
@@ -34,8 +68,8 @@ function buildLookup(
 test("resolveProvider returns decrypted provider credentials", async () => {
   process.env.API_ENCRYPT_KEY = "resolve-provider-test-secret";
   const plainApiKey = "sk-provider-plain-secret";
-  const lookup = buildLookup(async (name) =>
-    name === "openai"
+  const lookup = buildLookup(async (name, compatibilityType) =>
+    name === "openai" && compatibilityType === "openai"
       ? buildLookupRecord({
           name,
           encryptedApiKey: encryptApiKey(plainApiKey),
@@ -94,9 +128,7 @@ test("resolveProvider returns 400 for compatibility mismatches", async () => {
   const result = await resolveProvider(
     "openai",
     "anthropic",
-    buildLookup(async () =>
-      buildLookupRecord({ compatibilityType: "openai" }),
-    ),
+    buildLookup(async () => buildLookupRecord({ compatibilityType: "openai" })),
   );
 
   assert.equal(result.ok, false);
@@ -105,7 +137,10 @@ test("resolveProvider returns 400 for compatibility mismatches", async () => {
   }
 
   assert.equal(result.status, 400);
-  assert.match(result.error.message, /not available for the anthropic api family/i);
+  assert.match(
+    result.error.message,
+    /not available for the anthropic api family/i,
+  );
 });
 
 test("resolveProvider returns 502 when decryption fails", async () => {
@@ -139,4 +174,58 @@ test("resolveProvider returns 503 when lookup fails", async () => {
 
   assert.equal(result.status, 503);
   assert.equal(result.error.type, "server_error");
+});
+
+test("resolveProviderModel returns decrypted credentials and upstream model name", async () => {
+  process.env.API_ENCRYPT_KEY = "resolve-provider-test-secret";
+  const plainApiKey = "sk-provider-plain-secret";
+
+  const result = await resolveProviderModel(
+    "openai",
+    "gateway-alias",
+    "openai",
+    buildProviderModelLookup(async (name, modelAlias, compatibilityType) =>
+      name === "openai" &&
+      modelAlias === "gateway-alias" &&
+      compatibilityType === "openai"
+        ? buildProviderModelLookupRecord({
+            llmProvider: buildLookupRecord({
+              encryptedApiKey: encryptApiKey(plainApiKey),
+            }),
+          })
+        : null,
+    ),
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    throw new Error("Expected provider+model resolution to succeed");
+  }
+
+  assert.deepEqual(result.value, {
+    providerId: "openai",
+    baseUrl: "https://example.com/v1",
+    apiKey: plainApiKey,
+    compatibilityType: "openai",
+    modelAlias: "gateway-alias",
+    model: "gpt-5.4-mini",
+  });
+});
+
+test("resolveProviderModel returns 400 for unknown model aliases", async () => {
+  const result = await resolveProviderModel(
+    "openai",
+    "missing-alias",
+    "openai",
+    buildProviderModelLookup(async () => null),
+    buildLookup(async () => buildLookupRecord()),
+  );
+
+  assert.equal(result.ok, false);
+  if (result.ok) {
+    throw new Error("Expected provider+model resolution to fail");
+  }
+
+  assert.equal(result.status, 400);
+  assert.match(result.error.message, /unknown model "openai\/missing-alias"/i);
 });

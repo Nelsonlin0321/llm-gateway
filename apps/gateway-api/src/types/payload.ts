@@ -16,7 +16,7 @@ export type PayloadError = {
 
 export type PreparedPayload = {
   parsed: ParsedModel;
-  /** Body ready to forward (bare model + stream_options forced when streaming). */
+  /** Body with validated client input; proxy may still replace `model` before forwarding. */
   upstreamBody: JsonBody;
 };
 

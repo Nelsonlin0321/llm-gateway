@@ -47,7 +47,7 @@ test("ensureStreamUsageOptions leaves non-chat endpoints unchanged", () => {
   assert.equal(result, body);
 });
 
-test("prepareOpenaiPayload strips provider prefix and adds usage for streamed chat completions", () => {
+test("prepareOpenaiPayload preserves the client model and adds usage for streamed chat completions", () => {
   const result = prepareOpenaiPayload(
     {
       model: "openai/gpt-5.4-mini",
@@ -62,7 +62,8 @@ test("prepareOpenaiPayload strips provider prefix and adds usage for streamed ch
   }
 
   assert.equal(result.value.parsed.providerId, "openai");
-  assert.equal(result.value.upstreamBody.model, "gpt-5.4-mini");
+  assert.equal(result.value.parsed.model, "gpt-5.4-mini");
+  assert.equal(result.value.upstreamBody.model, "openai/gpt-5.4-mini");
   assert.deepEqual(result.value.upstreamBody.stream_options, {
     include_usage: true,
   });
@@ -82,7 +83,7 @@ test("prepareOpenaiPayload does not add usage for streamed non-chat endpoints", 
     throw new Error("Expected payload preparation to succeed");
   }
 
-  assert.equal(result.value.upstreamBody.model, "gpt-5.4-mini");
+  assert.equal(result.value.upstreamBody.model, "openai/gpt-5.4-mini");
   assert.equal("stream_options" in result.value.upstreamBody, false);
 });
 
@@ -100,5 +101,6 @@ test("prepareOpenaiPayload accepts provider prefixes that will resolve later", (
   }
 
   assert.equal(result.value.parsed.providerId, "db-openai");
-  assert.equal(result.value.upstreamBody.model, "gpt-5.4-mini");
+  assert.equal(result.value.parsed.model, "gpt-5.4-mini");
+  assert.equal(result.value.upstreamBody.model, "db-openai/gpt-5.4-mini");
 });

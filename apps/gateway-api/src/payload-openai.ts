@@ -31,10 +31,10 @@ export function ensureStreamUsageOptions(
 }
 
 /**
- * Validate the client JSON body and transform it for the upstream provider:
+ * Validate the client JSON body and prepare it for proxy resolution:
  * - require a non-empty string `model` in `provider/model` form
- * - parse the provider prefix from the model
- * - strip the provider prefix from `model`
+ * - parse the provider prefix and downstream model alias
+ * - keep the original `model` value until the proxy resolves the upstream name
  * - force stream usage options for streamed chat completions requests
  */
 export function prepareOpenaiPayload(
@@ -73,7 +73,6 @@ export function prepareOpenaiPayload(
   const upstreamBody = ensureStreamUsageOptions(
     {
       ...body,
-      model: parsed.model,
     },
     requestPath,
   );

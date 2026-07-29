@@ -19,7 +19,31 @@ export type ResolvedProvider = {
 };
 
 export type ProviderLookup = {
-  findByName(name: string): Promise<ProviderLookupRecord | null>;
+  findByName(
+    name: string,
+    compatibilityType: ProviderCompatibility,
+  ): Promise<ProviderLookupRecord | null>;
+};
+
+export type ResolvedProviderModel = ResolvedProvider & {
+  modelAlias: string;
+  model: string;
+};
+
+export type ProviderModelLookupRecord = {
+  llmProvider: ProviderLookupRecord;
+  llmModel: {
+    alias: string;
+    name: string;
+  };
+};
+
+export type ProviderModelLookup = {
+  findByNameAndAlias(
+    name: string,
+    modelAlias: string,
+    compatibilityType: ProviderCompatibility,
+  ): Promise<ProviderModelLookupRecord | null>;
 };
 
 export type ResolveProviderSuccess = {
@@ -41,9 +65,12 @@ export type ResolveProviderResult =
   | ResolveProviderFailure;
 
 const defaultLookup: ProviderLookup = {
-  async findByName(name: string): Promise<ProviderLookupRecord | null> {
+  async findByName(
+    name: string,
+    compatibilityType: ProviderCompatibility,
+  ): Promise<ProviderLookupRecord | null> {
     return prisma.lLMProvider.findFirst({
-      where: { name },
+      where: { name, compatibilityType },
       orderBy: { updatedAt: "desc" },
       select: {
         name: true,
@@ -53,6 +80,47 @@ const defaultLookup: ProviderLookup = {
         isActive: true,
       },
     });
+  },
+};
+
+const defaultProviderModelLookup: ProviderModelLookup = {
+  async findByNameAndAlias(
+    name: string,
+    modelAlias: string,
+    compatibilityType: ProviderCompatibility,
+  ): Promise<ProviderModelLookupRecord | null> {
+    const llmAndModel = await prisma.model.findFirst({
+      where: {
+        alias: `${name}/${modelAlias}`,
+        provider: { name, compatibilityType },
+      },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        alias: true,
+        name: true,
+        provider: {
+          select: {
+            name: true,
+            apiUrl: true,
+            encryptedApiKey: true,
+            compatibilityType: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!llmAndModel) {
+      return null;
+    }
+
+    return {
+      llmProvider: llmAndModel.provider,
+      llmModel: {
+        alias: llmAndModel.alias,
+        name: llmAndModel.name,
+      },
+    };
   },
 };
 
@@ -76,7 +144,7 @@ export async function resolveProvider(
   let record: ProviderLookupRecord | null;
 
   try {
-    record = await lookup.findByName(providerId);
+    record = await lookup.findByName(providerId, compatibilityType);
   } catch {
     return resolutionFailure(
       503,
@@ -130,6 +198,121 @@ export async function resolveProvider(
         baseUrl: record.apiUrl,
         apiKey,
         compatibilityType: record.compatibilityType,
+      },
+    };
+  } catch {
+    return resolutionFailure(
+      502,
+      `Provider "${providerId}" is misconfigured.`,
+      "server_error",
+    );
+  }
+}
+
+export type ResolveProviderModelSuccess = {
+  ok: true;
+  value: ResolvedProviderModel;
+};
+
+export type ResolveProviderModelResult =
+  | ResolveProviderModelSuccess
+  | ResolveProviderFailure;
+
+export async function resolveProviderModel(
+  providerId: string,
+  modelAlias: string,
+  compatibilityType: ProviderCompatibility,
+  lookup: ProviderModelLookup = defaultProviderModelLookup,
+  providerLookup: ProviderLookup = defaultLookup,
+): Promise<ResolveProviderModelResult> {
+  let record: ProviderModelLookupRecord | null;
+
+  try {
+    record = await lookup.findByNameAndAlias(
+      providerId,
+      modelAlias,
+      compatibilityType,
+    );
+  } catch {
+    return resolutionFailure(
+      503,
+      "Unable to load provider configuration right now.",
+      "server_error",
+    );
+  }
+
+  if (!record) {
+    let providerRecord: ProviderLookupRecord | null;
+    try {
+      providerRecord = await providerLookup.findByName(
+        providerId,
+        compatibilityType,
+      );
+    } catch {
+      return resolutionFailure(
+        503,
+        "Unable to load provider configuration right now.",
+        "server_error",
+      );
+    }
+
+    if (!providerRecord) {
+      return resolutionFailure(
+        400,
+        `Unknown provider "${providerId}".`,
+        "invalid_request_error",
+      );
+    }
+
+    return resolutionFailure(
+      400,
+      `Unknown model "${providerId}/${modelAlias}".`,
+      "invalid_request_error",
+    );
+  }
+
+  if (!record.llmProvider.isActive) {
+    return resolutionFailure(
+      403,
+      `Provider "${providerId}" is inactive.`,
+      "invalid_request_error",
+    );
+  }
+
+  if (record.llmProvider.compatibilityType !== compatibilityType) {
+    return resolutionFailure(
+      400,
+      `Provider "${providerId}" is not available for the ${compatibilityType} API family.`,
+      "invalid_request_error",
+    );
+  }
+
+  if (
+    record.llmProvider.apiUrl.trim() === "" ||
+    record.llmProvider.encryptedApiKey.trim() === ""
+  ) {
+    return resolutionFailure(
+      502,
+      `Provider "${providerId}" is misconfigured.`,
+      "server_error",
+    );
+  }
+
+  try {
+    const apiKey = decryptApiKeyForProxy(record.llmProvider.encryptedApiKey);
+    if (apiKey.trim() === "") {
+      throw new Error("empty api key");
+    }
+
+    return {
+      ok: true,
+      value: {
+        providerId: record.llmProvider.name,
+        baseUrl: record.llmProvider.apiUrl,
+        apiKey,
+        compatibilityType: record.llmProvider.compatibilityType,
+        modelAlias,
+        model: record.llmModel.name,
       },
     };
   } catch {

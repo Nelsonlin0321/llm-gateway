@@ -2,15 +2,18 @@ import type { Context } from "hono";
 import { proxy } from "hono/proxy";
 import { prepareOpenaiPayload } from "./payload-openai";
 import {
-  resolveProvider,
-  type ResolveProviderResult,
+  resolveProviderModel,
+  type ResolveProviderModelResult,
 } from "./providers/resolve.js";
 import { buildUpstreamHeaders, buildUpstreamUrl } from "./shared/upstream.js";
 
 type ForwardUpstream = (input: string, init: RequestInit) => Promise<Response>;
 
 export type OpenaiProxyDependencies = {
-  resolveProvider?: (providerId: string) => Promise<ResolveProviderResult>;
+  resolveProviderModel?: (
+    providerId: string,
+    modelAlias: string,
+  ) => Promise<ResolveProviderModelResult>;
   forwardUpstream?: ForwardUpstream;
 };
 
@@ -43,20 +46,34 @@ async function handleOpenaiProxy(
   }
   const { parsed, upstreamBody } = prepared.value;
   const resolved = await (
-    deps.resolveProvider ??
-    ((providerId: string) => resolveProvider(providerId, "openai"))
-  )(parsed.providerId);
+    deps.resolveProviderModel ??
+    ((providerId: string, modelAlias: string) =>
+      resolveProviderModel(providerId, modelAlias, "openai"))
+  )(parsed.providerId, parsed.model);
+  if (process.env.GATEWAY_DEBUG_RESOLVE === "1") {
+    console.log("resolveProviderModel", {
+      ok: resolved.ok,
+      status: resolved.ok ? undefined : resolved.status,
+      providerId: parsed.providerId,
+      modelAlias: parsed.model,
+      baseUrl: resolved.ok ? resolved.value.baseUrl : undefined,
+      upstreamModel: resolved.ok ? resolved.value.model : undefined,
+    });
+  }
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
-
+  console.log(JSON.stringify(resolved));
   const upstreamUrl = buildUpstreamUrl(resolved.value.baseUrl, requestPath);
 
   try {
     return await (deps.forwardUpstream ?? defaultForwardUpstream)(upstreamUrl, {
       method: c.req.method,
       headers: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
-      body: JSON.stringify(upstreamBody),
+      body: JSON.stringify({
+        ...upstreamBody,
+        model: resolved.value.model,
+      }),
     });
   } catch (err) {
     return c.json(

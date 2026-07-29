@@ -59,6 +59,6 @@ npm test
 ```
 
 ```shell
-npx tsx scripts/test-json-response.ts
-npx tsx scripts/test-stream-response.ts
+npx tsx scripts/openai-chat-non-stream.ts
+npx tsx scripts/openai-chat-stream.ts
 ```

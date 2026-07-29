@@ -15,17 +15,21 @@ export const openaiCompatibleProviders: Record<string, ProviderConfig> = {
     // baseUrl: "https://api.minimaxi.com/v1",
     exampleModel: "minimax-m3",
   },
-  openai: {
-    // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
-    exampleModel: "gpt-5.4-mini",
-  },
-  deepseek: {
-    // baseUrl: "https://api.deepseek.com",
-    exampleModel: "deepseek-v4-flash",
-  },
-  azure: {
-    // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
-    exampleModel: "gpt-5.4-mini",
+  // openai: {
+  //   // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
+  //   exampleModel: "gpt-5.4-mini",
+  // },
+  // deepseek: {
+  //   // baseUrl: "https://api.deepseek.com",
+  //   exampleModel: "deepseek-v4-flash",
+  // },
+  // azure: {
+  //   // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
+  //   exampleModel: "gpt-5.4-mini",
+  // },
+  deepinfra: {
+    // baseUrl: "https://api.deepinfra.ai",
+    exampleModel: "glm-5.2",
   },
 };
 

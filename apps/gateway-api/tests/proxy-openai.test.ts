@@ -12,13 +12,15 @@ test("proxyToOpenai forwards requests with DB-resolved credentials", async () =>
   app.post(
     "/openai/v1/chat/completions",
     createOpenaiProxyHandler({
-      resolveProvider: async () => ({
+      resolveProviderModel: async () => ({
         ok: true,
         value: {
           providerId: "db-openai",
           baseUrl: "https://example.com/v1",
           apiKey: "sk-db-provider-key",
           compatibilityType: "openai",
+          modelAlias: "gateway-alias",
+          model: "gpt-5.4-mini",
         },
       }),
       forwardUpstream: async (url, init) => {
@@ -41,7 +43,7 @@ test("proxyToOpenai forwards requests with DB-resolved credentials", async () =>
         "x-request-id": "req-1",
       },
       body: JSON.stringify({
-        model: "db-openai/gpt-5.4-mini",
+        model: "db-openai/gateway-alias",
         stream: true,
       }),
     },
