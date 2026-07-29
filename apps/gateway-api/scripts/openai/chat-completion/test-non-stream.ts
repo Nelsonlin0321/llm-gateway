@@ -15,7 +15,7 @@ import "dotenv/config";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { openaiCompatibleProviders as providers } from "./providers";
+import { openaiCompatibleProviders as providers } from "../../providers";
 
 const childApiKey = process.env.CHILD_API_KEY || "";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -23,7 +23,7 @@ const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:8080").replace(
   /\/$/,
   "",
 );
-const payloadPath = join(__dirname, "sample-payload.json");
+const payloadPath = join(__dirname, "payload.json");
 const endpoint = `${baseUrl}/openai/chat/completions`;
 
 type ChatPayload = {
