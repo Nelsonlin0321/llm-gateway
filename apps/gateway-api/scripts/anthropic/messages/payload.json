@@ -1,0 +1,23 @@
+{
+    "model": "minimax/minimax-m3",
+    "messages": [
+        {
+            "role": "system",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "You are a helpful assistant. Keep answers brief."
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Hi there!"
+                }
+            ]
+        }
+    ]
+}
