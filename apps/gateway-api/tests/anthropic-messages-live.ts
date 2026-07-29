@@ -47,6 +47,7 @@ async function getLiveChildApiKey(): Promise<string> {
   return mintTestChildApiKey({
     key_id: "live-test-key",
     name: "live-test",
+    creator_id: "live-test-creator",
     issued_at: issuedAt,
   });
 }
@@ -194,7 +195,7 @@ export async function runJsonProviderTest(
     response.ok,
     [
       `Expected success for ${providerId}, got ${response.status} ${response.statusText}: ${rawText}`,
-      `Check that ${anthropicCompatibleProviders[providerId]?.apiKeyEnv ?? "the provider API key env var"} is set correctly.`,
+      `Check that provider API key env var is set correctly.`,
     ].join("\n"),
   );
   assert.ok(
@@ -243,7 +244,7 @@ export async function runStreamProviderTest(
     assert.fail(
       [
         `Expected success for ${providerId}, got ${response.status} ${response.statusText}: ${text}`,
-        `Check that ${anthropicCompatibleProviders[providerId]?.apiKeyEnv ?? "the provider API key env var"} is set correctly.`,
+        `Check that provider API key env var is set correctly.`,
       ].join("\n"),
     );
   }

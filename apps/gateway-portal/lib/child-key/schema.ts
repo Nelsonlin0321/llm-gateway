@@ -154,6 +154,7 @@ export type ToggleChildKeyInput = z.infer<typeof toggleChildKeyInputSchema>;
 export type ChildKeyJwtPayload = {
   key_id: string;
   name: string;
+  creator_id: string;
   policy_id?: string;
   /** Unix timestamp (seconds). Changes on each key rotation. */
   issued_at: number;
@@ -177,4 +178,12 @@ export type ChildKeyListItem = {
 export type CreateChildKeyResultItem = ChildKeyListItem & {
   /** Full `sk_…` token — returned only on create / rotate / reveal. */
   apiKey: string;
+};
+
+export type JWTClaim = {
+  key_id: string;
+  name: string;
+  policy_id?: string;
+  creator_id: string;
+  issued_at: number;
 };

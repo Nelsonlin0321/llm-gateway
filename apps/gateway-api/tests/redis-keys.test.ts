@@ -11,7 +11,7 @@ test("getProviderModelCacheKey builds stable keys", () => {
       "openai",
       "gateway-api",
     ),
-    "provider-model:openai:openai:gateway-alias:gateway-api",
+    "provider-model:gateway-api:openai:openai:gateway-alias",
   );
 });
 
@@ -23,6 +23,6 @@ test("getProviderModelCacheKey URI-encodes path segments", () => {
       "openai",
       "gateway-api",
     ),
-    "provider-model:openai:provider%2Fwith%20spaces:gpt-4%2Fmini:gateway-api",
+    "provider-model:gateway-api:openai:provider%2Fwith%20spaces:gpt-4%2Fmini",
   );
 });

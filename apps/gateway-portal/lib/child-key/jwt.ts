@@ -1,6 +1,6 @@
 import { decodeJwt, jwtVerify, SignJWT, type JWTPayload } from "jose";
 
-import { type ChildKeyJwtPayload } from "@/lib/child-key/schema";
+import { JWTClaim, type ChildKeyJwtPayload } from "@/lib/child-key/schema";
 
 export const CHILD_KEY_PREFIX = "sk_";
 
@@ -55,9 +55,14 @@ export function parseChildKeyJwtPayload(
     throw new Error("Child key token payload is missing name.");
   }
 
+  if (typeof payload.creatorId !== "string" || payload.creatorId.length === 0) {
+    throw new Error("Child key token payload is missing creatorId.");
+  }
+
   return {
     key_id: payload.key_id,
     name: payload.name,
+    creator_id: payload.creatorId,
     policy_id:
       typeof payload.policy_id === "string" && payload.policy_id.length > 0
         ? payload.policy_id
@@ -76,9 +81,10 @@ export async function signChildKeyToken(
 ): Promise<string> {
   const issuedAt = Math.trunc(payload.issued_at);
 
-  const claims: Record<string, unknown> = {
+  const claims: JWTClaim = {
     key_id: payload.key_id,
     name: payload.name,
+    creator_id: payload.creator_id,
     issued_at: issuedAt,
   };
 

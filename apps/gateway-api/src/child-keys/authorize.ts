@@ -69,7 +69,7 @@ export async function authorizeChildKey(
         where: { id: payload.key_id },
       });
     } else {
-      const cacheKey = getChildKeyCacheKey(payload.key_id);
+      const cacheKey = getChildKeyCacheKey(payload.key_id, "both");
       record = await redis_cache(cacheKey, () =>
         prisma.childKey.findUnique({
           where: { id: payload.key_id },

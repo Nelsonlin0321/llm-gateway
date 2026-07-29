@@ -44,6 +44,7 @@ async function mintKey(overrides: { exp?: number } = {}) {
   return mintTestChildApiKey({
     key_id: "key-test-1",
     name: "test-key",
+    creator_id: "creator_id",
     issued_at: issuedAt,
     exp: overrides.exp,
   });
@@ -151,6 +152,7 @@ test("authenticateChildApiKey rejects expired JWT", async (t) => {
   const apiKey = await mintTestChildApiKey({
     key_id: "key-expired",
     name: "expired",
+    creator_id: "creator_id",
     issued_at: issuedAt,
     exp: issuedAt + 30,
   });

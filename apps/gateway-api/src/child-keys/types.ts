@@ -2,6 +2,7 @@
 export type ChildKeyJwtPayload = {
   name: string;
   key_id: string;
+  creator_id: string;
   policy_id?: string;
   /** Unix timestamp (seconds). Changes on each key rotation. */
   issued_at: number;

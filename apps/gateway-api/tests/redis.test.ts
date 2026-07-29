@@ -15,7 +15,7 @@ class FakeRedis implements RedisCacheClient {
   public setCalls: Array<{
     key: string;
     value: string;
-    options?: { ex: number } | Record<string, never>;
+    args: unknown[];
   }> = [];
 
   constructor(
@@ -37,11 +37,7 @@ class FakeRedis implements RedisCacheClient {
   }
 
   async set(key: string, value: string, ...args: unknown[]): Promise<unknown> {
-    const options = args[0] as
-      | { ex: number }
-      | Record<string, never>
-      | undefined;
-    this.setCalls.push({ key, value, options });
+    this.setCalls.push({ key, value, args });
     if (this.overrides.set) {
       return this.overrides.set(key, value, ...args);
     }
@@ -102,7 +98,7 @@ test("redis_cache computes and stores missing values with ttl", async () => {
   assert.deepEqual(redis.setCalls[0], {
     key: "provider:openai",
     value: JSON.stringify({ name: "openai" }),
-    options: { ex: 120 },
+    args: ["EX", 120],
   });
 });
 
@@ -111,7 +107,7 @@ test("redis_cache omits ttl options when ttl is zero", async () => {
 
   await redis_cache("policy:1", async () => ({ id: 1 }), 0, redis);
 
-  assert.deepEqual(redis.setCalls[0]?.options, {});
+  assert.deepEqual(redis.setCalls[0]?.args, []);
 });
 
 test("redis_cache falls back when redis read fails", async () => {

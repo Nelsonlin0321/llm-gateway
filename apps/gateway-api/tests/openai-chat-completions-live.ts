@@ -46,6 +46,7 @@ export async function getLiveChildApiKey(): Promise<string> {
   return mintTestChildApiKey({
     key_id: "live-test-key",
     name: "live-test",
+    creator_id: "live-test-creator",
     issued_at: issuedAt,
   });
 }

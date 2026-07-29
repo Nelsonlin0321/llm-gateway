@@ -71,6 +71,7 @@ async function mintWithDb(overrides?: {
   const plainApiKey = await mintTestChildApiKey({
     key_id: "key-db-1",
     name: "db-key",
+    creator_id: "creator-1",
     issued_at: issuedAt,
   });
 
@@ -89,6 +90,7 @@ async function mintWithDb(overrides?: {
   const payload: ChildKeyJwtPayload = {
     key_id: "key-db-1",
     name: "db-key",
+    creator_id: "creator-1",
     issued_at: issuedAt,
   };
 
@@ -113,6 +115,7 @@ test("authorizeChildKey rejects missing key", async (t) => {
   const plainApiKey = await mintTestChildApiKey({
     key_id: "missing",
     name: "x",
+    creator_id: "creator-1",
     issued_at: issuedAt,
   });
 
@@ -120,6 +123,7 @@ test("authorizeChildKey rejects missing key", async (t) => {
   const result = await authorizeChildKey(plainApiKey, {
     key_id: "missing",
     name: "x",
+    creator_id: "creator-1",
     issued_at: issuedAt,
   });
 
@@ -210,6 +214,7 @@ test("authorizeChildKey returns 503 on database errors", async (t) => {
   const plainApiKey = await mintTestChildApiKey({
     key_id: "key-db-err",
     name: "err",
+    creator_id: "creator-1",
     issued_at: issuedAt,
   });
 
@@ -225,6 +230,7 @@ test("authorizeChildKey returns 503 on database errors", async (t) => {
   const result = await authorizeChildKey(plainApiKey, {
     key_id: "key-db-err",
     name: "err",
+    creator_id: "creator-1",
     issued_at: issuedAt,
   });
 

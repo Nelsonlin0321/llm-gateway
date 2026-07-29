@@ -25,6 +25,7 @@ export { normalizeChildKeyTags };
 export type ChildKeyRotateSource = {
   id: string;
   name: string;
+  creatorId: string;
   userEmail: string;
   tags: unknown;
   expiresAt: Date | null;
@@ -38,6 +39,7 @@ type ChildKeyRecord = Pick<
   ChildKey,
   | "id"
   | "name"
+  | "creatorId"
   | "key"
   | "userEmail"
   | "tags"
@@ -135,6 +137,7 @@ export async function buildChildKeyCreateData(
     key_id: id,
     name: input.name,
     policy_id: input.policyId,
+    creator_id: creator.id,
     issued_at: issuedAt,
     exp,
   });
@@ -185,6 +188,7 @@ export async function buildChildKeyRotateData(record: ChildKeyRotateSource) {
   const apiKey = await signChildKeyToken({
     key_id: record.id,
     name: record.name,
+    creator_id: record.creatorId,
     policy_id: policyId,
     issued_at: issuedAt,
     exp,

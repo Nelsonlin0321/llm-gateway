@@ -22,6 +22,7 @@ export async function mintTestChildApiKey(
   const claims: Record<string, unknown> = {
     key_id: payload.key_id,
     name: payload.name,
+    creator_id: payload.creator_id,
     issued_at: issuedAt,
   };
 
