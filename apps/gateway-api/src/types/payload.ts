@@ -19,7 +19,7 @@ export type PayloadError = {
 export type PreparedPayload = {
   parsed: ParsedModel;
   /** Body with validated client input; proxy may still replace `model` before forwarding. */
-  upstreamBody: JsonBody;
+  downstreamBody: JsonBody;
   metadata?: PayloadMetadata;
 };
 

@@ -12,7 +12,7 @@ export type ChildKeyJwtPayload = {
 
 export type ChildKeyAuthSuccess = {
   ok: true;
-  authInfo: ChildKeyDbRecord;
+  record: ChildKeyDbRecord;
 };
 
 export type ChildKeyAuthFailure = {

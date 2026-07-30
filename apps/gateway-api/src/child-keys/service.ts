@@ -170,6 +170,6 @@ export async function authenticateChildApiKey(
 
   return {
     ok: true,
-    authInfo: authz.record,
+    record: authz.record,
   };
 }

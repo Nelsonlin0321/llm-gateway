@@ -88,17 +88,17 @@ export function prepareOpenaiPayload(
     metadata = body.metadata;
   }
 
-  const upstreamBody = ensureStreamUsageOptions(
+  const downstreamBody = ensureStreamUsageOptions(
     {
       ...body,
     },
     requestPath,
   );
 
-  delete upstreamBody.metadata;
+  delete downstreamBody.metadata;
 
   return {
     ok: true,
-    value: { parsed, upstreamBody, metadata },
+    value: { parsed, downstreamBody, metadata },
   };
 }

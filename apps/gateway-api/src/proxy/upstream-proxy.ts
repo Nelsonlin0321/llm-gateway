@@ -1,18 +1,25 @@
 import type { Context } from "hono";
 import { proxy } from "hono/proxy";
 
-import type { ChildKeyJwtPayload } from "../child-keys/types.js";
+import type { ChildKeyDbRecord } from "../child-keys/types.js";
 
 export type UpstreamProxyContext = {
-  childKeyPayload: ChildKeyJwtPayload;
-  childKeyTags: Record<string, unknown>;
-  providerName: string;
+  // downstream context
+  provider: string;
+  requestedModel: string;
+  requestedModelAlias: string;
+  apiFamily: string;
+  metadataJson: string;
+
+  // upstream context
   upstreamModel: string;
   upstreamUrl: string;
   masterApiKey: string;
   upstreamHeaders: Headers;
   upstreamBody: string;
-  metadata?: Record<string, unknown>;
+
+  // child key context
+  childKeyRecord: ChildKeyDbRecord;
 };
 
 export type UpstreamProxyVariables = {
@@ -61,7 +68,7 @@ export async function handleUpstreamProxy(
     return c.json(
       {
         error: {
-          message: `Failed to reach provider "${ctx.providerName}".`,
+          message: `Failed to reach provider "${ctx.provider}".`,
           type: "server_error",
         },
       },

@@ -1,13 +1,10 @@
 import type { MiddlewareHandler } from "hono";
 
 import { authenticateChildApiKey } from "./service.js";
-import type { ChildKeyJwtPayload } from "./types.js";
-import type { JsonValue } from "@prisma/client/runtime/client";
+import type { ChildKeyDbRecord } from "./types.js";
 
 export type ChildKeyAuthVariables = {
-  childKeyPayload: ChildKeyJwtPayload;
-  childApiKey: string;
-  childKeyTags: JsonValue;
+  childKeyRecord: ChildKeyDbRecord;
 };
 
 /**
@@ -26,6 +23,6 @@ export const requireChildKeyAuth: MiddlewareHandler<{
   if (!result.ok) {
     return c.json({ error: result.error }, result.status as 401 | 403 | 503);
   }
-  c.set("authInfo", result.authInfo);
+  c.set("childKeyRecord", result.record);
   await next();
 };

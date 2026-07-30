@@ -1,5 +1,5 @@
 import "dotenv/config";
-import type { ParsedModel } from "../types/payload";
+import type { JsonBody, ParsedModel } from "../types/payload";
 
 export function parseModel(
   model: string,
@@ -55,4 +55,11 @@ export function buildUpstreamHeaders(req: Request, apiKey: string): Headers {
   headers.set("authorization", `Bearer ${apiKey}`);
   headers.set("content-type", "application/json");
   return headers;
+}
+
+export function buildUpstreamBody(
+  body: JsonBody,
+  upstreamModel: string,
+): string {
+  return JSON.stringify({ ...body, model: upstreamModel });
 }

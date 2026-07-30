@@ -60,18 +60,18 @@ export function prepareAnthropicPayload(body: unknown): PrepareResult {
     metadata = body.metadata;
   }
 
-  const upstreamBody: JsonBody = {
+  const downstreamBody: JsonBody = {
     ...body,
     model: parsed.model,
   };
 
-  delete upstreamBody.metadata;
+  delete downstreamBody.metadata;
 
   return {
     ok: true,
     value: {
       parsed,
-      upstreamBody,
+      downstreamBody,
       metadata,
     },
   };
