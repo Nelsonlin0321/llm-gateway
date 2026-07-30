@@ -5,11 +5,7 @@ import type { ChildKeyAuthResult } from "./types.js";
 
 export { decryptApiKeyForProxy } from "./crypto.js";
 export { encryptApiKey } from "./crypto.js";
-export {
-  authorizeChildKey,
-  type ChildKeyAuthzResult,
-  type ChildKeyDbRecord,
-} from "./authorize.js";
+export { authorizeChildKey, type ChildKeyAuthzResult } from "./authorize.js";
 export {
   CHILD_KEY_PREFIX,
   decodeChildKeyToken,
@@ -174,8 +170,6 @@ export async function authenticateChildApiKey(
 
   return {
     ok: true,
-    plainApiKey,
-    payload,
-    tags: authz.record.tags,
+    authInfo: authz.record,
   };
 }

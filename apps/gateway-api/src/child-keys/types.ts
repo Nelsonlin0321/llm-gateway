@@ -1,5 +1,5 @@
-import type { JsonValue } from "@prisma/client/runtime/client";
-
+import type { ChildKey } from "../generated/prisma/client";
+export type ChildKeyDbRecord = ChildKey;
 /** Claims embedded in a signed child API key JWT (`sk_<jwt>`). */
 export type ChildKeyJwtPayload = {
   name: string;
@@ -12,9 +12,7 @@ export type ChildKeyJwtPayload = {
 
 export type ChildKeyAuthSuccess = {
   ok: true;
-  plainApiKey: string;
-  payload: ChildKeyJwtPayload;
-  tags: JsonValue;
+  authInfo: ChildKeyDbRecord;
 };
 
 export type ChildKeyAuthFailure = {

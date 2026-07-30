@@ -26,9 +26,6 @@ export const requireChildKeyAuth: MiddlewareHandler<{
   if (!result.ok) {
     return c.json({ error: result.error }, result.status as 401 | 403 | 503);
   }
-
-  c.set("childKeyPayload", result.payload);
-  c.set("childApiKey", result.plainApiKey);
-  c.set("childKeyTags", result.tags);
+  c.set("authInfo", result.authInfo);
   await next();
 };

@@ -105,10 +105,7 @@ test("authenticateChildApiKey accepts a plain sk_ JWT bearer token", async (t) =
   const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
   assert.equal(result.ok, true);
   assert.equal(findUnique.calls.length, 1);
-  if (result.ok) {
-    assert.equal(result.payload.key_id, "key-test-1");
-    assert.equal(result.plainApiKey, apiKey);
-  }
+  assert.equal(result.authInfo.id, record.id);
 });
 
 test("authenticateChildApiKey rejects encrypted DB values as bearer tokens", async (t) => {
