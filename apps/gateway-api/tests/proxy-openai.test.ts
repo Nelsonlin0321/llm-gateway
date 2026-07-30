@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { Hono } from "hono";
-import { createOpenaiProxyHandler } from "../src/proxy-openai.js";
+import { createOpenaiProxyHandler } from "../src/proxy/proxy-openai.js";
 import { createUpstreamProxyHandler } from "../src/proxy/upstream-proxy.js";
 
 test("proxyToOpenai forwards requests with DB-resolved credentials", async () => {

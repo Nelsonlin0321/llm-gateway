@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   ensureStreamUsageOptions,
   prepareOpenaiPayload,
-} from "../src/payload-openai.js";
+} from "../src/payload/payload-openai.js";
 
 test("ensureStreamUsageOptions adds usage for /chat/completions streams", () => {
   const body = {

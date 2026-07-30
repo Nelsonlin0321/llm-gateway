@@ -5,8 +5,8 @@ import {
   requireChildKeyAuth,
   type ChildKeyAuthVariables,
 } from "./child-keys/index";
-import { createOpenaiProxyHandler } from "./proxy-openai";
-import { createAnthropicProxyHandler } from "./proxy-anthropic";
+import { createOpenaiProxyHandler } from "./proxy/proxy-openai";
+import { createAnthropicProxyHandler } from "./proxy/proxy-anthropic";
 import {
   createUpstreamProxyHandler,
   type UpstreamProxyVariables,

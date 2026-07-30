@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { prepareAnthropicPayload } from "../src/payload-anthropic.js";
+import { prepareAnthropicPayload } from "../src/payload/payload-anthropic.js";
 
 test("prepareAnthropicPayload strips provider prefix from the upstream model", () => {
   const result = prepareAnthropicPayload({

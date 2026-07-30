@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { Hono } from "hono";
-import { createAnthropicProxyHandler } from "../src/proxy-anthropic.js";
+import { createAnthropicProxyHandler } from "../src/proxy/proxy-anthropic.js";
 import { createUpstreamProxyHandler } from "../src/proxy/upstream-proxy.js";
 
 test("proxyToAnthropic returns resolver failures without forwarding", async () => {
@@ -26,12 +26,12 @@ test("proxyToAnthropic returns resolver failures without forwarding", async () =
       resolveProvider: async (_providerId, creatorId) => {
         assert.equal(creatorId, "creator_1");
         return {
-        ok: false,
-        status: 403,
-        error: {
-          message: 'Provider "minimax" is inactive.',
-          type: "invalid_request_error",
-        },
+          ok: false,
+          status: 403,
+          error: {
+            message: 'Provider "minimax" is inactive.',
+            type: "invalid_request_error",
+          },
         };
       },
     }),

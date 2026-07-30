@@ -10,10 +10,10 @@ export function parseModel(
     return null;
   }
 
-  const providerId = model.slice(0, slash).toLowerCase();
+  const providerName = model.slice(0, slash).toLowerCase();
   const bareModel = model.slice(slash + 1);
 
-  return { providerId, model: bareModel };
+  return { providerName, model: bareModel };
 }
 
 export function buildUpstreamUrl(baseUrl: string, requestPath: string): string {

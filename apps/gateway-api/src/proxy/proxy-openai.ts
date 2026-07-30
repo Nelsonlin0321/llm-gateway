@@ -1,15 +1,15 @@
 import type { MiddlewareHandler } from "hono";
-import { prepareOpenaiPayload } from "./payload-openai";
+import { prepareOpenaiPayload } from "../payload/payload-openai";
 import {
   resolveProviderModel,
   type ResolveProviderModelResult,
-} from "./providers/resolve.js";
-import { buildUpstreamHeaders, buildUpstreamUrl } from "./shared/upstream.js";
-import type { ChildKeyAuthVariables } from "./child-keys/index.js";
+} from "../providers/resolve.js";
+import { buildUpstreamHeaders, buildUpstreamUrl } from "../shared/upstream.js";
+import type { ChildKeyAuthVariables } from "../child-keys/index.js";
 import type {
   UpstreamProxyContext,
   UpstreamProxyVariables,
-} from "./proxy/upstream-proxy.js";
+} from "./upstream-proxy.js";
 
 export type OpenaiProxyDependencies = {
   resolveProviderModel?: (

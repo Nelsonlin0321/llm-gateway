@@ -1,15 +1,15 @@
 import type { MiddlewareHandler } from "hono";
-import { prepareAnthropicPayload } from "./payload-anthropic";
+import { prepareAnthropicPayload } from "../payload/payload-anthropic";
 import {
   resolveProvider,
   type ResolveProviderResult,
-} from "./providers/resolve.js";
-import { buildUpstreamHeaders, buildUpstreamUrl } from "./shared/upstream.js";
-import type { ChildKeyAuthVariables } from "./child-keys/index.js";
+} from "../providers/resolve.js";
+import { buildUpstreamHeaders, buildUpstreamUrl } from "../shared/upstream.js";
+import type { ChildKeyAuthVariables } from "../child-keys/index.js";
 import type {
   UpstreamProxyContext,
   UpstreamProxyVariables,
-} from "./proxy/upstream-proxy.js";
+} from "./upstream-proxy.js";
 
 export type AnthropicProxyDependencies = {
   resolveProvider?: (
