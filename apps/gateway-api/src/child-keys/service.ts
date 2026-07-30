@@ -176,5 +176,6 @@ export async function authenticateChildApiKey(
     ok: true,
     plainApiKey,
     payload,
+    tags: authz.record.tags,
   };
 }

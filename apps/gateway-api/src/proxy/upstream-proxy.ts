@@ -5,6 +5,7 @@ import type { ChildKeyJwtPayload } from "../child-keys/types.js";
 
 export type UpstreamProxyContext = {
   childKeyPayload: ChildKeyJwtPayload;
+  childKeyTags: Record<string, unknown>;
   providerName: string;
   upstreamModel: string;
   upstreamUrl: string;

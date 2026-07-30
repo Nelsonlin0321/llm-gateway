@@ -42,6 +42,11 @@ async function handleAnthropicProxy(
   }
 
   const childKeyPayload = c.get("childKeyPayload");
+  const rawTags = c.get("childKeyTags");
+  const childKeyTags =
+    rawTags && typeof rawTags === "object" && !Array.isArray(rawTags)
+      ? (rawTags as Record<string, unknown>)
+      : {};
   const requestPath = new URL(c.req.url).pathname;
   const prepared = prepareAnthropicPayload(body);
   if (!prepared.ok) {
@@ -61,6 +66,7 @@ async function handleAnthropicProxy(
 
   const proxyContext: UpstreamProxyContext = {
     childKeyPayload,
+    childKeyTags,
     providerName: parsed.providerName,
     upstreamModel: parsed.model,
     upstreamUrl,
