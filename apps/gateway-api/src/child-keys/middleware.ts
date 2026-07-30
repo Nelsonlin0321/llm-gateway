@@ -17,7 +17,7 @@ export type ChildKeyAuthVariables = {
  * Sets `childKey` (verified JWT payload) and `childApiKey` (plain `sk_…`) on context.
  */
 export const requireChildKeyAuth: MiddlewareHandler<{
-  Variables: ChildKeyAuthVariables;
+  Variables: ChildKeyAuthVariables & Record<string, unknown>;
 }> = async (c, next) => {
   const result = await authenticateChildApiKey(c.req.header("Authorization"));
 

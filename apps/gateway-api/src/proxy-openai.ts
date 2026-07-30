@@ -1,29 +1,32 @@
-import type { Context } from "hono";
-import { proxy } from "hono/proxy";
+import type { MiddlewareHandler } from "hono";
 import { prepareOpenaiPayload } from "./payload-openai";
 import {
   resolveProviderModel,
   type ResolveProviderModelResult,
 } from "./providers/resolve.js";
 import { buildUpstreamHeaders, buildUpstreamUrl } from "./shared/upstream.js";
-
-type ForwardUpstream = (input: string, init: RequestInit) => Promise<Response>;
+import type { ChildKeyAuthVariables } from "./child-keys/index.js";
+import type {
+  UpstreamProxyContext,
+  UpstreamProxyVariables,
+} from "./proxy/upstream-proxy.js";
 
 export type OpenaiProxyDependencies = {
   resolveProviderModel?: (
     providerId: string,
     modelAlias: string,
+    creatorId: string,
   ) => Promise<ResolveProviderModelResult>;
-  forwardUpstream?: ForwardUpstream;
 };
 
-const defaultForwardUpstream: ForwardUpstream = (input, init) =>
-  proxy(input, init);
-
 async function handleOpenaiProxy(
-  c: Context,
+  c: Parameters<
+    MiddlewareHandler<{
+      Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
+    }>
+  >[0],
   deps: OpenaiProxyDependencies,
-): Promise<Response> {
+): Promise<Response | void> {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -39,6 +42,7 @@ async function handleOpenaiProxy(
     );
   }
 
+  const childKeyPayload = c.get("childKeyPayload");
   const requestPath = new URL(c.req.url).pathname;
   const prepared = prepareOpenaiPayload(body, requestPath);
   if (!prepared.ok) {
@@ -47,38 +51,40 @@ async function handleOpenaiProxy(
   const { parsed, upstreamBody } = prepared.value;
   const resolved = await (
     deps.resolveProviderModel ??
-    ((providerId: string, modelAlias: string) =>
-      resolveProviderModel(providerId, modelAlias, "openai"))
-  )(parsed.providerId, parsed.model);
+    ((providerId: string, modelAlias: string, creatorId: string) =>
+      resolveProviderModel(providerId, modelAlias, "openai", creatorId))
+  )(parsed.providerId, parsed.model, childKeyPayload.creator_id);
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
   const upstreamUrl = buildUpstreamUrl(resolved.value.baseUrl, requestPath);
 
-  try {
-    return await (deps.forwardUpstream ?? defaultForwardUpstream)(upstreamUrl, {
-      method: c.req.method,
-      headers: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
-      body: JSON.stringify({
-        ...upstreamBody,
-        model: resolved.value.model,
-      }),
-    });
-  } catch (err) {
-    return c.json(
-      {
-        error: {
-          message: `Failed to reach provider "${parsed.providerId}".`,
-          type: "server_error",
-        },
-      },
-      502,
-    );
-  }
+  const proxyContext: UpstreamProxyContext = {
+    childKeyPayload,
+    providerId: parsed.providerId,
+    upstreamModel: resolved.value.model,
+    upstreamUrl,
+    masterApiKey: resolved.value.apiKey,
+    upstreamHeaders: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
+    upstreamBody: JSON.stringify({
+      ...upstreamBody,
+      model: resolved.value.model,
+    }),
+  };
+
+  c.set("proxyContext", proxyContext);
 }
 
 export function createOpenaiProxyHandler(
   deps: OpenaiProxyDependencies = {},
-): (c: Context) => Promise<Response> {
-  return (c) => handleOpenaiProxy(c, deps);
+): MiddlewareHandler<{
+  Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
+}> {
+  return async (c, next) => {
+    const result = await handleOpenaiProxy(c, deps);
+    if (result) {
+      return result;
+    }
+    await next();
+  };
 }

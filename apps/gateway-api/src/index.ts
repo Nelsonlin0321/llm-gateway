@@ -7,9 +7,17 @@ import {
 } from "./child-keys/index";
 import { createOpenaiProxyHandler } from "./proxy-openai";
 import { createAnthropicProxyHandler } from "./proxy-anthropic";
+import {
+  createUpstreamProxyHandler,
+  type UpstreamProxyVariables,
+} from "./proxy/upstream-proxy";
 import prisma from "./lib/prisma";
 
-const app = new Hono<{ Variables: ChildKeyAuthVariables }>();
+const app = new Hono<{
+  Variables: ChildKeyAuthVariables &
+    UpstreamProxyVariables &
+    Record<string, unknown>;
+}>();
 
 app.use("*", logger());
 
@@ -99,8 +107,13 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // Proxy routes require a valid child API key.
 app.use("/openai/*", requireChildKeyAuth);
 app.use("/anthropic/*", requireChildKeyAuth);
-app.post("/openai/*", createOpenaiProxyHandler());
-app.post("/anthropic/*", createAnthropicProxyHandler());
+
+app.post("/openai/*", createOpenaiProxyHandler(), createUpstreamProxyHandler());
+app.post(
+  "/anthropic/*",
+  createAnthropicProxyHandler(),
+  createUpstreamProxyHandler(),
+);
 
 const port = Number(process.env.PORT) || 8080;
 

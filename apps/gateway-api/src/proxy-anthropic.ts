@@ -1,26 +1,31 @@
-import type { Context } from "hono";
-import { proxy } from "hono/proxy";
+import type { MiddlewareHandler } from "hono";
 import { prepareAnthropicPayload } from "./payload-anthropic";
 import {
   resolveProvider,
   type ResolveProviderResult,
 } from "./providers/resolve.js";
 import { buildUpstreamHeaders, buildUpstreamUrl } from "./shared/upstream.js";
-
-type ForwardUpstream = (input: string, init: RequestInit) => Promise<Response>;
+import type { ChildKeyAuthVariables } from "./child-keys/index.js";
+import type {
+  UpstreamProxyContext,
+  UpstreamProxyVariables,
+} from "./proxy/upstream-proxy.js";
 
 export type AnthropicProxyDependencies = {
-  resolveProvider?: (providerId: string) => Promise<ResolveProviderResult>;
-  forwardUpstream?: ForwardUpstream;
+  resolveProvider?: (
+    providerId: string,
+    creatorId: string,
+  ) => Promise<ResolveProviderResult>;
 };
 
-const defaultForwardUpstream: ForwardUpstream = (input, init) =>
-  proxy(input, init);
-
 async function handleAnthropicProxy(
-  c: Context,
+  c: Parameters<
+    MiddlewareHandler<{
+      Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
+    }>
+  >[0],
   deps: AnthropicProxyDependencies,
-): Promise<Response> {
+): Promise<Response | void> {
   let body: unknown;
   try {
     body = await c.req.json();
@@ -36,6 +41,7 @@ async function handleAnthropicProxy(
     );
   }
 
+  const childKeyPayload = c.get("childKeyPayload");
   const requestPath = new URL(c.req.url).pathname;
   const prepared = prepareAnthropicPayload(body);
   if (!prepared.ok) {
@@ -44,35 +50,38 @@ async function handleAnthropicProxy(
   const { parsed, upstreamBody } = prepared.value;
   const resolved = await (
     deps.resolveProvider ??
-    ((providerId: string) => resolveProvider(providerId, "anthropic"))
-  )(parsed.providerId);
+    ((providerId: string, creatorId: string) =>
+      resolveProvider(providerId, "anthropic", creatorId))
+  )(parsed.providerId, childKeyPayload.creator_id);
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
 
   const upstreamUrl = buildUpstreamUrl(resolved.value.baseUrl, requestPath);
 
-  try {
-    return await (deps.forwardUpstream ?? defaultForwardUpstream)(upstreamUrl, {
-      method: c.req.method,
-      headers: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
-      body: JSON.stringify(upstreamBody),
-    });
-  } catch (err) {
-    return c.json(
-      {
-        error: {
-          message: `Failed to reach provider "${parsed.providerId}".`,
-          type: "server_error",
-        },
-      },
-      502,
-    );
-  }
+  const proxyContext: UpstreamProxyContext = {
+    childKeyPayload,
+    providerId: parsed.providerId,
+    upstreamModel: parsed.model,
+    upstreamUrl,
+    masterApiKey: resolved.value.apiKey,
+    upstreamHeaders: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
+    upstreamBody: JSON.stringify(upstreamBody),
+  };
+
+  c.set("proxyContext", proxyContext);
 }
 
 export function createAnthropicProxyHandler(
   deps: AnthropicProxyDependencies = {},
-): (c: Context) => Promise<Response> {
-  return (c) => handleAnthropicProxy(c, deps);
+): MiddlewareHandler<{
+  Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
+}> {
+  return async (c, next) => {
+    const result = await handleAnthropicProxy(c, deps);
+    if (result) {
+      return result;
+    }
+    await next();
+  };
 }

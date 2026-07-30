@@ -28,11 +28,16 @@ function buildLookup(
   handler: (
     name: string,
     compatibilityType: "openai" | "anthropic",
+    creatorId: string,
   ) => Promise<ProviderLookupRecord | null>,
 ): ProviderLookup {
   return {
-    findByName(name: string, compatibilityType: "openai" | "anthropic") {
-      return handler(name, compatibilityType);
+    findByName(
+      name: string,
+      compatibilityType: "openai" | "anthropic",
+      creatorId: string,
+    ) {
+      return handler(name, compatibilityType, creatorId);
     },
   };
 }
@@ -52,6 +57,7 @@ function buildProviderModelLookup(
     name: string,
     modelAlias: string,
     compatibilityType: "openai" | "anthropic",
+    creatorId: string,
   ) => Promise<ProviderModelLookupRecord | null>,
 ): ProviderModelLookup {
   return {
@@ -59,8 +65,9 @@ function buildProviderModelLookup(
       name: string,
       modelAlias: string,
       compatibilityType: "openai" | "anthropic",
+      creatorId: string,
     ) {
-      return handler(name, modelAlias, compatibilityType);
+      return handler(name, modelAlias, compatibilityType, creatorId);
     },
   };
 }
@@ -68,6 +75,7 @@ function buildProviderModelLookup(
 test("resolveProvider returns decrypted provider credentials", async () => {
   process.env.API_ENCRYPT_KEY = "resolve-provider-test-secret";
   const plainApiKey = "sk-provider-plain-secret";
+  const creatorId = "creator_1";
   const lookup = buildLookup(async (name, compatibilityType) =>
     name === "openai" && compatibilityType === "openai"
       ? buildLookupRecord({
@@ -77,7 +85,7 @@ test("resolveProvider returns decrypted provider credentials", async () => {
       : null,
   );
 
-  const result = await resolveProvider("openai", "openai", lookup);
+  const result = await resolveProvider("openai", "openai", creatorId, lookup);
 
   assert.equal(result.ok, true);
   if (!result.ok) {
@@ -96,6 +104,7 @@ test("resolveProvider returns 400 for missing providers", async () => {
   const result = await resolveProvider(
     "missing",
     "openai",
+    "creator_1",
     buildLookup(async () => null),
   );
 
@@ -112,6 +121,7 @@ test("resolveProvider returns 403 for inactive providers", async () => {
   const result = await resolveProvider(
     "openai",
     "openai",
+    "creator_1",
     buildLookup(async () => buildLookupRecord({ isActive: false })),
   );
 
@@ -128,6 +138,7 @@ test("resolveProvider returns 400 for compatibility mismatches", async () => {
   const result = await resolveProvider(
     "openai",
     "anthropic",
+    "creator_1",
     buildLookup(async () => buildLookupRecord({ compatibilityType: "openai" })),
   );
 
@@ -149,7 +160,7 @@ test("resolveProvider returns 502 when decryption fails", async () => {
     buildLookupRecord({ encryptedApiKey: "v1.invalid.payload" }),
   );
 
-  const result = await resolveProvider("openai", "openai", lookup);
+  const result = await resolveProvider("openai", "openai", "creator_1", lookup);
 
   assert.equal(result.ok, false);
   if (result.ok) {
@@ -165,7 +176,7 @@ test("resolveProvider returns 503 when lookup fails", async () => {
     throw new Error("database unavailable");
   });
 
-  const result = await resolveProvider("openai", "openai", lookup);
+  const result = await resolveProvider("openai", "openai", "creator_1", lookup);
 
   assert.equal(result.ok, false);
   if (result.ok) {
@@ -179,15 +190,18 @@ test("resolveProvider returns 503 when lookup fails", async () => {
 test("resolveProviderModel returns decrypted credentials and upstream model name", async () => {
   process.env.API_ENCRYPT_KEY = "resolve-provider-test-secret";
   const plainApiKey = "sk-provider-plain-secret";
+  const creatorId = "creator_1";
 
   const result = await resolveProviderModel(
     "openai",
     "gateway-alias",
     "openai",
-    buildProviderModelLookup(async (name, modelAlias, compatibilityType) =>
+    creatorId,
+    buildProviderModelLookup(async (name, modelAlias, compatibilityType, id) =>
       name === "openai" &&
       modelAlias === "gateway-alias" &&
-      compatibilityType === "openai"
+      compatibilityType === "openai" &&
+      id === creatorId
         ? buildProviderModelLookupRecord({
             llmProvider: buildLookupRecord({
               encryptedApiKey: encryptApiKey(plainApiKey),
@@ -217,6 +231,7 @@ test("resolveProviderModel returns 400 for unknown model aliases", async () => {
     "openai",
     "missing-alias",
     "openai",
+    "creator_1",
     buildProviderModelLookup(async () => null),
     buildLookup(async () => buildLookupRecord()),
   );

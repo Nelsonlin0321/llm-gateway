@@ -3,26 +3,43 @@ import test from "node:test";
 
 import { Hono } from "hono";
 import { createOpenaiProxyHandler } from "../src/proxy-openai.js";
+import { createUpstreamProxyHandler } from "../src/proxy/upstream-proxy.js";
 
 test("proxyToOpenai forwards requests with DB-resolved credentials", async () => {
-  const app = new Hono();
+  const app = new Hono<{ Variables: Record<string, unknown> }>();
   let forwardedUrl = "";
   let forwardedInit: RequestInit | undefined;
+
+  app.use("*", async (c, next) => {
+    c.set("childKeyPayload", {
+      name: "test-key",
+      key_id: "key_1",
+      creator_id: "creator_1",
+      issued_at: 123,
+    });
+    c.set("childApiKey", "sk_test");
+    await next();
+  });
 
   app.post(
     "/openai/v1/chat/completions",
     createOpenaiProxyHandler({
-      resolveProviderModel: async () => ({
-        ok: true,
-        value: {
-          providerId: "db-openai",
-          baseUrl: "https://example.com/v1",
-          apiKey: "sk-db-provider-key",
-          compatibilityType: "openai",
-          modelAlias: "gateway-alias",
-          model: "gpt-5.4-mini",
-        },
-      }),
+      resolveProviderModel: async (_providerId, _modelAlias, creatorId) => {
+        assert.equal(creatorId, "creator_1");
+        return {
+          ok: true,
+          value: {
+            providerId: "db-openai",
+            baseUrl: "https://example.com/v1",
+            apiKey: "sk-db-provider-key",
+            compatibilityType: "openai",
+            modelAlias: "gateway-alias",
+            model: "gpt-5.4-mini",
+          },
+        };
+      },
+    }),
+    createUpstreamProxyHandler({
       forwardUpstream: async (url, init) => {
         forwardedUrl = url;
         forwardedInit = init;

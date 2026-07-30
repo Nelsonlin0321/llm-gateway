@@ -24,6 +24,7 @@ export type ProviderLookup = {
   findByName(
     name: string,
     compatibilityType: ProviderCompatibility,
+    creatorId: string,
   ): Promise<ProviderLookupRecord | null>;
 };
 
@@ -45,6 +46,7 @@ export type ProviderModelLookup = {
     name: string,
     modelAlias: string,
     compatibilityType: ProviderCompatibility,
+    creatorId: string,
   ): Promise<ProviderModelLookupRecord | null>;
 };
 
@@ -70,9 +72,10 @@ const defaultLookup: ProviderLookup = {
   async findByName(
     name: string,
     compatibilityType: ProviderCompatibility,
+    creatorId: string,
   ): Promise<ProviderLookupRecord | null> {
     return prisma.lLMProvider.findFirst({
-      where: { name, compatibilityType },
+      where: { name, compatibilityType, creatorId },
       orderBy: { updatedAt: "desc" },
       select: {
         name: true,
@@ -90,12 +93,13 @@ const defaultProviderModelLookup: ProviderModelLookup = {
     name: string,
     modelAlias: string,
     compatibilityType: ProviderCompatibility,
+    creatorId: string,
   ): Promise<ProviderModelLookupRecord | null> {
     const query = () =>
       prisma.model.findFirst({
         where: {
           alias: `${name}/${modelAlias}`,
-          provider: { name, compatibilityType },
+          provider: { name, compatibilityType, creatorId },
         },
         orderBy: { updatedAt: "desc" },
         select: {
@@ -118,6 +122,7 @@ const defaultProviderModelLookup: ProviderModelLookup = {
         providerName: name,
         compatibilityType,
         modelAlias,
+        creatorId,
         application: "gateway-api",
       }),
       query,
@@ -158,12 +163,13 @@ function resolutionFailure(
 export async function resolveProvider(
   providerId: string,
   compatibilityType: ProviderCompatibility,
+  creatorId: string,
   lookup: ProviderLookup = defaultLookup,
 ): Promise<ResolveProviderResult> {
   let record: ProviderLookupRecord | null;
 
   try {
-    record = await lookup.findByName(providerId, compatibilityType);
+    record = await lookup.findByName(providerId, compatibilityType, creatorId);
   } catch {
     return resolutionFailure(
       503,
@@ -241,6 +247,7 @@ export async function resolveProviderModel(
   providerId: string,
   modelAlias: string,
   compatibilityType: ProviderCompatibility,
+  creatorId: string,
   lookup: ProviderModelLookup = defaultProviderModelLookup,
   providerLookup: ProviderLookup = defaultLookup,
 ): Promise<ResolveProviderModelResult> {
@@ -251,6 +258,7 @@ export async function resolveProviderModel(
       providerId,
       modelAlias,
       compatibilityType,
+      creatorId,
     );
   } catch {
     return resolutionFailure(
@@ -266,6 +274,7 @@ export async function resolveProviderModel(
       providerRecord = await providerLookup.findByName(
         providerId,
         compatibilityType,
+        creatorId,
       );
     } catch {
       return resolutionFailure(

@@ -11,10 +11,19 @@ export const getProviderModelCacheKey = (params: {
   providerName: string;
   compatibilityType: string;
   modelAlias: string;
+  creatorId: string;
   application: App;
 }): string => {
-  const { providerName, compatibilityType, modelAlias, application } = params;
+  const {
+    providerName,
+    compatibilityType,
+    modelAlias,
+    creatorId,
+    application,
+  } = params;
   return `provider-model:${encodeURIComponent(
     providerName,
-  )}:${encodeURIComponent(compatibilityType)}:${encodeURIComponent(modelAlias)}:${application}`;
+  )}:${encodeURIComponent(compatibilityType)}:${encodeURIComponent(
+    creatorId,
+  )}:${encodeURIComponent(modelAlias)}:${application}`;
 };
