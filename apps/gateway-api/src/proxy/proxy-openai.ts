@@ -48,7 +48,7 @@ async function handleOpenaiProxy(
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
-  const { parsed, upstreamBody } = prepared.value;
+  const { parsed, upstreamBody, metadata } = prepared.value;
   const resolved = await (
     deps.resolveProviderModel ??
     ((providerName: string, modelAlias: string, creatorId: string) =>
@@ -70,6 +70,7 @@ async function handleOpenaiProxy(
       ...upstreamBody,
       model: resolved.value.model,
     }),
+    metadata,
   };
 
   c.set("proxyContext", proxyContext);

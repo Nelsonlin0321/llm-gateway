@@ -11,6 +11,7 @@ export type UpstreamProxyContext = {
   masterApiKey: string;
   upstreamHeaders: Headers;
   upstreamBody: string;
+  metadata?: Record<string, unknown>;
 };
 
 export type UpstreamProxyVariables = {

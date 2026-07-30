@@ -19,5 +19,8 @@
                 }
             ]
         }
-    ]
+    ],
+    "metadata": {
+        "user_email": "user@example.com"
+    }
 }

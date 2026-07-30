@@ -10,5 +10,8 @@
       "content": "Hi there!"
     }
   ],
-  "stream": false
+  "stream": false,
+  "metadata": {
+    "user_email": "user@example.com"
+  }
 }

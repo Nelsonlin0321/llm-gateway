@@ -42,14 +42,37 @@ export function prepareAnthropicPayload(body: unknown): PrepareResult {
     };
   }
 
+  let metadata: Record<string, unknown> | undefined;
+  if ("metadata" in body && body.metadata !== undefined) {
+    if (!isRecord(body.metadata)) {
+      return {
+        ok: false,
+        error: {
+          status: 400,
+          error: {
+            message: 'Request body "metadata" must be an object when provided.',
+            type: "invalid_request_error",
+            param: "metadata",
+          },
+        },
+      };
+    }
+    metadata = body.metadata;
+  }
+
+  const upstreamBody: JsonBody = {
+    ...body,
+    model: parsed.model,
+  };
+
+  delete upstreamBody.metadata;
+
   return {
     ok: true,
     value: {
       parsed,
-      upstreamBody: {
-        ...body,
-        model: parsed.model,
-      },
+      upstreamBody,
+      metadata,
     },
   };
 }
