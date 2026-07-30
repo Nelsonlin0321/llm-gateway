@@ -1,48 +1,125 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import { proxyToOpenai } from "./proxy-openai.js";
 import {
-  anthropicCompatibleProviders,
-  openaiCompatibleProviders,
-} from "./providers.js";
-import { proxyToAnthropic } from "./proxy-anthropic.js";
+  requireChildKeyAuth,
+  type ChildKeyAuthVariables,
+} from "./child-keys/index";
+import { createOpenaiProxyHandler } from "./proxy/proxy-openai";
+import { createAnthropicProxyHandler } from "./proxy/proxy-anthropic";
+import {
+  createUpstreamProxyHandler,
+  type UpstreamProxyVariables,
+} from "./proxy/upstream-proxy";
+import {
+  requestIdMiddleware,
+  type RequestIdVariables,
+} from "./request-log/index";
+import prisma from "./lib/prisma";
 
-const app = new Hono();
+const app = new Hono<{
+  Variables: ChildKeyAuthVariables &
+    UpstreamProxyVariables &
+    RequestIdVariables &
+    Record<string, unknown>;
+}>();
 
 app.use("*", logger());
+app.use("*", requestIdMiddleware);
 
-app.get("/", (c) => {
+type ProviderWithModels = {
+  name: string;
+  models: Array<{ alias: string }>;
+};
+
+function buildAvailableModelRoutes(providers: ProviderWithModels[]) {
+  return Array.from(
+    new Set(
+      providers.flatMap((provider) =>
+        provider.models
+          .map((model) => {
+            const alias = model.alias.trim().replace(/^\/+/, "");
+
+            if (alias === "") {
+              return null;
+            }
+
+            return alias.startsWith(`${provider.name}/`)
+              ? alias
+              : `${provider.name}/${alias}`;
+          })
+          .filter((model): model is string => model !== null),
+      ),
+    ),
+  );
+}
+
+app.get("/", async (c) => {
+  const [openaiCompatible, anthropicCompatible] = await Promise.all([
+    prisma.lLMProvider.findMany({
+      where: {
+        compatibilityType: "openai",
+        isActive: true,
+      },
+      select: {
+        name: true,
+        models: {
+          select: {
+            alias: true,
+          },
+          orderBy: {
+            alias: "asc",
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    }),
+    prisma.lLMProvider.findMany({
+      where: {
+        compatibilityType: "anthropic",
+        isActive: true,
+      },
+      select: {
+        name: true,
+        models: {
+          select: {
+            alias: true,
+          },
+          orderBy: {
+            alias: "asc",
+          },
+        },
+      },
+      orderBy: {
+        name: "asc",
+      },
+    }),
+  ]);
+
   return c.json({
     name: "llm-gateway",
     status: "ok",
-    docs: "POST /openai/* or /anthropic/* with model set to provider/model",
-    "openai-compatible": Object.fromEntries(
-      Object.entries(openaiCompatibleProviders).map(([id, p]) => [
-        id,
-        {
-          baseUrl: p.baseUrl,
-          exampleModel: `${id}/${p.exampleModel}`,
-          apiKeyEnv: p.apiKeyEnv,
-        },
-      ]),
-    ),
-    "anthropic-compatible": Object.fromEntries(
-      Object.entries(anthropicCompatibleProviders).map(([id, p]) => [
-        id,
-        {
-          baseUrl: p.baseUrl,
-          exampleModel: `${id}/${p.exampleModel}`,
-          apiKeyEnv: p.apiKeyEnv,
-        },
-      ]),
-    ),
+    docs: "POST /openai/* or /anthropic/* with Authorization: Bearer sk_<child_api_key> and model set to provider/model",
+    auth: "Bearer plain child API key required (sk_… from portal create/reveal; not the encrypted DB value)",
+    "openai-compatible": buildAvailableModelRoutes(openaiCompatible),
+    "anthropic-compatible": buildAvailableModelRoutes(anthropicCompatible),
   });
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
-app.post("/openai/*", proxyToOpenai);
-app.post("/anthropic/*", proxyToAnthropic);
+
+// Proxy routes require a valid child API key.
+app.use("/openai/*", requireChildKeyAuth);
+app.use("/anthropic/*", requireChildKeyAuth);
+
+app.post("/openai/*", createOpenaiProxyHandler(), createUpstreamProxyHandler());
+app.post(
+  "/anthropic/*",
+  createAnthropicProxyHandler(),
+  createUpstreamProxyHandler(),
+);
 
 const port = Number(process.env.PORT) || 8080;
 

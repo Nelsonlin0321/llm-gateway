@@ -3,7 +3,7 @@ import test from "node:test";
 import {
   ensureStreamUsageOptions,
   prepareOpenaiPayload,
-} from "../src/payload-openai.js";
+} from "../src/payload/payload-openai.js";
 
 test("ensureStreamUsageOptions adds usage for /chat/completions streams", () => {
   const body = {
@@ -47,7 +47,7 @@ test("ensureStreamUsageOptions leaves non-chat endpoints unchanged", () => {
   assert.equal(result, body);
 });
 
-test("prepareOpenaiPayload strips provider prefix and adds usage for streamed chat completions", () => {
+test("prepareOpenaiPayload preserves the client model and adds usage for streamed chat completions", () => {
   const result = prepareOpenaiPayload(
     {
       model: "openai/gpt-5.4-mini",
@@ -61,8 +61,9 @@ test("prepareOpenaiPayload strips provider prefix and adds usage for streamed ch
     throw new Error("Expected payload preparation to succeed");
   }
 
-  assert.equal(result.value.parsed.providerId, "openai");
-  assert.equal(result.value.upstreamBody.model, "gpt-5.4-mini");
+  assert.equal(result.value.parsed.providerName, "openai");
+  assert.equal(result.value.parsed.model, "gpt-5.4-mini");
+  assert.equal(result.value.upstreamBody.model, "openai/gpt-5.4-mini");
   assert.deepEqual(result.value.upstreamBody.stream_options, {
     include_usage: true,
   });
@@ -82,6 +83,59 @@ test("prepareOpenaiPayload does not add usage for streamed non-chat endpoints", 
     throw new Error("Expected payload preparation to succeed");
   }
 
-  assert.equal(result.value.upstreamBody.model, "gpt-5.4-mini");
+  assert.equal(result.value.upstreamBody.model, "openai/gpt-5.4-mini");
   assert.equal("stream_options" in result.value.upstreamBody, false);
+});
+
+test("prepareOpenaiPayload accepts provider prefixes that will resolve later", () => {
+  const result = prepareOpenaiPayload(
+    {
+      model: "db-openai/gpt-5.4-mini",
+    },
+    "/v1/responses",
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    throw new Error("Expected payload preparation to succeed");
+  }
+
+  assert.equal(result.value.parsed.providerName, "db-openai");
+  assert.equal(result.value.parsed.model, "gpt-5.4-mini");
+  assert.equal(result.value.upstreamBody.model, "db-openai/gpt-5.4-mini");
+});
+
+test("prepareOpenaiPayload captures metadata but does not forward it upstream", () => {
+  const result = prepareOpenaiPayload(
+    {
+      model: "openai/gpt-5.4-mini",
+      metadata: { user_email: "user@example.com" },
+    },
+    "/v1/chat/completions",
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    throw new Error("Expected payload preparation to succeed");
+  }
+
+  assert.deepEqual(result.value.metadata, { user_email: "user@example.com" });
+  assert.equal("metadata" in result.value.upstreamBody, false);
+});
+
+test("prepareOpenaiPayload rejects non-object metadata", () => {
+  const result = prepareOpenaiPayload(
+    {
+      model: "openai/gpt-5.4-mini",
+      metadata: "user@example.com",
+    },
+    "/v1/chat/completions",
+  );
+
+  assert.equal(result.ok, false);
+  if (result.ok) {
+    throw new Error("Expected payload preparation to fail");
+  }
+
+  assert.equal(result.error.error.param, "metadata");
 });

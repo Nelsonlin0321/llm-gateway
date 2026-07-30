@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { Command } from "lucide-react";
 
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { PortalHeaderAuth } from "@/components/portal-header-auth";
 
 type PortalHeaderNavItem = {
   label: string;
@@ -15,54 +13,34 @@ type PortalHeaderProps = {
 
 export function PortalHeader({ navItems }: PortalHeaderProps) {
   return (
-    <header className="rounded-[24px] border border-border bg-[color-mix(in_srgb,var(--surface-1)_76%,transparent)] p-3 shadow-card backdrop-blur">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <header className="w-full border-b border-border bg-surface-1">
+      <div className="flex w-full flex-col gap-3 px-4 py-2.5 sm:px-6 sm:flex-row sm:items-center sm:justify-between lg:px-8">
         <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-2xl border border-[color-mix(in_srgb,var(--accent)_35%,var(--border))] bg-accent-subtle text-accent">
-            <Command className="size-4" />
+          <div className="flex size-8 items-center justify-center rounded-md bg-accent text-[11px] font-bold tracking-tight text-accent-foreground">
+            GW
           </div>
-          <div className="space-y-1">
-            <p className="[font-family:var(--font-display)] text-lg font-semibold tracking-[-0.03em]">
+          <div className="space-y-0.5">
+            <p className="font-heading text-[0.95rem] font-semibold tracking-[-0.02em] text-text-primary">
               LLM Gateway Portal
             </p>
-            <p className="text-sm text-text-secondary">
-              Self-service governance for providers, pricing, keys, and
-              analytics
+            <p className="text-[12px] text-text-secondary">
+              Providers, keys, policies, and analytics
             </p>
           </div>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <nav className="flex items-center gap-2 overflow-x-auto pb-1 text-sm text-text-secondary [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <nav className="flex items-center gap-0.5 overflow-x-auto pb-0.5 text-sm font-medium text-text-secondary [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden">
             {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="shrink-0 rounded-lg px-3 py-2 transition-colors hover:bg-secondary hover:text-foreground"
+                className="shrink-0 rounded-md px-3 py-2 transition-colors hover:bg-surface-2 hover:text-text-primary"
               >
                 {item.label}
               </Link>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
-            <Link
-              href="#audit"
-              className={cn(
-                buttonVariants({ variant: "ghost", size: "lg" }),
-                "h-10 rounded-lg px-4 text-sm text-text-secondary hover:bg-secondary hover:text-foreground",
-              )}
-            >
-              View audit trail
-            </Link>
-            <Link
-              href="#providers-card"
-              className={cn(
-                buttonVariants({ variant: "default", size: "lg" }),
-                "h-10 rounded-lg border border-white/8 px-4 text-sm font-semibold",
-              )}
-            >
-              Launch portal
-            </Link>
-          </div>
+          <PortalHeaderAuth />
         </div>
       </div>
     </header>

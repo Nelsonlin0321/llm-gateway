@@ -1,6 +1,11 @@
-import type { ParsedModel } from "../providers.js";
+export type ParsedModel = {
+  providerName: string;
+  model: string;
+};
 
 export type JsonBody = Record<string, unknown>;
+
+export type PayloadMetadata = Record<string, unknown>;
 
 export type PayloadError = {
   status: 400;
@@ -13,8 +18,9 @@ export type PayloadError = {
 
 export type PreparedPayload = {
   parsed: ParsedModel;
-  /** Body ready to forward (bare model + stream_options forced when streaming). */
-  upstreamBody: JsonBody;
+  /** Body with validated client input; proxy may still replace `model` before forwarding. */
+  downstreamBody: JsonBody;
+  metadata?: PayloadMetadata;
 };
 
 export type PrepareResult =

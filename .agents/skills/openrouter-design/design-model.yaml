@@ -1,0 +1,352 @@
+name: "OpenRouter"
+description: "Unified LLM interface and routing platform. Dark mode is Ink + Cloud with Grape Accent primary CTAs; light mode uses Cloud canvas with the same Grape Accent. Volt remains a brand mark color only. Bauhaus geometric mark, Gordita brand type, Plus Jakarta Sans UI, Geist Mono for code."
+philosophy: "Form follows function for multi-model infrastructure. The canvas is near-black Ink, type is Cloud white, and interactive action uses Grape Accent purple on both dark and light. Volt lime is reserved for brand marks and optional highlights, not primary CTAs. Surfaces are translucent white films on ink, not stacked gray panels. The language is Bauhaus geometry, developer-product density, and restrained color that only spikes at CTAs, status, and brand moments."
+primary_mode: "dark"
+brand_source: "Observed from https://openrouter.ai/, https://openrouter.ai/models, https://openrouter.ai/blog/announcements/brand-refresh/, and live CSS tokens (July 2026 brand refresh). Analysis via page HTML/CSS extract (no Chrome DevTools)."
+brand_domain: "LLM API gateway / model routing / developer platform"
+brand_type: "ui-rich"
+mono_for_code: true
+mono_for_metrics: true
+
+# ── PRIMITIVES ── Raw scales from OpenRouter brand tokens
+primitives:
+  colors:
+    # Cool ink→cloud ramp (or-ink #03080a, or-cloud #fcfcfe, slate steps)
+    neutral:
+      50: "#FCFCFE"    # or-cloud
+      100: "#F4F4F5"
+      200: "#E4E4E7"
+      300: "#D4D4D8"
+      400: "#A1A1AA"
+      500: "#71717A"
+      600: "#52525B"
+      700: "#3D3D42"
+      800: "#27272A"
+      900: "#18181B"
+      950: "#03080A"    # or-ink
+    # Volt - brand mark / optional highlight only (or-volt). NOT dark primary CTA.
+    volt:
+      50: "#F7FFE0"
+      100: "#ECFFB0"
+      200: "#DEFF70"
+      300: "#D4FF40"
+      400: "#CEFF20"
+      500: "#C8FF00"    # or-volt
+      600: "#A8D900"
+      700: "#7AA300"
+      800: "#4F6B00"
+      900: "#2E3F00"
+      950: "#1A2400"
+    # Grape Accent - primary interactive accent dark + light (or-grape)
+    brand:
+      50: "#F5EDFF"
+      100: "#E9D5FF"
+      200: "#D4ABFF"
+      300: "#B870FF"
+      400: "#9A45F8"
+      500: "#7624F4"    # or-grape / Accent
+      600: "#6218D4"
+      700: "#4E12AB"
+      800: "#3A0C80"
+      900: "#260855"
+      950: "#160433"
+    grape:
+      50: "#F5EDFF"
+      100: "#E9D5FF"
+      200: "#D4ABFF"
+      300: "#B870FF"
+      400: "#9A45F8"
+      500: "#7624F4"    # alias of brand / or-grape
+      600: "#6218D4"
+      700: "#4E12AB"
+      800: "#3A0C80"
+      900: "#260855"
+      950: "#160433"
+    # Royal blue (or-royal) - links, charts, secondary signal
+    royal:
+      50: "#EBF4FF"
+      100: "#D6E9FF"
+      200: "#A8D0FF"
+      300: "#70B0FF"
+      400: "#3B9EFF"
+      500: "#035ADE"    # or-royal / blue-9 dark
+      600: "#004BB8"
+      700: "#003C94"
+      800: "#002D6E"
+      900: "#001F4A"
+    red:
+      50: "#FFF0F3"
+      500: "#FF2D55"    # or negative
+      900: "#7F0A22"
+    green:
+      50: "#E8FBF3"
+      500: "#00BF6F"    # or positive
+      900: "#004D2C"
+    amber:
+      50: "#FFF8E6"
+      500: "#FFAB00"    # warning-text dark
+      900: "#6A4500"
+    coral:
+      50: "#FFF1ED"
+      500: "#FF6849"    # or-coral
+      900: "#7A2410"
+  spacing: [0, 2, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96]
+  radii: [0, 4, 6, 8, 12, 16, 24, 999]   # sm/md/lg/xl/2xl/3xl/full from site
+
+# ── SEMANTIC TOKENS ──
+tokens:
+  colors:
+    # Primary product mode - brand-refresh .dark
+    dark:
+      background: "{neutral.950}"           # #03080A or-ink
+      surface1: "rgba(252, 252, 254, 0.02)" # card film
+      surface2: "rgba(252, 252, 254, 0.04)" # muted / hover well
+      surface3: "rgba(252, 252, 254, 0.08)" # stronger well / card-hover
+      border: "rgba(252, 252, 254, 0.08)"   # border 7.8%
+      border_visible: "rgba(252, 252, 254, 0.14)"
+      text1: "{neutral.50}"                 # or-cloud
+      text2: "#A1A1AA"                      # muted-foreground (~62.7% cloud on ink)
+      text3: "rgba(252, 252, 254, 0.45)"
+      text4: "rgba(252, 252, 254, 0.28)"
+      accent: "{brand.500}"                 # Grape Accent CTA (not Volt)
+      accent_hover: "#7624F4E0"
+      accent_subtle: "rgba(118, 36, 244, 0.08)"
+      accent_foreground: "{neutral.50}"     # cloud on grape
+    # Light - brand-refresh light (Cloud + Grape Accent)
+    light:
+      background: "{neutral.50}"
+      surface1: "#FFFFFF"
+      surface2: "{neutral.100}"
+      surface3: "{neutral.200}"
+      border: "{neutral.200}"
+      border_visible: "{neutral.300}"
+      text1: "{neutral.950}"
+      text2: "{neutral.500}"
+      text3: "{neutral.400}"
+      text4: "{neutral.300}"
+      accent: "{brand.500}"                 # Grape Accent CTA
+      accent_hover: "#7624F4E0"
+      accent_subtle: "rgba(118, 36, 244, 0.08)"
+      accent_foreground: "{neutral.50}"
+    success: "{green.500}"
+    warning: "{amber.500}"
+    error: "{red.500}"
+    success_bg:
+      light: "{green.50}"
+      dark: "rgba(0, 191, 111, 0.08)"
+    warning_bg:
+      light: "{amber.50}"
+      dark: "rgba(255, 171, 0, 0.08)"
+    error_bg:
+      light: "{red.50}"
+      dark: "rgba(255, 45, 85, 0.08)"
+    # Named brand anchors (use sparingly)
+    or_ink: "{neutral.950}"
+    or_cloud: "{neutral.50}"
+    or_volt: "{volt.500}"                   # brand mark only
+    or_grape: "{brand.500}"                 # Accent primary
+    or_royal: "{royal.500}"
+    or_coral: "{coral.500}"
+
+  spacing:
+    2xs: 2
+    xs: 4
+    sm: 8
+    md: 16
+    lg: 24
+    xl: 32
+    2xl: 48
+    3xl: 64
+    4xl: 96
+
+  radii:
+    element: 4      # radius-sm
+    control: 6      # radius-md - buttons, inputs (rounded-md)
+    component: 8    # radius-lg / rounded-lg - cards
+    container: 12   # radius-xl
+    pill: 999
+
+  typography:
+    # Observed: Gordita (brand), Plus Jakarta Sans (UI), Geist Mono (code)
+    # Gordita is proprietary - previews use Plus Jakarta Sans for display+body.
+    display:
+      family: "Plus Jakarta Sans"
+      observed_family: "Gordita"
+      size: "56px"
+      weight: 700
+      line_height: 1.15
+      letter_spacing: "-0.02em"
+      google_fonts: "Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400"
+    body:
+      family: "Plus Jakarta Sans"
+      size: "16px"
+      weight: 400
+      line_height: 1.5
+      letter_spacing: "0em"
+      google_fonts: "Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400"
+    mono:
+      family: "Geist Mono"
+      size: "13px"
+      weight: 400
+      google_fonts: "Geist+Mono:wght@400;500;600"
+      # Also available: --font-geist-mono on openrouter.ai
+
+  elevation:
+    strategy: "flat"
+    # OpenRouter dark is primarily border + translucent film, not heavy shadows
+    level_1_light: "0 1px 3px rgba(3, 8, 10, 0.06), 0 1px 2px rgba(3, 8, 10, 0.04)"
+    level_2_light: "0 4px 12px rgba(3, 8, 10, 0.08)"
+    level_3_light: "0 16px 40px rgba(3, 8, 10, 0.12)"
+    level_1_dark: "none"
+    level_2_dark: "0 8px 24px rgba(0, 0, 0, 0.35)"
+    level_3_dark: "0 20px 48px rgba(0, 0, 0, 0.45)"
+    notes: "Dark mode elevation is almost always a 1px cloud-alpha border on ink, not drop shadow. Reserve shadows for modals and floating menus."
+
+  motion:
+    personality: "smooth"
+    easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+    duration_fast: "120ms"
+    duration_normal: "200ms"
+    duration_slow: "320ms"
+
+  hero_stage:
+    preset: null
+    observed_style:
+      description: "Near-flat Ink stage. Centered marketing type (56px bold), dual CTAs (Grape Accent primary + outlined secondary), then provider logo marquee and product feature cards. No mesh orb, no painterly wash - identity is typography + Grape Accent signal + provider iconography. Brand mark is geometric OR (circle + R cut); Volt may appear on the mark only, not as UI primary."
+      where_used: ["homepage hero", "models browse", "docs shells"]
+      notes: "Skill override: dark primary uses Grape Accent (#7624F4) instead of site Volt. Light primary remains Grape. Volt kept as or-volt for brand marks only."
+    background:
+      medium: "absent"
+      color_mode: "monochrome"
+      saturation: "flat"
+      light_source: "none"
+      falloff: "soft"
+      vignette: "off"
+      texture: "clean"
+      motion: "static"
+      intensity: "subtle"
+      safe_zone: "full-bleed"
+      color_palette: ["#03080A", "#FCFCFE", "#7624F4", "#C8FF00", "#035ADE"]
+    hero:
+      subject: "composition"
+      form: "type-and-cta-stack"
+      placement: "center"
+      scale: "dominant"
+      tint: "neutral"
+    relation:
+      type: "flat"
+      bleed: 0
+    disclaimer: "Approximated with CSS. OpenRouter product photography, provider logos, and the proprietary OR mark are not redistributed with this skill."
+
+  iconography:
+    observed_style:
+      description: "Compact geometric utility icons (~16px), medium stroke, rounded caps. Provider marks are often filled brand favicons in rows. Nav and UI chrome use simple outline chevrons, keys, and model glyphs."
+      stroke_weight: "medium"
+      corner_treatment: "soft"
+      fill_style: "outline"
+      form_language: "geometric"
+      visual_density: "minimal"
+    fallback_kit:
+      name: "Lucide"
+      weight: "default 2px"
+      match_score: "high"
+      match_reasoning: "Lucide matches OpenRouter's clean geometric product icons (dev-tool SaaS, 2px stroke, rounded caps). Tabler would be denser for admin tables; Phosphor is warmer than the Bauhaus mark language."
+      cdn: "https://unpkg.com/lucide-static@1.8.0/font/lucide.css"
+      icon_class_prefix: "icon icon-"
+    disclaimer: "Preview icons use Lucide as a best-match fallback. OpenRouter's production icons and provider logos are proprietary and not redistributed."
+
+components:
+  button_primary:
+    source: "observed"
+    # dark + light: Grape Accent fill, cloud text
+    background: "{tokens.colors.*.accent}"
+    color: "{tokens.colors.*.accent_foreground}"
+    padding: "0 32px"
+    height: "44px"          # h-11
+    radius: "{radii.control}"  # 6px rounded-md
+    font_weight: 500
+    font_size: "14px"       # text-button
+    border: "none"
+    shadow: "none"
+    hover:
+      background: "{tokens.colors.*.accent_hover}"
+    active:
+      opacity: 0.8
+  button_secondary:
+    source: "observed"
+    background: "transparent"
+    color: "{tokens.colors.*.text1}"
+    padding: "0 32px"
+    height: "44px"
+    radius: "{radii.control}"
+    font_weight: 500
+    font_size: "14px"
+    border: "1px solid {tokens.colors.*.border_visible}"
+    hover:
+      background: "{tokens.colors.*.surface2}"
+  button_ghost:
+    source: "derived"
+    background: "transparent"
+    color: "{tokens.colors.*.text2}"
+    padding: "8px 12px"
+    radius: "{radii.control}"
+    font_weight: 500
+    border: "none"
+    hover:
+      background: "{tokens.colors.*.surface2}"
+      color: "{tokens.colors.*.text1}"
+    justification: "Nav and quiet actions match secondary density without the outline."
+  card_feature:
+    source: "observed"
+    background: "{tokens.colors.dark.surface1}"
+    color: "{tokens.colors.*.text1}"
+    padding: "24px"
+    radius: "{radii.component}"  # 8px
+    border: "1px solid {tokens.colors.*.border}"
+    shadow: "none"
+  input:
+    source: "observed"
+    background: "transparent"
+    color: "{tokens.colors.*.text1}"
+    padding: "10px 12px"
+    radius: "{radii.control}"
+    border: "1px solid {tokens.colors.*.border_visible}"
+    focus_border: "rgba(252, 252, 254, 0.30)"  # focus-border dark
+    focus_ring: "0 0 0 3px rgba(118, 36, 244, 0.18)"
+  tag:
+    source: "observed"
+    background: "{tokens.colors.*.surface2}"
+    color: "{tokens.colors.*.text2}"
+    padding: "2px 8px"
+    radius: "{radii.element}"
+    border: "1px solid {tokens.colors.*.border}"
+    font_size: "12px"
+  nav_tab:
+    source: "observed"
+    background: "transparent"
+    color: "{tokens.colors.*.text2}"
+    active_color: "{tokens.colors.*.text1}"
+    active_indicator: "{tokens.colors.*.accent}"
+
+voice:
+  tone: "direct, infrastructure-confident, developer-first"
+  cadence: "short claims, concrete metrics (tokens, providers, models), verbs about routing and access. No hype adjectives."
+  samples:
+    - "The Unified Interface For LLMs"
+    - "Better prices, better uptime, no subscriptions."
+    - "One API for Any Model"
+    - "Access all major models through a single, unified interface."
+
+app_screen:
+  archetype: "list-detail"
+  frame: "browser"
+  frame_params:
+    url: "openrouter.ai/models"
+    title: "Models - OpenRouter"
+  content_seed: "Model catalog with filters, provider rows, token pricing, and a selected model detail panel showing context window, pricing, and providers."
+  required_tokens_checklist:
+    - "background, surface1, surface2, surface3, border, border_visible"
+    - "text1, text2, text3, text4"
+    - "accent, accent_subtle, success, warning, error"
+    - "display, body, mono typography"
+    - "radii.element, radii.control, radii.component, radii.pill"

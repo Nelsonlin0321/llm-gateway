@@ -70,10 +70,10 @@ When working in this app, optimize for:
 
 When adding features to this app, prefer this stack by default:
 
-- UI: 
-    - Tailwind CSS
-    - shadcn/ui components: How to install component: 
-        if you're working on the root directory of the project, run `npx shadcn@latest add card -c apps/gateway-portal`
+- UI:
+  - Tailwind CSS
+  - shadcn/ui components: How to install component:
+    if you're working on the root directory of the project, run `npx shadcn@latest add card -c apps/gateway-portal`
 - State management: React Context for simple shared state, TanStack React Query for server state, and Zustand for client-side app state where Context becomes cumbersome
 - ORM: Prisma
 - Auth: Better Auth
@@ -93,3 +93,17 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 <!-- END:nextjs-agent-rules -->
 
+# Work Log Rule
+
+When you complete any meaningful change (feature, fix, refactor, test, documentation, configuration), you must record what was done in a Markdown file.
+
+## Requirements
+
+- Location: under the most relevant `tasks/**` folder in `apps/gateway-portal/`.
+- Filename prefix: a three-digit, zero-padded sequence number that increases over time within that folder.
+  - Examples: `001-auth-flow.md`, `002-provider-loading-states.md`
+- Content: include at minimum:
+  - Summary of changes
+  - Files touched
+  - How to verify (commands/tests run)
+  - Follow-ups / next steps (if any)

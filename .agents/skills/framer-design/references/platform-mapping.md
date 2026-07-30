@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 
+If the product already uses framework-managed font loading, reuse it instead of duplicating the HTML snippet above. For `apps/gateway-portal`, the fonts are already loaded in `app/layout.tsx` via `next/font/google`, so Framer updates should keep using the existing `--font-display`, `--font-body`, and `--font-mono` variables.
+
 ### CSS Custom Properties
 
 ```css
@@ -258,5 +260,7 @@ module.exports = {
 ### Notes
 
 - Use `font-display` only for hero moments, canvas titles, and high-contrast section heads.
+- For `apps/gateway-portal`, prefer compact utility classes such as `rounded-xl`, `px-3`, `py-2.5`, `gap-3`, and `text-sm` before introducing page-specific exceptions.
+- In dense admin screens, keep the main hero near `text-[2.25rem]` to `text-[3rem]`, panel titles near `text-xl`, and metadata at `text-[11px]` to `text-xs`.
 - Use `font-mono` for shortcuts, traces, and code-like tokens.
 - Keep `accent` usage narrow and intentional.

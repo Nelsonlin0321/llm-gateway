@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenRouter  -  Design Preview</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@1.8.0/font/lucide.css">
+
+<style>
+
+:root {
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --space-2xs: 2px; --space-xs: 4px; --space-sm: 8px; --space-md: 16px;
+  --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px; --space-4xl: 96px;
+  --radius-element: 4px; --radius-control: 6px; --radius-component: 8px;
+  --radius-container: 12px; --radius-pill: 999px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 120ms; --duration-normal: 200ms;
+  --display: 56px; --heading: 24px; --subheading: 18px;
+  --body: 16px; --body-sm: 14px; --caption: 12px; --label: 12px;
+}
+[data-theme="dark"] {
+  --background: #03080a; --bg: #03080a;
+  --surface1: rgba(252,252,254,0.02); --surface2: rgba(252,252,254,0.04);
+  --surface3: rgba(252,252,254,0.08);
+  --border: rgba(252,252,254,0.08); --border-visible: rgba(252,252,254,0.14);
+  --text1: #fcfcfe; --text2: #A1A1AA;
+  --text3: rgba(252,252,254,0.45); --text4: rgba(252,252,254,0.28);
+  --accent: #7624f4; --accent-subtle: rgba(118,36,244,0.08);
+  --accent-foreground: #fcfcfe; --accent-hover: #7624f4e0;
+  --success: #00bf6f; --warning: #ffab00; --error: #ff2d55;
+  --success-bg: rgba(0,191,111,0.08); --warning-bg: rgba(255,171,0,0.08);
+  --error-bg: rgba(255,45,85,0.08);
+  --shadow-1: none; --shadow-2: 0 8px 24px rgba(0,0,0,0.35);
+  --grape: #7624f4; --royal: #035ade; --coral: #ff6849;
+}
+[data-theme="light"] {
+  --background: #fcfcfe; --bg: #fcfcfe;
+  --surface1: #ffffff; --surface2: #f4f4f5; --surface3: #e4e4e7;
+  --border: #e4e4e7; --border-visible: #d4d4d8;
+  --text1: #03080a; --text2: #71717a; --text3: #a1a1aa; --text4: #d4d4d8;
+  --accent: #7624f4; --accent-subtle: rgba(118,36,244,0.08);
+  --accent-foreground: #fcfcfe; --accent-hover: #7624f4e0;
+  --success: #00bf6f; --warning: #ffab00; --error: #ff2d55;
+  --success-bg: #e8fbf3; --warning-bg: #fff8e6; --error-bg: #fff0f3;
+  --shadow-1: 0 1px 3px rgba(3,8,10,0.06); --shadow-2: 0 4px 12px rgba(3,8,10,0.08);
+  --grape: #7624f4; --royal: #035ade; --coral: #ff6849;
+}
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; pointer-events: none; cursor: default; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh; background: var(--background); color: var(--text1);
+  font-family: var(--font-body); font-size: var(--body); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--duration-normal) var(--ease), color var(--duration-normal) var(--ease);
+}
+
+[data-theme-btn] { pointer-events: auto !important; cursor: pointer !important; }
+.mono { font-family: var(--font-mono); }
+.theme-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 100; display: flex; gap: 4px; padding: 4px;
+  background: var(--surface2); border: 1px solid var(--border-visible);
+  border-radius: var(--radius-control); box-shadow: var(--shadow-2);
+  backdrop-filter: blur(12px);
+}
+.theme-bar button {
+  border: 0; background: transparent; color: var(--text2);
+  font: 500 12px var(--font-body); padding: 8px 14px;
+  border-radius: 4px; cursor: pointer;
+}
+.theme-bar button.active { background: var(--surface3); color: var(--text1); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 32px; border-radius: var(--radius-control);
+  font-size: var(--body-sm); font-weight: 500; border: none; cursor: pointer;
+  transition: background var(--duration-fast) var(--ease), opacity var(--duration-fast) var(--ease);
+}
+.btn-primary { background: var(--accent); color: var(--accent-foreground); }
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-secondary {
+  background: transparent; color: var(--text1);
+  border: 1px solid var(--border-visible);
+}
+
+
+.btn-sm { height: 36px; padding: 0 16px; }
+.card {
+  background: var(--surface1); border: 1px solid var(--border);
+  border-radius: var(--radius-component); padding: var(--space-lg);
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--radius-element);
+  font-size: var(--caption); font-weight: 500;
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.tag-accent { background: var(--accent-subtle); color: var(--accent); border-color: transparent; }
+.tag-success { background: var(--success-bg); color: var(--success); border-color: transparent; }
+
+.tag-warning { background: var(--warning-bg); color: var(--warning); border-color: transparent; }
+
+
+
+
+
+body { padding: 32px; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 32px; gap: 16px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.02em; }
+.mark {
+  width: 28px; height: 28px; border-radius: 6px; background: var(--accent);
+  display: grid; place-items: center; color: var(--accent-foreground); font-weight: 800; font-size: 14px;
+}
+.nav { display: flex; gap: 8px; align-items: center; color: var(--text2); font-size: 14px; font-weight: 500; }
+.grid {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px;
+}
+.span-8 { grid-column: span 8; }
+.span-4 { grid-column: span 4; }
+.span-6 { grid-column: span 6; }
+.span-3 { grid-column: span 3; }
+.span-12 { grid-column: span 12; }
+@media (max-width: 900px) {
+  .span-8, .span-4, .span-6, .span-3 { grid-column: span 12; }
+}
+h1 { font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; }
+h2 { font-size: var(--heading); margin: 0 0 12px; letter-spacing: -0.01em; }
+.muted { color: var(--text2); }
+.kpi { font-family: var(--font-mono); font-size: 28px; font-weight: 500; letter-spacing: -0.02em; }
+.kpi-label { color: var(--text2); font-size: 12px; margin-top: 4px; }
+.row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.row:last-child { border-bottom: 0; }
+.model-name { font-weight: 500; }
+.meta { font-family: var(--font-mono); font-size: 12px; color: var(--text3); }
+.bar {
+  height: 6px; border-radius: 999px; background: var(--surface3); overflow: hidden; margin-top: 12px;
+}
+.bar > i { display: block; height: 100%; width: 68%; background: var(--accent); border-radius: 999px; }
+.providers { display: flex; flex-wrap: wrap; gap: 8px; }
+.pchip {
+  width: 36px; height: 36px; border-radius: 8px; background: var(--surface2);
+  border: 1px solid var(--border); display: grid; place-items: center;
+  font-size: 11px; font-weight: 600; color: var(--text2);
+}
+.chart {
+  height: 140px; display: flex; align-items: flex-end; gap: 6px; margin-top: 16px;
+}
+.chart span {
+  flex: 1; border-radius: 4px 4px 0 0; background: var(--surface3);
+}
+.chart span.on { background: var(--accent); opacity: 0.85; }
+.section-label {
+  font-size: 12px; font-weight: 500; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div class="brand"><div class="mark">OR</div> OpenRouter</div>
+    <nav class="nav">
+      <a href="#">Models</a>
+      <a href="#">Chat</a>
+      <a href="#">Rankings</a>
+      <a href="#">Docs</a>
+      <button class="btn btn-primary btn-sm" type="button">Get API Key</button>
+    </nav>
+  </header>
+
+  <div class="grid">
+    <div class="card span-8">
+      <div class="section-label">Overview</div>
+      <h1>The Unified Interface For LLMs</h1>
+      <p class="muted" style="margin:0 0 20px; max-width: 52ch;">Better prices, better uptime, no subscriptions. Route any model through one OpenAI-compatible API.</p>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="btn btn-primary" type="button">Get API Key</button>
+        <button class="btn btn-secondary" type="button">Explore Models</button>
+      </div>
+    </div>
+    <div class="card span-4">
+      <div class="section-label">This week</div>
+      <div class="kpi">200T+</div>
+      <div class="kpi-label">Monthly tokens routed</div>
+      <div class="bar"><i></i></div>
+      <div style="display:flex; justify-content:space-between; margin-top:16px;">
+        <div><div class="kpi" style="font-size:20px;">70+</div><div class="kpi-label">Providers</div></div>
+        <div><div class="kpi" style="font-size:20px;">400+</div><div class="kpi-label">Models</div></div>
+      </div>
+    </div>
+
+    <div class="card span-3"><div class="kpi">10M+</div><div class="kpi-label">Global users</div></div>
+    <div class="card span-3"><div class="kpi mono">$0.80</div><div class="kpi-label">Claude Fable / M input</div></div>
+    <div class="card span-3"><div class="kpi" style="color:var(--success);">99.98%</div><div class="kpi-label">Edge uptime</div></div>
+    <div class="card span-3"><div class="kpi" style="color:var(--accent);">+16%</div><div class="kpi-label">Weekly GPT trend</div></div>
+
+    <div class="card span-6">
+      <h2>Featured models</h2>
+      <div class="row"><div><div class="model-name">Claude Fable 5</div><div class="meta">anthropic · 367.5B tokens</div></div><span class="tag tag-warning">-27%</span></div>
+      <div class="row"><div><div class="model-name">GPT-5.6 Sol</div><div class="meta">openai · 592.6B tokens</div></div><span class="tag tag-success">+16%</span></div>
+      <div class="row"><div><div class="model-name">Muse Spark 1.1</div><div class="meta">meta · 50.8B tokens</div></div><span class="tag tag-accent">New</span></div>
+      <div class="row"><div><div class="model-name">DeepSeek V4</div><div class="meta">deepseek · 128.1B tokens</div></div><span class="tag">stable</span></div>
+    </div>
+
+    <div class="card span-6">
+      <h2>Provider marquee</h2>
+      <p class="muted" style="margin-top:0;">One key across Anthropic, OpenAI, Google, Meta, Mistral, and more.</p>
+      <div class="providers">
+        <div class="pchip">An</div><div class="pchip">OAI</div><div class="pchip">G</div>
+        <div class="pchip">Me</div><div class="pchip">Mi</div><div class="pchip">DS</div>
+        <div class="pchip">Qw</div><div class="pchip">xAI</div><div class="pchip">Co</div>
+      </div>
+      <div class="chart">
+        <span style="height:40%"></span><span class="on" style="height:72%"></span>
+        <span style="height:55%"></span><span class="on" style="height:90%"></span>
+        <span style="height:48%"></span><span class="on" style="height:66%"></span>
+        <span style="height:38%"></span><span class="on" style="height:80%"></span>
+        <span style="height:52%"></span><span class="on" style="height:95%"></span>
+      </div>
+    </div>
+
+    <div class="card span-12">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>
+          <h2 style="margin:0;">API key</h2>
+          <p class="muted" style="margin:4px 0 0;">Create a key and start making requests. Fully OpenAI compatible.</p>
+        </div>
+        <span class="tag tag-success">Active</span>
+      </div>
+      <div style="margin-top:16px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+        <code class="mono" style="padding:10px 14px; background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text2); font-size:13px;">OPENROUTER_API_KEY · sk-or-••••••••••••••••</code>
+        <button class="btn btn-secondary btn-sm" type="button">Copy</button>
+        <button class="btn btn-primary btn-sm" type="button">Create key</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="theme-bar">
+  <button type="button" data-theme-btn="dark" class="active">Dark</button>
+  <button type="button" data-theme-btn="light">Light</button>
+</div>
+
+
+<script>
+  const root = document.documentElement;
+  function setTheme(t) {
+    root.setAttribute('data-theme', t);
+    document.querySelectorAll('[data-theme-btn]').forEach(b => {
+      b.classList.toggle('active', b.dataset.themeBtn === t);
+    });
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach(b => {
+    b.addEventListener('click', () => setTheme(b.dataset.themeBtn));
+  });
+</script>
+
+</body>
+</html>

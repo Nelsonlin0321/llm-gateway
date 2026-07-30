@@ -58,16 +58,10 @@ Run the regular automated tests:
 npm test
 ```
 
-Run live proxy checks for `/openai/v1/chat/completions` from the `tests/` folder:
-
 ```shell
-npm run test:openai-chat
+npx tsx scripts/openai/chat-completion/test-non-stream.ts
+npx tsx scripts/openai/chat-completion/test-stream.ts
+npx tsx scripts/anthropic/messages/test-non-stream.ts
+npx tsx scripts/anthropic/messages/test-stream.ts
+npx tsx scripts/prisma-query.ts
 ```
-
-Run live proxy checks for `/anthropic/v1/messages` from the `tests/` folder:
-
-```shell
-npm run test:anthropic-messages
-```
-
-These live tests expect the proxy to be running at `PROXY_BASE_URL` (defaults to `http://localhost:8080`). You can narrow the provider list with `PROXY_TEST_PROVIDERS=openai,deepseek`.

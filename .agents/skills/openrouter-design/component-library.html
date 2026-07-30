@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenRouter  -  Component Library</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/lucide-static@1.8.0/font/lucide.css">
+
+<style>
+
+:root {
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --space-2xs: 2px; --space-xs: 4px; --space-sm: 8px; --space-md: 16px;
+  --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px; --space-4xl: 96px;
+  --radius-element: 4px; --radius-control: 6px; --radius-component: 8px;
+  --radius-container: 12px; --radius-pill: 999px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 120ms; --duration-normal: 200ms;
+  --display: 56px; --heading: 24px; --subheading: 18px;
+  --body: 16px; --body-sm: 14px; --caption: 12px; --label: 12px;
+}
+[data-theme="dark"] {
+  --background: #03080a; --bg: #03080a;
+  --surface1: rgba(252,252,254,0.02); --surface2: rgba(252,252,254,0.04);
+  --surface3: rgba(252,252,254,0.08);
+  --border: rgba(252,252,254,0.08); --border-visible: rgba(252,252,254,0.14);
+  --text1: #fcfcfe; --text2: #A1A1AA;
+  --text3: rgba(252,252,254,0.45); --text4: rgba(252,252,254,0.28);
+  --accent: #7624f4; --accent-subtle: rgba(118,36,244,0.08);
+  --accent-foreground: #fcfcfe; --accent-hover: #7624f4e0;
+  --success: #00bf6f; --warning: #ffab00; --error: #ff2d55;
+  --success-bg: rgba(0,191,111,0.08); --warning-bg: rgba(255,171,0,0.08);
+  --error-bg: rgba(255,45,85,0.08);
+  --shadow-1: none; --shadow-2: 0 8px 24px rgba(0,0,0,0.35);
+  --grape: #7624f4; --royal: #035ade; --coral: #ff6849;
+}
+[data-theme="light"] {
+  --background: #fcfcfe; --bg: #fcfcfe;
+  --surface1: #ffffff; --surface2: #f4f4f5; --surface3: #e4e4e7;
+  --border: #e4e4e7; --border-visible: #d4d4d8;
+  --text1: #03080a; --text2: #71717a; --text3: #a1a1aa; --text4: #d4d4d8;
+  --accent: #7624f4; --accent-subtle: rgba(118,36,244,0.08);
+  --accent-foreground: #fcfcfe; --accent-hover: #7624f4e0;
+  --success: #00bf6f; --warning: #ffab00; --error: #ff2d55;
+  --success-bg: #e8fbf3; --warning-bg: #fff8e6; --error-bg: #fff0f3;
+  --shadow-1: 0 1px 3px rgba(3,8,10,0.06); --shadow-2: 0 4px 12px rgba(3,8,10,0.08);
+  --grape: #7624f4; --royal: #035ade; --coral: #ff6849;
+}
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; pointer-events: none; cursor: default; }
+html, body { margin: 0; padding: 0; }
+body {
+  min-height: 100vh; background: var(--background); color: var(--text1);
+  font-family: var(--font-body); font-size: var(--body); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--duration-normal) var(--ease), color var(--duration-normal) var(--ease);
+}
+
+[data-theme-btn] { pointer-events: auto !important; cursor: pointer !important; }
+.mono { font-family: var(--font-mono); }
+.theme-bar {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 100; display: flex; gap: 4px; padding: 4px;
+  background: var(--surface2); border: 1px solid var(--border-visible);
+  border-radius: var(--radius-control); box-shadow: var(--shadow-2);
+  backdrop-filter: blur(12px);
+}
+.theme-bar button {
+  border: 0; background: transparent; color: var(--text2);
+  font: 500 12px var(--font-body); padding: 8px 14px;
+  border-radius: 4px; cursor: pointer;
+}
+.theme-bar button.active { background: var(--surface3); color: var(--text1); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 32px; border-radius: var(--radius-control);
+  font-size: var(--body-sm); font-weight: 500; border: none; cursor: pointer;
+  transition: background var(--duration-fast) var(--ease), opacity var(--duration-fast) var(--ease);
+}
+.btn-primary { background: var(--accent); color: var(--accent-foreground); }
+.btn-primary.is-hover, .btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary {
+  background: transparent; color: var(--text1);
+  border: 1px solid var(--border-visible);
+}
+.btn-secondary.is-hover { background: var(--surface2); }
+.btn-ghost { background: transparent; color: var(--text2); height: 36px; padding: 0 12px; }
+.btn-sm { height: 36px; padding: 0 16px; }
+.card {
+  background: var(--surface1); border: 1px solid var(--border);
+  border-radius: var(--radius-component); padding: var(--space-lg);
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: var(--radius-element);
+  font-size: var(--caption); font-weight: 500;
+  background: var(--surface2); color: var(--text2);
+  border: 1px solid var(--border);
+}
+.tag-accent { background: var(--accent-subtle); color: var(--accent); border-color: transparent; }
+.tag-success { background: var(--success-bg); color: var(--success); border-color: transparent; }
+.tag-error { background: var(--error-bg); color: var(--error); border-color: transparent; }
+.tag-warning { background: var(--warning-bg); color: var(--warning); border-color: transparent; }
+.input {
+  width: 100%; height: 40px; padding: 0 12px;
+  background: transparent; color: var(--text1);
+  border: 1px solid var(--border-visible); border-radius: var(--radius-control);
+  font: 400 14px var(--font-body); outline: none;
+}
+.input:focus, .input.is-focused {
+  border-color: rgba(252,252,254,0.3);
+  box-shadow: 0 0 0 3px rgba(118,36,244,0.18);
+}
+[data-theme="light"] .input:focus, [data-theme="light"] .input.is-focused {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(118,36,244,0.18);
+}
+.input::placeholder { color: var(--text3); }
+
+body { display: flex; min-height: 100vh; }
+.toc {
+  position: sticky; top: 0; align-self: flex-start;
+  width: 240px; min-width: 240px; height: 100vh; overflow: auto;
+  padding: 24px 16px; border-right: 1px solid var(--border);
+  background: var(--background);
+}
+.toc h1 { font-size: 14px; margin: 0 0 16px; letter-spacing: -0.01em; }
+.toc a {
+  display: block; padding: 8px 10px; border-radius: 6px;
+  color: var(--text2); font-size: 13px; font-weight: 500; margin-bottom: 2px;
+}
+.toc a.active, .toc a:hover { background: var(--surface2); color: var(--text1); }
+.main { flex: 1; max-width: 960px; padding: 40px 40px 120px; }
+.group { margin-bottom: 64px; scroll-margin-top: 24px; }
+.group h2 { font-size: 22px; margin: 0 0 6px; letter-spacing: -0.01em; }
+.group .desc { color: var(--text2); margin: 0 0 20px; font-size: 14px; }
+.canvas {
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+  padding: 24px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--surface1); margin-bottom: 12px;
+}
+.spec {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.spec th, .spec td {
+  text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border);
+}
+.spec th { color: var(--text3); font-weight: 500; }
+.spec td.mono { font-family: var(--font-mono); font-size: 12px; color: var(--text2); }
+.state-label { font-size: 11px; color: var(--text3); width: 100%; margin-bottom: -4px; }
+.swatch {
+  width: 56px; height: 56px; border-radius: 8px; border: 1px solid var(--border);
+}
+.swatch-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.swatch-wrap { text-align: center; }
+.swatch-wrap span { display:block; font-size: 11px; color: var(--text3); margin-top: 6px; font-family: var(--font-mono); }
+</style>
+</head>
+<body>
+<aside class="toc">
+  <h1>OpenRouter components</h1>
+  <a href="#colors" class="active">Colors</a>
+  <a href="#type">Typography</a>
+  <a href="#buttons">Buttons</a>
+  <a href="#inputs">Inputs</a>
+  <a href="#cards">Cards</a>
+  <a href="#tags">Tags</a>
+  <a href="#nav">Navigation</a>
+  <a href="#preview">Preview</a>
+  <a href="#landing">Landing</a>
+  <a href="#app">App screen</a>
+</aside>
+<main class="main">
+  <section class="group" id="colors">
+    <h2>Colors</h2>
+    <p class="desc">Dark primary: Ink + Cloud + Grape Accent. Light primary: Cloud + Grape Accent. Volt is brand-mark only.</p>
+    <div class="canvas swatch-row">
+      <div class="swatch-wrap"><div class="swatch" style="background:#03080a"></div><span>ink</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#fcfcfe"></div><span>cloud</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#7624f4"></div><span>accent</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#c8ff00"></div><span>volt</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#035ade"></div><span>royal</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#ff6849"></div><span>coral</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#00bf6f"></div><span>success</span></div>
+      <div class="swatch-wrap"><div class="swatch" style="background:#ff2d55"></div><span>error</span></div>
+    </div>
+  </section>
+
+  <section class="group" id="type">
+    <h2>Typography</h2>
+    <p class="desc">Plus Jakarta Sans (Gordita fallback) + Geist Mono.</p>
+    <div class="canvas" style="flex-direction:column; align-items:flex-start;">
+      <div style="font-size:56px; font-weight:700; letter-spacing:-0.02em; line-height:1.1;">Display 56</div>
+      <div style="font-size:24px; font-weight:600;">Heading 24</div>
+      <div style="font-size:16px;">Body 16  -  route any model through one interface.</div>
+      <div class="mono" style="font-size:13px; color:var(--text2);">anthropic/claude-fable-5 · $3.00 / M</div>
+    </div>
+  </section>
+
+  <section class="group" id="buttons">
+    <h2>Buttons</h2>
+    <p class="desc">Primary Grape Accent (dark + light). Height 44px, radius 6px, label 14px medium.</p>
+    <div class="canvas">
+      <div class="state-label">Default</div>
+      <button class="btn btn-primary" type="button">Get API Key</button>
+      <button class="btn btn-secondary" type="button">Explore Models</button>
+      <button class="btn btn-ghost" type="button">Docs</button>
+      <div class="state-label">Hover (static)</div>
+      <button class="btn btn-primary is-hover" type="button">Get API Key</button>
+      <button class="btn btn-secondary is-hover" type="button">Explore Models</button>
+      <div class="state-label">Disabled</div>
+      <button class="btn btn-primary" type="button" style="opacity:.5" disabled>Get API Key</button>
+    </div>
+    <table class="spec">
+      <tr><th>Token</th><th>Value</th></tr>
+      <tr><td>Radius</td><td class="mono">6px (--radius-control)</td></tr>
+      <tr><td>Height</td><td class="mono">44px</td></tr>
+      <tr><td>Font</td><td class="mono">14px / 500</td></tr>
+      <tr><td>Primary bg (dark)</td><td class="mono">#7624F4</td></tr>
+      <tr><td>Primary bg (light)</td><td class="mono">#7624F4</td></tr>
+    </table>
+  </section>
+
+  <section class="group" id="inputs">
+    <h2>Inputs</h2>
+    <p class="desc">Transparent field, visible border, Grape Accent focus ring on dark.</p>
+    <div class="canvas" style="flex-direction:column; align-items:stretch;">
+      <input class="input" placeholder="Search models…" />
+      <input class="input is-focused" value="anthropic/claude" />
+      <input class="input" style="border-color:var(--error); box-shadow:0 0 0 3px rgba(255,45,85,.12)" value="invalid key" />
+    </div>
+  </section>
+
+  <section class="group" id="cards">
+    <h2>Cards</h2>
+    <p class="desc">Cloud film surface + 1px border, 8px radius, no shadow in dark.</p>
+    <div class="canvas">
+      <div class="card" style="width:260px;">
+        <div style="font-weight:600; margin-bottom:6px;">Claude Fable 5</div>
+        <div class="mono" style="font-size:12px; color:var(--text3);">anthropic · 200k ctx</div>
+        <div style="margin-top:12px; display:flex; gap:8px;"><span class="tag tag-accent">Top weekly</span></div>
+      </div>
+      <div class="card" style="width:260px; background:var(--surface2);">
+        <div style="font-weight:600; margin-bottom:6px;">Edge routing</div>
+        <div style="color:var(--text2); font-size:14px;">Lowest latency between users and inference.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="group" id="tags">
+    <h2>Tags</h2>
+    <div class="canvas">
+      <span class="tag">stable</span>
+      <span class="tag tag-accent">New</span>
+      <span class="tag tag-success">+16%</span>
+      <span class="tag tag-warning">-27%</span>
+      <span class="tag tag-error">down</span>
+    </div>
+  </section>
+
+  <section class="group" id="nav">
+    <h2>Navigation</h2>
+    <div class="canvas" style="width:100%; justify-content:space-between;">
+      <div style="display:flex; gap:10px; align-items:center; font-weight:700;"><div class="lp-mark" style="width:24px;height:24px;border-radius:6px;background:var(--accent);color:var(--accent-foreground);display:grid;place-items:center;font-size:11px;">OR</div> OpenRouter</div>
+      <div style="display:flex; gap:16px; color:var(--text2); font-size:14px; font-weight:500;">
+        <span style="color:var(--text1); border-bottom:2px solid var(--accent); padding-bottom:2px;">Models</span>
+        <span>Chat</span><span>Docs</span>
+      </div>
+      <button class="btn btn-primary btn-sm" type="button">Get API Key</button>
+    </div>
+  </section>
+
+  <section class="group" id="preview">
+    <h2>Other views</h2>
+    <p class="desc">Open the sibling HTML files for full previews.</p>
+    <div class="canvas">
+      <a class="btn btn-secondary btn-sm" href="./preview.html">Bento preview</a>
+      <a class="btn btn-secondary btn-sm" href="./landing-page.html">Landing page</a>
+      <a class="btn btn-secondary btn-sm" href="./app-screen.html">App screen</a>
+    </div>
+  </section>
+  <section class="group" id="landing"></section>
+  <section class="group" id="app"></section>
+</main>
+
+<div class="theme-bar">
+  <button type="button" data-theme-btn="dark" class="active">Dark</button>
+  <button type="button" data-theme-btn="light">Light</button>
+</div>
+
+
+<script>
+  const root = document.documentElement;
+  function setTheme(t) {
+    root.setAttribute('data-theme', t);
+    document.querySelectorAll('[data-theme-btn]').forEach(b => {
+      b.classList.toggle('active', b.dataset.themeBtn === t);
+    });
+  }
+  document.querySelectorAll('[data-theme-btn]').forEach(b => {
+    b.addEventListener('click', () => setTheme(b.dataset.themeBtn));
+  });
+</script>
+
+<script>
+  const main = document.querySelector('.main');
+  const links = [...document.querySelectorAll('.toc a')];
+  const groups = [...document.querySelectorAll('.group')];
+  main.addEventListener('scroll', () => {
+    const y = main.scrollTop + 40;
+    let current = groups[0];
+    for (const g of groups) if (g.offsetTop <= y) current = g;
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current.id));
+  });
+  // also window scroll for this layout
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 80;
+    let current = groups[0];
+    for (const g of groups) if (g.offsetTop <= y) current = g;
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + current.id));
+  });
+</script>
+</body>
+</html>

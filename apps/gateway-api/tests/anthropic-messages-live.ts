@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { anthropicCompatibleProviders } from "../src/providers.js";
+import { anthropicCompatibleProviders } from "../scripts/providers.js";
+import { mintTestChildApiKey } from "./child-keys/mint-test-key.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baseUrl = (process.env.PROXY_BASE_URL ?? "http://localhost:8080").replace(
@@ -29,6 +30,26 @@ export function getLiveTestSkipReason(): string | undefined {
   }
 
   return "Set LIVE_PROXY_TEST=1 to run live proxy tests against the local gateway";
+}
+
+async function getLiveChildApiKey(): Promise<string> {
+  if (process.env.CHILD_API_KEY?.trim()) {
+    return process.env.CHILD_API_KEY.trim();
+  }
+
+  if (!process.env.JWT_SIGNING_SECRET?.trim()) {
+    throw new Error(
+      "Live proxy tests require CHILD_API_KEY or JWT_SIGNING_SECRET to mint a test child key.",
+    );
+  }
+
+  const issuedAt = Math.floor(Date.now() / 1000);
+  return mintTestChildApiKey({
+    key_id: "live-test-key",
+    name: "live-test",
+    creator_id: "live-test-creator",
+    issued_at: issuedAt,
+  });
 }
 
 export function getProviderIds(): string[] {
@@ -144,12 +165,14 @@ export async function runJsonProviderTest(
     stream: false,
   };
   const endpoint = `${baseUrl}/anthropic/v1/messages`;
+  const childApiKey = await getLiveChildApiKey();
 
   const started = Date.now();
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      authorization: `Bearer ${childApiKey}`,
     },
     body: JSON.stringify(payload),
   });
@@ -172,7 +195,7 @@ export async function runJsonProviderTest(
     response.ok,
     [
       `Expected success for ${providerId}, got ${response.status} ${response.statusText}: ${rawText}`,
-      `Check that ${anthropicCompatibleProviders[providerId]?.apiKeyEnv ?? "the provider API key env var"} is set correctly.`,
+      `Check that provider API key env var is set correctly.`,
     ].join("\n"),
   );
   assert.ok(
@@ -203,12 +226,14 @@ export async function runStreamProviderTest(
     stream: true,
   };
   const endpoint = `${baseUrl}/anthropic/v1/messages`;
+  const childApiKey = await getLiveChildApiKey();
 
   const started = Date.now();
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      authorization: `Bearer ${childApiKey}`,
     },
     body: JSON.stringify(payload),
   });
@@ -219,7 +244,7 @@ export async function runStreamProviderTest(
     assert.fail(
       [
         `Expected success for ${providerId}, got ${response.status} ${response.statusText}: ${text}`,
-        `Check that ${anthropicCompatibleProviders[providerId]?.apiKeyEnv ?? "the provider API key env var"} is set correctly.`,
+        `Check that provider API key env var is set correctly.`,
       ].join("\n"),
     );
   }
