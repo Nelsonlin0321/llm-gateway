@@ -1,5 +1,5 @@
 export type ParsedModel = {
-  providerId: string;
+  providerName: string;
   model: string;
 };
 

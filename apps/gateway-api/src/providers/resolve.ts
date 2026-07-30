@@ -161,7 +161,7 @@ function resolutionFailure(
 }
 
 export async function resolveProvider(
-  providerId: string,
+  providerName: string,
   compatibilityType: ProviderCompatibility,
   creatorId: string,
   lookup: ProviderLookup = defaultLookup,
@@ -169,7 +169,11 @@ export async function resolveProvider(
   let record: ProviderLookupRecord | null;
 
   try {
-    record = await lookup.findByName(providerId, compatibilityType, creatorId);
+    record = await lookup.findByName(
+      providerName,
+      compatibilityType,
+      creatorId,
+    );
   } catch {
     return resolutionFailure(
       503,
@@ -181,7 +185,7 @@ export async function resolveProvider(
   if (!record) {
     return resolutionFailure(
       400,
-      `Unknown provider "${providerId}".`,
+      `Unknown provider "${providerName}".`,
       "invalid_request_error",
     );
   }
@@ -189,7 +193,7 @@ export async function resolveProvider(
   if (!record.isActive) {
     return resolutionFailure(
       403,
-      `Provider "${providerId}" is inactive.`,
+      `Provider "${providerName}" is inactive.`,
       "invalid_request_error",
     );
   }
@@ -197,7 +201,7 @@ export async function resolveProvider(
   if (record.compatibilityType !== compatibilityType) {
     return resolutionFailure(
       400,
-      `Provider "${providerId}" is not available for the ${compatibilityType} API family.`,
+      `Provider "${providerName}" is not available for the ${compatibilityType} API family.`,
       "invalid_request_error",
     );
   }
@@ -205,7 +209,7 @@ export async function resolveProvider(
   if (record.apiUrl.trim() === "" || record.encryptedApiKey.trim() === "") {
     return resolutionFailure(
       502,
-      `Provider "${providerId}" is misconfigured.`,
+      `Provider "${providerName}" is misconfigured.`,
       "server_error",
     );
   }
@@ -228,7 +232,7 @@ export async function resolveProvider(
   } catch {
     return resolutionFailure(
       502,
-      `Provider "${providerId}" is misconfigured.`,
+      `Provider "${providerName}" is misconfigured.`,
       "server_error",
     );
   }
@@ -244,7 +248,7 @@ export type ResolveProviderModelResult =
   | ResolveProviderFailure;
 
 export async function resolveProviderModel(
-  providerId: string,
+  providerName: string,
   modelAlias: string,
   compatibilityType: ProviderCompatibility,
   creatorId: string,
@@ -255,7 +259,7 @@ export async function resolveProviderModel(
 
   try {
     record = await lookup.findByNameAndAlias(
-      providerId,
+      providerName,
       modelAlias,
       compatibilityType,
       creatorId,
@@ -272,7 +276,7 @@ export async function resolveProviderModel(
     let providerRecord: ProviderLookupRecord | null;
     try {
       providerRecord = await providerLookup.findByName(
-        providerId,
+        providerName,
         compatibilityType,
         creatorId,
       );
@@ -287,14 +291,14 @@ export async function resolveProviderModel(
     if (!providerRecord) {
       return resolutionFailure(
         400,
-        `Unknown provider "${providerId}".`,
+        `Unknown provider "${providerName}".`,
         "invalid_request_error",
       );
     }
 
     return resolutionFailure(
       400,
-      `Unknown model "${providerId}/${modelAlias}".`,
+      `Unknown model "${providerName}/${modelAlias}".`,
       "invalid_request_error",
     );
   }
@@ -302,7 +306,7 @@ export async function resolveProviderModel(
   if (!record.llmProvider.isActive) {
     return resolutionFailure(
       403,
-      `Provider "${providerId}" is inactive.`,
+      `Provider "${providerName}" is inactive.`,
       "invalid_request_error",
     );
   }
@@ -310,7 +314,7 @@ export async function resolveProviderModel(
   if (record.llmProvider.compatibilityType !== compatibilityType) {
     return resolutionFailure(
       400,
-      `Provider "${providerId}" is not available for the ${compatibilityType} API family.`,
+      `Provider "${providerName}" is not available for the ${compatibilityType} API family.`,
       "invalid_request_error",
     );
   }
@@ -321,7 +325,7 @@ export async function resolveProviderModel(
   ) {
     return resolutionFailure(
       502,
-      `Provider "${providerId}" is misconfigured.`,
+      `Provider "${providerName}" is misconfigured.`,
       "server_error",
     );
   }
@@ -346,7 +350,7 @@ export async function resolveProviderModel(
   } catch {
     return resolutionFailure(
       502,
-      `Provider "${providerId}" is misconfigured.`,
+      `Provider "${providerName}" is misconfigured.`,
       "server_error",
     );
   }

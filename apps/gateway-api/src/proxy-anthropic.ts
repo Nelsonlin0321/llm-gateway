@@ -52,7 +52,7 @@ async function handleAnthropicProxy(
     deps.resolveProvider ??
     ((providerId: string, creatorId: string) =>
       resolveProvider(providerId, "anthropic", creatorId))
-  )(parsed.providerId, childKeyPayload.creator_id);
+  )(parsed.providerName, childKeyPayload.creator_id);
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
@@ -61,7 +61,7 @@ async function handleAnthropicProxy(
 
   const proxyContext: UpstreamProxyContext = {
     childKeyPayload,
-    providerId: parsed.providerId,
+    providerName: parsed.providerName,
     upstreamModel: parsed.model,
     upstreamUrl,
     masterApiKey: resolved.value.apiKey,

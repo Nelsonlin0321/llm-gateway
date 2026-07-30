@@ -51,9 +51,9 @@ async function handleOpenaiProxy(
   const { parsed, upstreamBody } = prepared.value;
   const resolved = await (
     deps.resolveProviderModel ??
-    ((providerId: string, modelAlias: string, creatorId: string) =>
-      resolveProviderModel(providerId, modelAlias, "openai", creatorId))
-  )(parsed.providerId, parsed.model, childKeyPayload.creator_id);
+    ((providerName: string, modelAlias: string, creatorId: string) =>
+      resolveProviderModel(providerName, modelAlias, "openai", creatorId))
+  )(parsed.providerName, parsed.model, childKeyPayload.creator_id);
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
@@ -61,7 +61,7 @@ async function handleOpenaiProxy(
 
   const proxyContext: UpstreamProxyContext = {
     childKeyPayload,
-    providerId: parsed.providerId,
+    providerName: parsed.providerName,
     upstreamModel: resolved.value.model,
     upstreamUrl,
     masterApiKey: resolved.value.apiKey,

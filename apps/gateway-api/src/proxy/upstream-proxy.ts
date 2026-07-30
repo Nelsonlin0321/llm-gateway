@@ -5,7 +5,7 @@ import type { ChildKeyJwtPayload } from "../child-keys/types.js";
 
 export type UpstreamProxyContext = {
   childKeyPayload: ChildKeyJwtPayload;
-  providerId: string;
+  providerName: string;
   upstreamModel: string;
   upstreamUrl: string;
   masterApiKey: string;
@@ -59,7 +59,7 @@ export async function handleUpstreamProxy(
     return c.json(
       {
         error: {
-          message: `Failed to reach provider "${ctx.providerId}".`,
+          message: `Failed to reach provider "${ctx.providerName}".`,
           type: "server_error",
         },
       },
