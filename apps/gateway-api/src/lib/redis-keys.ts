@@ -1,5 +1,8 @@
 type App = "gateway-api" | "gateway-portal" | "";
 
+/** Redis Stream used as the request-log buffer before database ingest. */
+export const REQUEST_LOG_STREAM = "llm-gateway-request-logs";
+
 export const getChildKeyCacheKey = (
   keyId: string,
   application: App,

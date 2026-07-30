@@ -2,8 +2,25 @@ import type { Context } from "hono";
 import { proxy } from "hono/proxy";
 
 import type { ChildKeyDbRecord } from "../child-keys/types.js";
+import {
+  emitRequestLog,
+  getCaptureLevel,
+  getOrCreateRequestId,
+  instrumentUpstreamResponse,
+  type EmitRequestLogInput,
+  type EmitRequestLogResult,
+  type InstrumentedResponseCapture,
+  type RequestLogResponseCapture,
+} from "../request-log/index.js";
 
 export type UpstreamProxyContext = {
+  // routing / request envelope (for request-log stream)
+  gatewayPath: string;
+  httpMethod: string;
+  isStream: boolean;
+  /** Original client JSON body, stringified (pre-rewrite). */
+  requestPayloadJson: string;
+
   // downstream context
   provider: string;
   requestedModel: string;
@@ -28,12 +45,51 @@ export type UpstreamProxyVariables = {
 
 type ForwardUpstream = (input: string, init: RequestInit) => Promise<Response>;
 
+export type EmitRequestLogFn = (
+  input: EmitRequestLogInput,
+) => Promise<EmitRequestLogResult>;
+
 export type UpstreamProxyDependencies = {
   forwardUpstream?: ForwardUpstream;
+  /** Injected for tests; defaults to best-effort Redis Stream emit. */
+  emitRequestLog?: EmitRequestLogFn;
 };
 
 const defaultForwardUpstream: ForwardUpstream = (input, init) =>
   proxy(input, init);
+
+function toResponseCapture(
+  requestId: string,
+  startedAt: Date,
+  capture: InstrumentedResponseCapture,
+): RequestLogResponseCapture {
+  return {
+    requestId,
+    startedAt,
+    completedAt: capture.completedAt,
+    durationMs: capture.durationMs,
+    statusCode: capture.statusCode,
+    responseMode: capture.responseMode,
+    responseContentType: capture.responseContentType,
+    responseHeaders: capture.responseHeaders,
+    responsePayloadJson: capture.responsePayloadJson,
+    responseStreamText: capture.responseStreamText,
+    responseId: capture.responseId,
+    errorType: capture.errorType,
+    errorMessage: capture.errorMessage,
+    firstTokenMs: capture.firstTokenMs,
+    streamChunkCount: capture.streamChunkCount,
+  };
+}
+
+function scheduleEmit(
+  emit: EmitRequestLogFn,
+  input: EmitRequestLogInput,
+): void {
+  void emit(input).catch((error) => {
+    console.error("[request-log] emitRequestLog rejected", error);
+  });
+}
 
 export async function handleUpstreamProxy(
   c: Context,
@@ -55,8 +111,31 @@ export async function handleUpstreamProxy(
     );
   }
 
+  const startedAt = new Date();
+  const startedAtMs = startedAt.getTime();
+  const requestId = getOrCreateRequestId(
+    (c as unknown as { get: (key: string) => unknown }).get("requestId") as
+      | string
+      | undefined,
+  );
+  // Ensure downstream handlers / clients can see the correlation id.
+  c.header("x-request-id", requestId);
+
+  const emit = deps.emitRequestLog ?? emitRequestLog;
+  const requestHeaders = c.req.raw.headers;
+  const captureLevel = getCaptureLevel();
+
+  const emitWithResponse = (response: RequestLogResponseCapture) => {
+    scheduleEmit(emit, {
+      proxyContext: ctx,
+      requestHeaders,
+      response,
+      captureLevel,
+    });
+  };
+
   try {
-    return await (deps.forwardUpstream ?? defaultForwardUpstream)(
+    const upstream = await (deps.forwardUpstream ?? defaultForwardUpstream)(
       ctx.upstreamUrl,
       {
         method: c.req.method,
@@ -64,11 +143,43 @@ export async function handleUpstreamProxy(
         body: ctx.upstreamBody,
       },
     );
+
+    return await instrumentUpstreamResponse(upstream, {
+      isStream: ctx.isStream,
+      startedAtMs,
+      captureLevel,
+      onComplete: (capture) => {
+        emitWithResponse(toResponseCapture(requestId, startedAt, capture));
+      },
+    });
   } catch {
+    const completedAt = new Date();
+    const errorMessage = `Failed to reach provider "${ctx.provider}".`;
+    emitWithResponse({
+      requestId,
+      startedAt,
+      completedAt,
+      durationMs: Math.max(0, completedAt.getTime() - startedAtMs),
+      statusCode: 502,
+      responseMode: "json",
+      responseContentType: "application/json",
+      responseHeaders: {
+        "content-type": "application/json",
+      },
+      responsePayloadJson: JSON.stringify({
+        error: {
+          message: errorMessage,
+          type: "server_error",
+        },
+      }),
+      errorType: "server_error",
+      errorMessage,
+    });
+
     return c.json(
       {
         error: {
-          message: `Failed to reach provider "${ctx.provider}".`,
+          message: errorMessage,
           type: "server_error",
         },
       },

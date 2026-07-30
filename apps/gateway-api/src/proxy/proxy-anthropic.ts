@@ -7,6 +7,7 @@ import {
   buildUpstreamUrl,
 } from "../shared/upstream";
 import type { ChildKeyAuthVariables } from "../child-keys/index";
+import { isRecord } from "../utils.js";
 import type {
   UpstreamProxyContext,
   UpstreamProxyVariables,
@@ -37,12 +38,6 @@ async function handleAnthropicProxy(
   }
 
   const childKeyRecord = c.get("childKeyRecord");
-  // const childKeyTags =
-  //   childKeyRecord.tags &&
-  //   typeof childKeyRecord.tags === "object" &&
-  //   !Array.isArray(childKeyRecord.tags)
-  //     ? (childKeyRecord.tags as Record<string, unknown>)
-  //     : {};
   const requestPath = new URL(c.req.url).pathname;
   const prepared = prepareAnthropicPayload(body);
   if (!prepared.ok) {
@@ -52,7 +47,7 @@ async function handleAnthropicProxy(
   const resolved = await (
     deps.resolveProviderModel ??
     ((providerName: string, modelAlias: string, creatorId: string) =>
-      resolveProviderModel(providerName, modelAlias, "openai", creatorId))
+      resolveProviderModel(providerName, modelAlias, "anthropic", creatorId))
   )(parsed.providerName, parsed.model, childKeyRecord.creatorId);
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
@@ -60,13 +55,21 @@ async function handleAnthropicProxy(
 
   const upstreamUrl = buildUpstreamUrl(resolved.value.baseUrl, requestPath);
   const upstreamBody = buildUpstreamBody(downstreamBody, resolved.value.model);
+  const isStream = isRecord(body) && body.stream === true;
+
   const proxyContext: UpstreamProxyContext = {
-    //  downstream context
+    // request-log envelope
+    gatewayPath: requestPath,
+    httpMethod: c.req.method,
+    isStream,
+    requestPayloadJson: JSON.stringify(body),
+
+    // downstream context
     provider: parsed.providerName,
     requestedModel: parsed.model,
     requestedModelAlias: `${parsed.providerName}/${parsed.model}`,
     apiFamily: resolved.value.compatibilityType,
-    metadataJson: JSON.stringify(metadata),
+    metadataJson: JSON.stringify(metadata ?? {}),
 
     // upstream context
     upstreamModel: resolved.value.model,

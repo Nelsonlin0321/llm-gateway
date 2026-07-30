@@ -6,13 +6,20 @@ const ISO_DATE_TIME_RE =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:\d{2})$/;
 
 /**
- * Minimal Redis surface used by `redis_cache`.
- * Compatible with ioredis: `set(key, value)` or `set(key, value, "EX", seconds)`.
+ * Minimal Redis surface used by cache helpers and stream publishers.
+ * Compatible with ioredis:
+ * - `set(key, value)` or `set(key, value, "EX", seconds)`
+ * - `xadd(stream, id, field1, value1, ...)`
  */
 export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ...args: unknown[]): Promise<unknown>;
   del(key: string): Promise<number>;
+  xadd(
+    key: string,
+    id: string,
+    ...fieldValues: (string | Buffer | number)[]
+  ): Promise<string>;
 }
 
 const REDIS_URL = process.env.REDIS_URL;

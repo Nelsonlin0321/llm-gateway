@@ -11,15 +11,21 @@ import {
   createUpstreamProxyHandler,
   type UpstreamProxyVariables,
 } from "./proxy/upstream-proxy";
+import {
+  requestIdMiddleware,
+  type RequestIdVariables,
+} from "./request-log/index";
 import prisma from "./lib/prisma";
 
 const app = new Hono<{
   Variables: ChildKeyAuthVariables &
     UpstreamProxyVariables &
+    RequestIdVariables &
     Record<string, unknown>;
 }>();
 
 app.use("*", logger());
+app.use("*", requestIdMiddleware);
 
 type ProviderWithModels = {
   name: string;
