@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -157,21 +158,90 @@ export const childKeys = pgTable(
  * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
  *   PARTITION BY RANGE (log_date)
  */
-export const requestLogs = pgTable(
+export const requestLog = pgTable(
   "request_log",
   {
-    id: text().primaryKey(),
-    requestHeadersJson: jsonb().$type<Record<string, unknown>>(),
-    requestPayloadJson: jsonb().$type<unknown>(),
-    responseHeadersJson: jsonb().$type<Record<string, unknown>>(),
-    responsePayloadJson: jsonb().$type<unknown>(),
-    loggedAt: timestamp({ mode: "date" }).notNull(),
+    eventId: text().notNull(),
+    requestId: text().notNull(),
+    requestHeadersJson: jsonb("request_headers_json"),
+    requestPayloadJson: jsonb("request_payload_json"),
+    responseHeadersJson: jsonb("response_headers_json"),
+    responsePayloadJson: jsonb("response_payload_json"),
+    loggedAt: timestamp("logged_at").notNull(),
+    logDate: date("log_date").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").notNull(),
+  },
+  (table) => [
+    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    index("log_date_idx").on(table.logDate),
+  ],
+);
+
+/**
+ * Gateway request event log (routing, attribution, tokens, cost).
+ * Composite primary key: (`id` = request_id, `log_date`).
+ *
+ * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
+ *   PARTITION BY RANGE (log_date)
+ */
+export const eventLog = pgTable(
+  "event_log",
+  {
+    eventId: text().notNull(),
+    requestId: text().notNull(),
+    schemaVersion: integer().notNull(),
+    eventType: text().notNull(),
+    startedAt: timestamp().notNull(),
+    completedAt: timestamp(),
+    gatewayPath: text().notNull(),
+    httpMethod: text().notNull(),
+    apiFamily: compatibilityTypeEnum().notNull(),
+    providerId: text().references(() => llmProviders.id, {
+      onDelete: "set null",
+    }),
+    provider: text().notNull(),
+    requestedModel: text().notNull(),
+    requestedModelAlias: text().notNull(),
+    upstreamModel: text().notNull(),
+    upstreamUrl: text().notNull(),
+    isStream: boolean().notNull().default(false),
+    responseMode: text().notNull(),
+    childKeyId: text().references(() => childKeys.id, {
+      onDelete: "set null",
+    }),
+    childKeyName: text().notNull(),
+    childKeyCreatorId: text().references(() => user.id, {
+      onDelete: "set null",
+    }),
+    childKeyIssuedAt: integer(),
+    childKeyTagsJson: jsonb().$type<Record<string, string>>(),
+    userEmail: text().notNull(),
+    metadataJson: jsonb().$type<Record<string, unknown>>(),
+    captureLevel: text(),
+    statusCode: integer(),
+    responseContentType: text(),
+    durationMs: integer(),
+    responseId: text(),
+    inputToken: integer(),
+    outputToken: integer(),
+    cachedInputToken: integer(),
+    cost: doublePrecision(),
+    loggedAt: timestamp().notNull(),
     logDate: date().notNull(),
     ...timestamps,
   },
   (table) => [
-    index("logged_at_idx").on(table.loggedAt),
-    index("created_at_idx").on(table.createdAt),
+    primaryKey({ columns: [table.eventId, table.logDate] }),
+    index("log_date_idx").on(table.logDate),
+    index("tags_path_gin_idx").using(
+      "gin",
+      sql`${table.childKeyTagsJson} jsonb_path_ops`,
+    ),
+    index("metadata_path_gin_idx").using(
+      "gin",
+      sql`${table.metadataJson} jsonb_path_ops`,
+    ),
   ],
 );
 
@@ -219,6 +289,22 @@ export const childKeysRelations = relations(childKeys, ({ one }) => ({
   }),
 }));
 
+export const eventLogRelations = relations(eventLog, ({ one }) => ({
+  // Named llmProvider to avoid clashing with the denormalized `provider` text column.
+  llmProvider: one(llmProviders, {
+    fields: [eventLog.providerId],
+    references: [llmProviders.id],
+  }),
+  childKey: one(childKeys, {
+    fields: [eventLog.childKeyId],
+    references: [childKeys.id],
+  }),
+  childKeyCreator: one(user, {
+    fields: [eventLog.childKeyCreatorId],
+    references: [user.id],
+  }),
+}));
+
 export type User = typeof user.$inferSelect;
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
@@ -226,8 +312,10 @@ export type Verification = typeof verification.$inferSelect;
 export type LLMProvider = typeof llmProviders.$inferSelect;
 export type Model = typeof models.$inferSelect;
 export type ChildKey = typeof childKeys.$inferSelect;
-export type RequestLog = typeof requestLogs.$inferSelect;
+export type RequestLog = typeof requestLog.$inferSelect;
+export type EventLog = typeof eventLog.$inferSelect;
 export type NewLLMProvider = typeof llmProviders.$inferInsert;
 export type NewModel = typeof models.$inferInsert;
 export type NewChildKey = typeof childKeys.$inferInsert;
-export type NewRequestLog = typeof requestLogs.$inferInsert;
+export type NewRequestLog = typeof requestLog.$inferInsert;
+export type NewEventLog = typeof eventLog.$inferInsert;
