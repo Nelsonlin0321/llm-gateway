@@ -50,6 +50,7 @@ export function buildRequestLogFields(
     gateway_path: input.gatewayPath,
     http_method: input.httpMethod,
     api_family: input.apiFamily,
+    provider_id: input.providerId,
     provider: input.provider,
     requested_model: input.requestedModel,
     requested_model_alias: input.requestedModelAlias,

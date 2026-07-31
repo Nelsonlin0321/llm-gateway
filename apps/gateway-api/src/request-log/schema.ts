@@ -26,6 +26,7 @@ export type RequestLogV1Fields = {
   gateway_path: string;
   http_method: string;
   api_family: string;
+  provider_id: string;
   provider: string;
   requested_model: string;
   requested_model_alias: string;
@@ -96,6 +97,7 @@ export type BuildRequestLogInput = {
   gatewayPath: string;
   httpMethod: string;
   apiFamily: string;
+  providerId: string;
   provider: string;
   requestedModel: string;
   requestedModelAlias: string;
