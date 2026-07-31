@@ -27,10 +27,10 @@ export const openaiCompatibleProviders: Record<string, ProviderConfig> = {
   //   // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
   //   exampleModel: "gpt-5.4-mini",
   // },
-  deepinfra: {
-    // baseUrl: "https://api.deepinfra.ai",
-    exampleModel: "glm-5.2",
-  },
+  // openrouter: {
+  //   // baseUrl: "https://api.deepinfra.ai",
+  //   exampleModel: "glm-5.2",
+  // },
 };
 
 export const anthropicCompatibleProviders: Record<string, ProviderConfig> = {
@@ -38,9 +38,4 @@ export const anthropicCompatibleProviders: Record<string, ProviderConfig> = {
     // baseUrl: "https://api.minimaxi.com/anthropic",
     exampleModel: "minimax-m3",
   },
-};
-
-export const providers = {
-  ...openaiCompatibleProviders,
-  ...anthropicCompatibleProviders,
 };

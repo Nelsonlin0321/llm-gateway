@@ -31,7 +31,7 @@ function summarize(timesMs: number[]) {
 }
 
 async function runQuery() {
-  const name = "deepinfra";
+  const name = "openrouter";
   const compatibilityType = "openai" as const;
   const modelAlias = "glm-5.2";
 
