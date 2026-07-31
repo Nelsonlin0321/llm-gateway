@@ -11,7 +11,9 @@
     "test": "node --import tsx --test tests/**/*.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:snapshot": "tsx scripts/snapshot-seed-data.ts export",
+    "db:seed": "tsx scripts/snapshot-seed-data.ts seed"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1095.0",

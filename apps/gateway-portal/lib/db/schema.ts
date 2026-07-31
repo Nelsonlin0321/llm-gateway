@@ -8,7 +8,6 @@ import {
   jsonb,
   pgEnum,
   pgTable,
-  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -163,28 +162,23 @@ export const requestLog = pgTable(
   {
     eventId: text().notNull(),
     requestId: text().notNull(),
-    requestHeadersJson: jsonb("request_headers_json"),
-    requestPayloadJson: jsonb("request_payload_json"),
-    responseHeadersJson: jsonb("response_headers_json"),
-    responsePayloadJson: jsonb("response_payload_json"),
-    loggedAt: timestamp("logged_at").notNull(),
-    logDate: date("log_date").notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").notNull(),
+    requestHeadersJson: jsonb(),
+    requestPayloadJson: jsonb(),
+    responseHeadersJson: jsonb(),
+    responsePayloadJson: jsonb(),
+    statusCode: integer(),
+    isStream: boolean().notNull().default(false),
+    gatewayPath: text().notNull(),
+    loggedAt: timestamp().notNull(),
+    logDate: date().notNull(),
+    ...timestamp,
   },
   (table) => [
+    index("request_log_date_idx").on(table.logDate),
     // primaryKey({ columns: [table.eventId, table.logDate] }),
-    index("log_date_idx").on(table.logDate),
   ],
 );
 
-/**
- * Gateway request event log (routing, attribution, tokens, cost).
- * Composite primary key: (`id` = request_id, `log_date`).
- *
- * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
- *   PARTITION BY RANGE (log_date)
- */
 export const eventLog = pgTable(
   "event_log",
   {
@@ -218,22 +212,21 @@ export const eventLog = pgTable(
     childKeyTagsJson: jsonb().$type<Record<string, string>>(),
     userEmail: text().notNull(),
     metadataJson: jsonb().$type<Record<string, unknown>>(),
-    captureLevel: text(),
     statusCode: integer(),
     responseContentType: text(),
     durationMs: integer(),
     responseId: text(),
-    inputToken: integer(),
-    outputToken: integer(),
-    cachedInputToken: integer(),
-    cost: doublePrecision(),
+    inputToken: integer().default(0),
+    outputToken: integer().default(0),
+    cachedInputToken: integer().default(0),
+    cost: doublePrecision().default(0),
     loggedAt: timestamp().notNull(),
     logDate: date().notNull(),
     ...timestamps,
   },
   (table) => [
-    primaryKey({ columns: [table.eventId, table.logDate] }),
-    index("log_date_idx").on(table.logDate),
+    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    index("event_log_date_idx").on(table.logDate),
     index("tags_path_gin_idx").using(
       "gin",
       sql`${table.childKeyTagsJson} jsonb_path_ops`,
