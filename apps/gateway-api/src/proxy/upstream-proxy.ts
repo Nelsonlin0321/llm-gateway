@@ -23,6 +23,7 @@ export type UpstreamProxyContext = {
   requestPayloadJson: string;
 
   // downstream context
+  providerId: string;
   provider: string;
   requestedModel: string;
   requestedModelAlias: string;

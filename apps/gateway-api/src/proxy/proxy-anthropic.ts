@@ -65,6 +65,7 @@ async function handleAnthropicProxy(
     requestPayloadJson: JSON.stringify(body),
 
     // downstream context
+    providerId: resolved.value.providerId,
     provider: parsed.providerName,
     requestedModel: parsed.model,
     requestedModelAlias: `${parsed.providerName}/${parsed.model}`,
