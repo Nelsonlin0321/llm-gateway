@@ -11,6 +11,14 @@ export interface RedisStreamClient {
   xreadgroup(
     ...args: (string | number | Buffer)[]
   ): Promise<XReadGroupResult | null>;
+  xautoclaim(
+    ...args: (string | number | Buffer)[]
+  ): Promise<XAutoClaimResult>;
+  xack(
+    key: string,
+    group: string,
+    ...ids: string[]
+  ): Promise<number>;
   quit(): Promise<"OK">;
   disconnect(): void;
 }
@@ -20,8 +28,18 @@ export interface RedisStreamClient {
  * [ [ streamKey, [ [ id, [ field, value, ... ] ], ... ] ], ... ]
  */
 export type XReadGroupResult = Array<
-  [streamKey: string, entries: Array<[id: string, fields: string[]]>]
+  [streamKey: string, entries: Array<[id: string, fields: string[] | null]>]
 >;
+
+/**
+ * ioredis shape for XAUTOCLAIM replies:
+ * [ nextStartId, [ [ id, fields | null ], ... ], [ deletedIds? ] ]
+ */
+export type XAutoClaimResult = [
+  nextStartId: string,
+  entries: Array<[id: string, fields: string[] | null]>,
+  deletedIds?: string[],
+];
 
 let redisClient: RedisStreamClient | null | undefined;
 

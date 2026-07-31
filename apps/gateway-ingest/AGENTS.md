@@ -6,8 +6,11 @@
 
 ## Scope
 
-- Consume Redis Stream request-log events via consumer groups (`XREADGROUP` + `CLAIM`).
-- Extract stream entries into structured records.
+- Consume Redis Stream request-log events via consumer groups:
+  - `XAUTOCLAIM` for idle pending (Redis 6.2+; works on 8.2)
+  - `XREADGROUP … >` for new messages
+  - `XACK` after successful extract + log (Phase A)
+- Do **not** use `XREADGROUP … CLAIM` (Redis 8.4+ only).
 - Transform + Postgres ingest are **out of scope until explicitly requested**.
 
 ## Testing Expectations

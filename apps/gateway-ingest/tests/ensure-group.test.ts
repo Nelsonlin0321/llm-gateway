@@ -4,6 +4,7 @@ import test from "node:test";
 import { ensureConsumerGroup } from "../src/consumer/ensure-group.js";
 import type {
   RedisStreamClient,
+  XAutoClaimResult,
   XReadGroupResult,
 } from "../src/lib/redis-client.js";
 
@@ -21,6 +22,14 @@ class FakeRedis implements RedisStreamClient {
 
   async xreadgroup(): Promise<XReadGroupResult | null> {
     return null;
+  }
+
+  async xautoclaim(): Promise<XAutoClaimResult> {
+    return ["0-0", []];
+  }
+
+  async xack(): Promise<number> {
+    return 0;
   }
 
   async quit(): Promise<"OK"> {

@@ -8,13 +8,14 @@ export type IngestConfig = {
   streamKey: string;
   groupName: string;
   consumerName: string;
-  /** Max entries per XREADGROUP call (COUNT). */
+  /** Shared COUNT budget: XAUTOCLAIM first, then XREADGROUP >. */
   count: number;
-  /** Block timeout in milliseconds (BLOCK). 0 = do not block. */
+  /** Block timeout in milliseconds for new-message XREADGROUP. 0 = do not block. */
   blockMs: number;
   /**
-   * Claim pending entries idle at least this many ms (CLAIM).
-   * Requires Redis 8.4+ XREADGROUP CLAIM support.
+   * XAUTOCLAIM min-idle-time in milliseconds (Redis 6.2+).
+   * Pending entries idle at least this long are reclaimed first.
+   * Set to 0 to skip reclaim (new messages only).
    */
   claimMinIdleMs: number;
 };
@@ -56,8 +57,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): IngestConfig {
     consumerName:
       (env.REQUEST_LOG_CONSUMER_NAME ?? defaultConsumer).trim() ||
       defaultConsumer,
-    count: parsePositiveInt(env.REQUEST_LOG_READ_COUNT, 100),
-    blockMs: parsePositiveInt(env.REQUEST_LOG_BLOCK_MS, 2000), //Wait up to 2 seconds if nothing is available
-    claimMinIdleMs: parsePositiveInt(env.REQUEST_LOG_CLAIM_MIN_IDLE_MS, 60_000), //Claim any pending messages that have been idle ≥ 60 000 ms (60 seconds)
+    count: parsePositiveInt(env.REQUEST_LOG_READ_COUNT, 20), // We sure we can process 20 messages within 60 seconds.
+    blockMs: parsePositiveInt(env.REQUEST_LOG_BLOCK_MS, 5_000), // This should be shorter, wait like 5 seconds
+    // XREADGROUP Wait up to 5_000 milliseconds (5 seconds) if there are no new messages available.
+    claimMinIdleMs: parsePositiveInt(env.REQUEST_LOG_CLAIM_MIN_IDLE_MS, 60_000),
+    // XAUTOCLAIM:Only claim messages that have been idle for at least 60 seconds.
   };
 }
