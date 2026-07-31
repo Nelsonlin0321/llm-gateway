@@ -145,11 +145,12 @@ function fieldsFromXaddArgs(
   return out;
 }
 
-test("parseCaptureLevel defaults to metadata", () => {
-  assert.equal(parseCaptureLevel(undefined), "metadata");
-  assert.equal(parseCaptureLevel(""), "metadata");
-  assert.equal(parseCaptureLevel("nope"), "metadata");
+test("parseCaptureLevel defaults to full", () => {
+  assert.equal(parseCaptureLevel(undefined), "full");
+  assert.equal(parseCaptureLevel(""), "full");
+  assert.equal(parseCaptureLevel("nope"), "full");
   assert.equal(parseCaptureLevel("FULL"), "full");
+  assert.equal(parseCaptureLevel("metadata"), "metadata");
   assert.equal(parseCaptureLevel("redacted"), "redacted");
 });
 

@@ -19,7 +19,7 @@ declare global {
 
 function createDb(connectionString: string) {
   const pool = new Pool({ connectionString });
-  return drizzle(pool, { schema });
+  return drizzle(pool, { schema, casing: "snake_case" });
 }
 
 function getDb(): AppDb {

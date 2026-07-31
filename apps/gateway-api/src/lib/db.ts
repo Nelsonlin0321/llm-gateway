@@ -1,11 +1,10 @@
-import "dotenv/config";
 import { neonConfig, Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
-import ws from "ws";
 
 import * as schema from "../db/schema";
 
-neonConfig.webSocketConstructor = ws;
+// Bun provides a native WebSocket implementation (no `ws` package needed).
+neonConfig.webSocketConstructor = WebSocket;
 
 // Edge-friendly querying over fetch when WebSockets are unavailable.
 neonConfig.poolQueryViaFetch = true;
@@ -19,7 +18,7 @@ declare global {
 
 function createDb(connectionString: string) {
   const pool = new Pool({ connectionString });
-  return drizzle(pool, { schema });
+  return drizzle(pool, { schema, casing: "snake_case" });
 }
 
 function getDb(): AppDb {

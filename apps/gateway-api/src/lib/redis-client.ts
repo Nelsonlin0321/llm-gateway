@@ -1,4 +1,3 @@
-import "dotenv/config";
 import Redis from "ioredis";
 
 const DEFAULT_TTL = 60 * 60 * 24 * 30;

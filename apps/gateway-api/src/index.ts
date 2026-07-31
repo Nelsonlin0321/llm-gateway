@@ -1,4 +1,3 @@
-import { serve } from "@hono/node-server";
 import { and, asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
@@ -118,14 +117,13 @@ app.post(
 
 const port = Number(process.env.PORT) || 8080;
 
-serve(
-  {
-    fetch: app.fetch,
-    port,
-  },
-  (info) => {
-    console.log(`LLM proxy listening on http://localhost:${info.port}`);
-  },
-);
+// Bun runtime: export a server config (fetch + port) so `bun run src/index.ts` serves natively.
+export default {
+  port,
+  fetch: app.fetch,
+  idleTimeout: 255,
+};
 
-export default app;
+console.log(`LLM proxy listening on http://localhost:${port}`);
+
+export { app };

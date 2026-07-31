@@ -1,4 +1,3 @@
-import "dotenv/config";
 import type { JsonBody, ParsedModel } from "../types/payload";
 
 export function parseModel(

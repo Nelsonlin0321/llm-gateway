@@ -1,11 +1,13 @@
 ```
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ```
-open http://localhost:3000
+open http://localhost:8080
 ```
+
+Requires [Bun](https://bun.sh) ≥ 1.1.
 
 Please read @README.MD and @SYSTEM_DESIGN.MD to understand this project first. Now, we're going to build a proxy api based on the hono framework.
 
@@ -55,13 +57,13 @@ curl http://localhost:8080/openai/v1/responses \
 Run the regular automated tests:
 
 ```shell
-npm test
+bun test
 ```
 
 ```shell
-npx tsx scripts/openai/chat-completion/test-non-stream.ts
-npx tsx scripts/openai/chat-completion/test-stream.ts
-npx tsx scripts/anthropic/messages/test-non-stream.ts
-npx tsx scripts/anthropic/messages/test-stream.ts
-npx tsx scripts/drizzle-query.ts
+bun run scripts/openai/chat-completion/test-non-stream.ts
+bun run scripts/openai/chat-completion/test-stream.ts
+bun run scripts/anthropic/messages/test-non-stream.ts
+bun run scripts/anthropic/messages/test-stream.ts
+bun run scripts/drizzle-query.ts
 ```

@@ -195,13 +195,16 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
   }),
 }));
 
-export const llmProvidersRelations = relations(llmProviders, ({ one, many }) => ({
-  creator: one(users, {
-    fields: [llmProviders.creatorId],
-    references: [users.id],
+export const llmProvidersRelations = relations(
+  llmProviders,
+  ({ one, many }) => ({
+    creator: one(users, {
+      fields: [llmProviders.creatorId],
+      references: [users.id],
+    }),
+    models: many(models),
   }),
-  models: many(models),
-}));
+);
 
 export const modelsRelations = relations(models, ({ one }) => ({
   provider: one(llmProviders, {

@@ -20,8 +20,8 @@ test("prepareAnthropicPayload strips provider prefix from the upstream model", (
   }
 
   assert.equal(result.value.parsed.providerName, "minimax");
-  assert.equal(result.value.upstreamBody.model, "MiniMax-M3");
-  assert.equal(result.value.upstreamBody.max_tokens, 500);
+  assert.equal(result.value.downstreamBody.model, "MiniMax-M3");
+  assert.equal(result.value.downstreamBody.max_tokens, 500);
 });
 
 test("prepareAnthropicPayload accepts provider prefixes that will resolve later", () => {
@@ -35,7 +35,7 @@ test("prepareAnthropicPayload accepts provider prefixes that will resolve later"
   }
 
   assert.equal(result.value.parsed.providerName, "db-provider");
-  assert.equal(result.value.upstreamBody.model, "MiniMax-M3");
+  assert.equal(result.value.downstreamBody.model, "MiniMax-M3");
 });
 
 test("prepareAnthropicPayload captures metadata but does not forward it upstream", () => {
@@ -50,7 +50,7 @@ test("prepareAnthropicPayload captures metadata but does not forward it upstream
   }
 
   assert.deepEqual(result.value.metadata, { user_email: "user@example.com" });
-  assert.equal("metadata" in result.value.upstreamBody, false);
+  assert.equal("metadata" in result.value.downstreamBody, false);
 });
 
 test("prepareAnthropicPayload rejects non-object metadata", () => {

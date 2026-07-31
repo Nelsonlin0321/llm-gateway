@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db, llmProviders, models } from "../src/lib/db";
 
-const ITERATIONS = 15;
+const ITERATIONS = 30;
 
 function percentile(sorted: number[], p: number): number {
   if (sorted.length === 0) return 0;
@@ -64,7 +64,9 @@ async function main(): Promise<void> {
     const { llmAndModel, elapsedMs } = await runQuery();
     timesMs.push(elapsedMs);
     lastResult = llmAndModel;
-    console.log(`  run ${String(i).padStart(2, " ")}: ${elapsedMs.toFixed(2)} ms`);
+    console.log(
+      `  run ${String(i).padStart(2, " ")}: ${elapsedMs.toFixed(2)} ms`,
+    );
   }
 
   const stats = summarize(timesMs);

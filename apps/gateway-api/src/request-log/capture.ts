@@ -1,4 +1,3 @@
-import "dotenv/config";
 import type { CaptureLevel } from "./schema.js";
 
 const DEFAULT_CAPTURE_LEVEL: CaptureLevel = "full";

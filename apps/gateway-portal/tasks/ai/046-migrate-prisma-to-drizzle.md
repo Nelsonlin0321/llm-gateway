@@ -33,3 +33,7 @@ npx tsc --noEmit
 
 - Baseline Drizzle migrations against the already-applied Prisma migrations before shipping the first Drizzle-managed migration.
 - Confirm Better Auth session flows end-to-end against Neon after deploy.
+- Make sure the Drizzle schema is aligned to the better auth standards.
+- Change the prisma key id to be uuid
+- Change the database to be snake_case
+- Check the relation logic of drizzle schema
