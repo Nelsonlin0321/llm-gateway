@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
-import prisma from "@/lib/prisma";
+import { db, llmProviders } from "@/lib/db";
 import { requireSession } from "@/lib/auth-server";
 import {
   buildProviderCreateData,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/llm-provider/service";
 
 import {
-  providerSelect,
+  providerReturning,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -30,13 +31,16 @@ export async function createProvider(
     );
   }
 
-  const duplicate = await prisma.lLMProvider.findFirst({
-    where: {
-      name: parsed.data.name,
-      compatibilityType: parsed.data.compatibilityType,
-    },
-    select: { id: true },
-  });
+  const [duplicate] = await db
+    .select({ id: llmProviders.id })
+    .from(llmProviders)
+    .where(
+      and(
+        eq(llmProviders.name, parsed.data.name),
+        eq(llmProviders.compatibilityType, parsed.data.compatibilityType),
+      ),
+    )
+    .limit(1);
 
   if (duplicate) {
     return validationErrorResult(
@@ -46,10 +50,10 @@ export async function createProvider(
   }
 
   try {
-    const provider = await prisma.lLMProvider.create({
-      data: buildProviderCreateData(parsed.data, session.user.id),
-      select: providerSelect,
-    });
+    const [provider] = await db
+      .insert(llmProviders)
+      .values(buildProviderCreateData(parsed.data, session.user.id))
+      .returning(providerReturning);
 
     revalidatePath("/providers");
     revalidatePath("/dashboard");

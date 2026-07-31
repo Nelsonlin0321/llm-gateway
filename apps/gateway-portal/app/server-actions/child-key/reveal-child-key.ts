@@ -1,8 +1,10 @@
 "use server";
 
+import { and, eq } from "drizzle-orm";
+
 import { requireSession } from "@/lib/auth-server";
 import { decryptChildKey } from "@/lib/child-key/service";
-import prisma from "@/lib/prisma";
+import { db, childKeys } from "@/lib/db";
 
 export type RevealChildKeyResult =
   | {
@@ -25,17 +27,17 @@ export async function revealChildKey(
     return { ok: false, error: "Child key id is required." };
   }
 
-  const childKey = await prisma.childKey.findFirst({
-    where: {
-      id,
-      creatorId: session.user.id,
-    },
-    select: {
-      id: true,
-      name: true,
-      key: true,
-    },
-  });
+  const [childKey] = await db
+    .select({
+      id: childKeys.id,
+      name: childKeys.name,
+      key: childKeys.key,
+    })
+    .from(childKeys)
+    .where(
+      and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)),
+    )
+    .limit(1);
 
   if (!childKey) {
     return { ok: false, error: "Child key not found." };

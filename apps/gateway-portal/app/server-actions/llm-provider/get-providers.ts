@@ -1,6 +1,8 @@
 "use server";
 
-import prisma from "@/lib/prisma";
+import { and, desc, eq } from "drizzle-orm";
+
+import { db, llmProviders } from "@/lib/db";
 import { requireSession } from "@/lib/auth-server";
 import {
   buildProvidersWhereClause,
@@ -9,7 +11,7 @@ import {
 } from "@/lib/llm-provider/service";
 import type { GetProvidersOptions } from "@/lib/llm-provider/schema";
 
-import { providerSelect } from "./shared";
+import { providerReturning } from "./shared";
 
 export async function getProviders(options?: GetProvidersOptions) {
   const session = await requireSession();
@@ -19,11 +21,17 @@ export async function getProviders(options?: GetProvidersOptions) {
     return [];
   }
 
-  const providers = await prisma.lLMProvider.findMany({
-    where: buildProvidersWhereClause(session.user.id, parsed.data),
-    select: providerSelect,
-    orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
-  });
+  const filters = buildProvidersWhereClause(session.user.id, parsed.data);
+  const conditions = [eq(llmProviders.creatorId, filters.creatorId)];
+  if ("isActive" in filters && filters.isActive !== undefined) {
+    conditions.push(eq(llmProviders.isActive, filters.isActive));
+  }
+
+  const providers = await db
+    .select(providerReturning)
+    .from(llmProviders)
+    .where(and(...conditions))
+    .orderBy(desc(llmProviders.isActive), desc(llmProviders.updatedAt));
 
   return providers.map(toProviderListItem);
 }

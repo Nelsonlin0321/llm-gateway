@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { LLMProvider } from "@/generated/prisma/client";
+import type { LLMProvider } from "@/lib/db/schema";
 import {
   createProviderInputSchema,
   getProvidersOptionsSchema,
@@ -74,7 +74,7 @@ export function buildProvidersWhereClause(
 
   return {
     creatorId,
-    ...(parsed?.includeInactive ? {} : { isActive: true }),
+    ...(parsed?.includeInactive ? {} : { isActive: true as const }),
   };
 }
 

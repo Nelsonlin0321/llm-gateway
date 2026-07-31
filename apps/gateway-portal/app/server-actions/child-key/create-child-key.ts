@@ -8,10 +8,10 @@ import {
   buildChildKeyCreateData,
   validateCreateChildKeyInput,
 } from "@/lib/child-key/service";
-import prisma from "@/lib/prisma";
+import { db, childKeys } from "@/lib/db";
 
 import {
-  childKeySelect,
+  childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
   type ChildKeyActionResult,
@@ -35,10 +35,10 @@ export async function createChildKey(
       id: session.user.id,
     });
 
-    const childKey = await prisma.childKey.create({
-      data,
-      select: childKeySelect,
-    });
+    const [childKey] = await db
+      .insert(childKeys)
+      .values(data)
+      .returning(childKeyReturning);
 
     revalidatePath("/workspace/child-keys");
 
