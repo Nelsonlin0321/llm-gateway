@@ -14,6 +14,7 @@ function buildLookupRecord(
   overrides: Partial<ProviderLookupRecord> = {},
 ): ProviderLookupRecord {
   return {
+    id: "provider_openai",
     name: "openai",
     apiUrl: "https://example.com/v1",
     encryptedApiKey: "encrypted",
@@ -104,7 +105,8 @@ test("resolveProvider returns decrypted provider credentials", async () => {
   }
 
   assert.deepEqual(result.value, {
-    providerId: "openai",
+    providerId: "provider_openai",
+    providerName: "openai",
     baseUrl: "https://example.com/v1",
     apiKey: plainApiKey,
     compatibilityType: "openai",
@@ -256,7 +258,8 @@ test("resolveProviderModel returns decrypted credentials and upstream model name
   }
 
   assert.deepEqual(result.value, {
-    providerId: "openai",
+    providerId: "provider_openai",
+    providerName: "openai",
     baseUrl: "https://example.com/v1",
     apiKey: plainApiKey,
     compatibilityType: "openai",

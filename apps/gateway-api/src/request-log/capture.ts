@@ -8,6 +8,8 @@ const SENSITIVE_HEADERS = new Set([
   "proxy-authorization",
   "x-api-key",
   "api-key",
+  "set-cookie",
+  "cookie",
 ]);
 
 export function parseCaptureLevel(

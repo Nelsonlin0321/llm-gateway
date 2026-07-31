@@ -80,6 +80,7 @@ export async function emitRequestLog(
     gatewayPath: ctx.gatewayPath,
     httpMethod: ctx.httpMethod,
     apiFamily: ctx.apiFamily,
+    providerId: ctx.providerId,
     provider: ctx.provider,
     requestedModel: ctx.requestedModel,
     requestedModelAlias: ctx.requestedModelAlias,
@@ -108,6 +109,7 @@ export async function emitRequestLog(
 
   try {
     const streamId = await client.xadd(streamKey, ...xaddCommandArgs);
+    console.log(`StreamId:${streamId} has been logged to redis stream`);
     return { ok: true, streamId, fields };
   } catch (error) {
     console.error(

@@ -106,6 +106,8 @@ export function buildRequestLogFields(
     fields.stream_chunk_count = String(response.streamChunkCount);
   }
 
+  // console.log(`providerId:${fields.provider_id}`);
+
   return fields;
 }
 
