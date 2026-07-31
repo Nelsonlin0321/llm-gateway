@@ -171,7 +171,7 @@ export const requestLog = pgTable(
     gatewayPath: text().notNull(),
     loggedAt: timestamp().notNull(),
     logDate: date().notNull(),
-    ...timestamp,
+    ...timestamps,
   },
   (table) => [
     index("request_log_date_idx").on(table.logDate),
@@ -219,6 +219,7 @@ export const eventLog = pgTable(
     inputToken: integer().default(0),
     outputToken: integer().default(0),
     cachedInputToken: integer().default(0),
+    totalToken: integer().default(0),
     cost: doublePrecision().default(0),
     loggedAt: timestamp().notNull(),
     logDate: date().notNull(),
