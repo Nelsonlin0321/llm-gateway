@@ -24,8 +24,7 @@ class FakeRedis implements RedisCacheClient {
   public delCalls: string[] = [];
   public xaddCalls: Array<{
     key: string;
-    id: string;
-    fieldValues: (string | Buffer | number)[];
+    args: (string | Buffer | number)[];
   }> = [];
 
   constructor(
@@ -39,8 +38,7 @@ class FakeRedis implements RedisCacheClient {
       del?: (key: string) => Promise<number>;
       xadd?: (
         key: string,
-        id: string,
-        ...fieldValues: (string | Buffer | number)[]
+        ...args: (string | Buffer | number)[]
       ) => Promise<string>;
     } = {},
   ) {}
@@ -72,12 +70,11 @@ class FakeRedis implements RedisCacheClient {
 
   async xadd(
     key: string,
-    id: string,
-    ...fieldValues: (string | Buffer | number)[]
+    ...args: (string | Buffer | number)[]
   ): Promise<string> {
-    this.xaddCalls.push({ key, id, fieldValues });
+    this.xaddCalls.push({ key, args });
     if (this.overrides.xadd) {
-      return this.overrides.xadd(key, id, ...fieldValues);
+      return this.overrides.xadd(key, ...args);
     }
     return "1-0";
   }

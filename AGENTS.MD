@@ -12,3 +12,9 @@ When you complete any meaningful change (feature, fix, refactor, test, documenta
   - Files touched
   - How to verify (commands/tests run)
   - Follow-ups / next steps (if any)
+
+## Simplicity Rule
+
+- Prefer the simplest correct solution; avoid premature generalization.
+- Keep logic local unless it is reused or clearly improves clarity.
+- Use straightforward validation when requirements are simple (e.g. `Number(value) > 0`), instead of layered parsing/helpers unless needed.

@@ -186,6 +186,7 @@ Share the same crypto secrets between portal and gateway so child keys and provi
 | --------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
 | `PORT`                      | `8080`     | HTTP listen port                                                                         |
 | `REQUEST_LOG_CAPTURE_LEVEL` | `metadata` | `metadata` \| `redacted` \| `full` — how much request/response body to put on the stream |
+| `REQUEST_LOG_STREAM_MAXLEN` | `10000`    | Max entries kept in the request-log Redis Stream (uses `XADD MAXLEN ~ <n>` when `> 0`)  |
 
 ### Portal
 
