@@ -12,6 +12,7 @@ import {
   type InstrumentedResponseCapture,
   type RequestLogResponseCapture,
 } from "../request-log/index.js";
+import { buildCurlCommand, isUpstreamCurlLogEnabled } from "./curl";
 
 export type UpstreamProxyContext = {
   // routing / request envelope (for request-log stream)
@@ -124,6 +125,7 @@ export async function handleUpstreamProxy(
   const emit = deps.emitRequestLog ?? emitRequestLog;
   const requestHeaders = c.req.raw.headers;
   const captureLevel = getCaptureLevel();
+  const shouldLogUpstreamCurl = isUpstreamCurlLogEnabled();
 
   const emitWithResponse = (response: RequestLogResponseCapture) => {
     scheduleEmit(emit, {
@@ -135,6 +137,18 @@ export async function handleUpstreamProxy(
   };
 
   try {
+    if (shouldLogUpstreamCurl) {
+      console.log(
+        buildCurlCommand({
+          url: ctx.upstreamUrl,
+          method: c.req.method,
+          headers: ctx.upstreamHeaders,
+          body: ctx.upstreamBody,
+          captureLevel,
+        }),
+      );
+    }
+
     const upstream = await (deps.forwardUpstream ?? defaultForwardUpstream)(
       ctx.upstreamUrl,
       {
@@ -143,7 +157,6 @@ export async function handleUpstreamProxy(
         body: ctx.upstreamBody,
       },
     );
-
     return await instrumentUpstreamResponse(upstream, {
       isStream: ctx.isStream,
       startedAtMs,

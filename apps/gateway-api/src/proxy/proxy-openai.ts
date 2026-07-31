@@ -80,7 +80,10 @@ export function createOpenaiProxyHandler(
   deps: proxyDependencies = {},
 ): MiddlewareHandler {
   return async (c, next) => {
+    const started = performance.now();
     const failureResponse = await handleOpenaiProxy(c, deps);
+    const elapsedMs = performance.now() - started;
+    console.log(`Parse OpenAI request took ${elapsedMs.toFixed(2)} ms`);
     if (failureResponse) {
       return failureResponse;
     }
