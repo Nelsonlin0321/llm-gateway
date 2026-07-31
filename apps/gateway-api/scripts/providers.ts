@@ -38,4 +38,7 @@ export const anthropicCompatibleProviders: Record<string, ProviderConfig> = {
     // baseUrl: "https://api.minimaxi.com/anthropic",
     exampleModel: "minimax-m3",
   },
+  deepseek: {
+    exampleModel: "deepseek-v4-flash",
+  },
 };
