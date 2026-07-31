@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { PencilLine, Plus, Trash2 } from "lucide-react";
+import { FlaskConical, PencilLine, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { z } from "zod";
 
 import { createModel } from "@/app/server-actions/model/create-model";
 import { deleteModel } from "@/app/server-actions/model/delete-model";
+import { testModel } from "@/app/server-actions/model/test-model";
 import { updateModel } from "@/app/server-actions/model/update-model";
 import { ModelFormModal } from "@/components/models/model-form-modal";
 import {
@@ -74,6 +75,7 @@ export function ModelManagementClient({
     useState<ModelListItem | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     const avgInput =
@@ -130,6 +132,22 @@ export function ModelManagementClient({
       setModalState(null);
       router.refresh();
     });
+  };
+
+  const handleTest = async (model: ModelListItem) => {
+    setTestingId(model.id);
+    try {
+      const result = await testModel(model.id);
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.message);
+    } finally {
+      setTestingId(null);
+    }
   };
 
   const handleDelete = async () => {
@@ -234,6 +252,16 @@ export function ModelManagementClient({
                   </div>
 
                   <div className="flex shrink-0 flex-wrap items-center gap-2 self-start lg:self-center">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={testingId === model.id}
+                      onClick={() => void handleTest(model)}
+                    >
+                      <FlaskConical className="size-4" />
+                      {testingId === model.id ? "Testing..." : "Test"}
+                    </Button>
                     <Button
                       type="button"
                       variant="secondary"
