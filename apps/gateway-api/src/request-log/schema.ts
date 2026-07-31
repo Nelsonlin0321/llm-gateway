@@ -41,6 +41,7 @@ export type RequestLogV1Fields = {
   /** Unix seconds as decimal string. */
   child_key_issued_at: string;
   child_key_tags_json: string;
+  user_email: string;
 
   request_headers_json: string;
   /** Present when capture_level is `redacted` or `full`. */
@@ -107,6 +108,7 @@ export type BuildRequestLogInput = {
   childKeyCreatorId: string;
   childKeyIssuedAt: number;
   childKeyTags: unknown;
+  userEmail: string;
 
   /** Original client headers (Authorization will be stripped). */
   requestHeaders: Headers | Record<string, string>;

@@ -7,35 +7,37 @@ import type {
   RequestLogResponseCapture,
   RequestLogV1Fields,
 } from "./schema.js";
+import type { UpstreamProxyContext } from "../proxy/upstream-proxy.js";
 
 /**
  * Structural snapshot of proxy handoff data needed for request-log emit.
  * Kept free of imports from `proxy/*` to avoid circular dependencies.
  */
-export type RequestLogProxySnapshot = {
-  gatewayPath: string;
-  httpMethod: string;
-  isStream: boolean;
-  requestPayloadJson: string;
-  provider: string;
-  requestedModel: string;
-  requestedModelAlias: string;
-  apiFamily: string;
-  metadataJson: string;
-  upstreamModel: string;
-  upstreamUrl: string;
-  upstreamBody: string;
-  childKeyRecord: {
-    id: string;
-    name: string;
-    creatorId: string;
-    issuedAt: number;
-    tags: unknown;
-  };
-};
+// export type RequestLogProxySnapshot = {
+//   gatewayPath: string;
+//   httpMethod: string;
+//   isStream: boolean;
+//   requestPayloadJson: string;
+//   provider: string;
+//   requestedModel: string;
+//   requestedModelAlias: string;
+//   apiFamily: string;
+//   metadataJson: string;
+//   upstreamModel: string;
+//   upstreamUrl: string;
+//   upstreamBody: string;
+//   childKeyRecord: {
+//     id: string;
+//     name: string;
+//     creatorId: string;
+//     userEmail: string;
+//     issuedAt: number;
+//     tags: unknown;
+//   };
+// };
 
 export type EmitRequestLogInput = {
-  proxyContext: RequestLogProxySnapshot;
+  proxyContext: UpstreamProxyContext;
   requestHeaders: Headers | Record<string, string>;
   response: RequestLogResponseCapture;
   captureLevel?: CaptureLevel;
@@ -89,6 +91,7 @@ export async function emitRequestLog(
     childKeyCreatorId: ctx.childKeyRecord.creatorId,
     childKeyIssuedAt: ctx.childKeyRecord.issuedAt,
     childKeyTags: ctx.childKeyRecord.tags,
+    userEmail: ctx.childKeyRecord.userEmail,
     requestHeaders: input.requestHeaders,
     requestPayloadJson: ctx.requestPayloadJson,
     metadataJson: ctx.metadataJson,
