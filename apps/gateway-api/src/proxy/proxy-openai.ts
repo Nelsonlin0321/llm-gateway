@@ -1,4 +1,4 @@
-import type { MiddlewareHandler } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import { prepareOpenaiPayload } from "../payload/payload-openai";
 import { resolveProviderModel } from "../providers/resolve.js";
 import {
@@ -6,20 +6,12 @@ import {
   buildUpstreamHeaders,
   buildUpstreamUrl,
 } from "../shared/upstream.js";
-import type { ChildKeyAuthVariables } from "../child-keys/index.js";
 import { isRecord } from "../utils.js";
-import type {
-  UpstreamProxyContext,
-  UpstreamProxyVariables,
-} from "./upstream-proxy.js";
+import type { UpstreamProxyContext } from "./upstream-proxy.js";
 import type { proxyDependencies } from "./dependencies";
 
 async function handleOpenaiProxy(
-  c: Parameters<
-    MiddlewareHandler<{
-      Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
-    }>
-  >[0],
+  c: Context<any, string, {}>,
   deps: proxyDependencies,
 ): Promise<Response | void> {
   let body: unknown;
@@ -86,13 +78,11 @@ async function handleOpenaiProxy(
 
 export function createOpenaiProxyHandler(
   deps: proxyDependencies = {},
-): MiddlewareHandler<{
-  Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
-}> {
+): MiddlewareHandler {
   return async (c, next) => {
-    const result = await handleOpenaiProxy(c, deps);
-    if (result) {
-      return result;
+    const failureResponse = await handleOpenaiProxy(c, deps);
+    if (failureResponse) {
+      return failureResponse;
     }
     await next();
   };

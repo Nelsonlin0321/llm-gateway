@@ -1,4 +1,4 @@
-import type { Context } from "hono";
+import type { Context, MiddlewareHandler } from "hono";
 import { proxy } from "hono/proxy";
 
 import type { ChildKeyDbRecord } from "../child-keys/types.js";
@@ -188,8 +188,10 @@ export async function handleUpstreamProxy(
   }
 }
 
+// MiddlewareHandler  is equivalent to (c: Context) => Promise<Response>;
+
 export function createUpstreamProxyHandler(
   deps: UpstreamProxyDependencies = {},
-): (c: Context) => Promise<Response> {
+): MiddlewareHandler {
   return (c) => handleUpstreamProxy(c, deps);
 }

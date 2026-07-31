@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { db, llmProviders, models } from "../src/lib/db";
 
-const ITERATIONS = 30;
+const ITERATIONS = 1;
 
 function percentile(sorted: number[], p: number): number {
   if (sorted.length === 0) return 0;
@@ -31,9 +31,9 @@ function summarize(timesMs: number[]) {
 }
 
 async function runQuery() {
-  const name = "openrouter";
+  const name = "minimax";
   const compatibilityType = "openai" as const;
-  const modelAlias = "glm-5.2";
+  const modelAlias = "minimax-m3";
 
   const started = performance.now();
   const [llmAndModel] = await db

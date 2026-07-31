@@ -103,7 +103,6 @@ app.get("/", async (c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
-
 // Proxy routes require a valid child API key.
 app.use("/openai/*", requireChildKeyAuth);
 app.use("/anthropic/*", requireChildKeyAuth);
