@@ -12,7 +12,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-export const compatibilityTypeEnum = pgEnum("CompatibilityType", [
+export const compatibilityTypeEnum = pgEnum("compatibility_type", [
   "openai",
   "anthropic",
 ]);
@@ -23,10 +23,10 @@ export const users = pgTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     email: text("email").notNull(),
-    emailVerified: boolean("emailVerified").notNull().default(false),
+    emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
@@ -38,22 +38,22 @@ export const sessions = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
-    expiresAt: timestamp("expiresAt", { mode: "date" }).notNull(),
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
     token: text("token").notNull(),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
-    ipAddress: text("ipAddress"),
-    userAgent: text("userAgent"),
-    userId: text("userId")
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
   },
   (table) => [
     uniqueIndex("session_token_key").on(table.token),
-    index("session_userId_idx").on(table.userId),
+    index("session_user_id_idx").on(table.userId),
   ],
 );
 
@@ -61,27 +61,29 @@ export const accounts = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
-    accountId: text("accountId").notNull(),
-    providerId: text("providerId").notNull(),
-    userId: text("userId")
+    accountId: text("account_id").notNull(),
+    providerId: text("provider_id").notNull(),
+    userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    accessToken: text("accessToken"),
-    refreshToken: text("refreshToken"),
-    idToken: text("idToken"),
-    accessTokenExpiresAt: timestamp("accessTokenExpiresAt", { mode: "date" }),
-    refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt", {
+    accessToken: text("access_token"),
+    refreshToken: text("refresh_token"),
+    idToken: text("id_token"),
+    accessTokenExpiresAt: timestamp("access_token_expires_at", {
+      mode: "date",
+    }),
+    refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
       mode: "date",
     }),
     scope: text("scope"),
     password: text("password"),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [index("account_user_id_idx").on(table.userId)],
 );
 
 export const verifications = pgTable(
@@ -90,9 +92,9 @@ export const verifications = pgTable(
     id: text("id").primaryKey(),
     identifier: text("identifier").notNull(),
     value: text("value").notNull(),
-    expiresAt: timestamp("expiresAt", { mode: "date" }).notNull(),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
@@ -101,76 +103,76 @@ export const verifications = pgTable(
 );
 
 export const llmProviders = pgTable(
-  "LLMProvider",
+  "llm_provider",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    apiUrl: text("apiUrl").notNull(),
-    encryptedApiKey: text("encryptedApiKey").notNull(),
-    compatibilityType: compatibilityTypeEnum("compatibilityType").notNull(),
-    isActive: boolean("isActive").notNull().default(true),
-    creatorId: text("creatorId")
+    apiUrl: text("api_url").notNull(),
+    encryptedApiKey: text("encrypted_api_key").notNull(),
+    compatibilityType: compatibilityTypeEnum("compatibility_type").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    creatorId: text("creator_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
   (table) => [
-    uniqueIndex("LLMProvider_name_compatibilityType_key").on(
+    uniqueIndex("llm_provider_name_compatibility_type_key").on(
       table.name,
       table.compatibilityType,
     ),
-    index("LLMProvider_creatorId_idx").on(table.creatorId),
+    index("llm_provider_creator_id_idx").on(table.creatorId),
   ],
 );
 
 export const models = pgTable(
-  "Model",
+  "model",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     alias: text("alias").notNull(),
-    inputPrice: doublePrecision("inputPrice").notNull(),
-    outputPrice: doublePrecision("outputPrice").notNull(),
-    inputCachePrice: doublePrecision("inputCachePrice").notNull(),
-    providerId: text("providerId")
+    inputPrice: doublePrecision("input_price").notNull(),
+    outputPrice: doublePrecision("output_price").notNull(),
+    inputCachePrice: doublePrecision("input_cache_price").notNull(),
+    providerId: text("provider_id")
       .notNull()
       .references(() => llmProviders.id, { onDelete: "cascade" }),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
-  (table) => [index("Model_providerId_idx").on(table.providerId)],
+  (table) => [index("model_provider_id_idx").on(table.providerId)],
 );
 
 export const childKeys = pgTable(
-  "ChildKey",
+  "child_key",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     key: text("key").notNull(),
-    creatorId: text("creatorId")
+    creatorId: text("creator_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    userEmail: text("userEmail").notNull(),
-    isActive: boolean("isActive").notNull().default(true),
+    userEmail: text("user_email").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
     tags: jsonb("tags").$type<Record<string, string>>().notNull().default({}),
-    expiresAt: timestamp("expiresAt", { mode: "date" }),
-    issuedAt: integer("issuedAt").notNull(),
-    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
-    updatedAt: timestamp("updatedAt", { mode: "date" })
+    expiresAt: timestamp("expires_at", { mode: "date" }),
+    issuedAt: integer("issued_at").notNull(),
+    createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { mode: "date" })
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
   },
   (table) => [
     // Existing DB index uses GIN + jsonb_path_ops; declared for schema parity.
-    index("ChildKey_tags_idx").using("gin", table.tags),
+    index("child_key_tags_idx").using("gin", table.tags),
   ],
 );
 
@@ -195,13 +197,16 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
   }),
 }));
 
-export const llmProvidersRelations = relations(llmProviders, ({ one, many }) => ({
-  creator: one(users, {
-    fields: [llmProviders.creatorId],
-    references: [users.id],
+export const llmProvidersRelations = relations(
+  llmProviders,
+  ({ one, many }) => ({
+    creator: one(users, {
+      fields: [llmProviders.creatorId],
+      references: [users.id],
+    }),
+    models: many(models),
   }),
-  models: many(models),
-}));
+);
 
 export const modelsRelations = relations(models, ({ one }) => ({
   provider: one(llmProviders, {

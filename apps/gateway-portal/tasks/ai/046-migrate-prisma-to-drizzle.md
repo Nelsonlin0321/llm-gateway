@@ -35,5 +35,5 @@ npx tsc --noEmit
 - Confirm Better Auth session flows end-to-end against Neon after deploy.
 - Make sure the Drizzle schema is aligned to the better auth standards.
 - Change the prisma key id to be uuid
-- Change the database to be snake_case
+- Change the database to be snake_case (done in `047-drizzle-schema-snake-case.md`)
 - Check the relation logic of drizzle schema
