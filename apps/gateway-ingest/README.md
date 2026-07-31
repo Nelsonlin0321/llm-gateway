@@ -72,6 +72,19 @@ With `REQUEST_LOG_DEBUG=1`, each entry’s full field map is printed.
 | `bun run start` | Run consumer once (long-lived loop) |
 | `bun run build` | Typecheck (`tsc --noEmit`) |
 | `bun test` | Unit tests |
+| `bun run db:generate` | Generate Drizzle migrations from `src/db/schema.ts` |
+| `bun run db:migrate` | Apply Drizzle migrations |
+| `bun run db:studio` | Open Drizzle Studio |
+
+## Database (Drizzle)
+
+Postgres access uses Drizzle ORM + Neon serverless driver (same stack as `gateway-api`):
+
+- Schema: `src/db/schema.ts` (mirrors portal/api; includes `request_log` + `event_log`)
+- Client: `src/lib/db.ts` (`db` lazy proxy, `casing: "snake_case"`)
+- Config: `drizzle.config.ts` (requires `DATABASE_URL`)
+
+Migrations are owned by `gateway-portal`. Ingest uses the shared schema for typed inserts once Postgres write path lands.
 
 ## Extracted shape
 

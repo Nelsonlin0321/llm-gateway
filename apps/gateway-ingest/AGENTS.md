@@ -11,7 +11,9 @@
   - `XREADGROUP … >` for new messages
   - `XACK` after successful extract + log (Phase A)
 - Do **not** use `XREADGROUP … CLAIM` (Redis 8.4+ only).
-- Transform + Postgres ingest are **out of scope until explicitly requested**.
+- Postgres: Drizzle client is set up (`src/lib/db.ts`, `src/db/schema.ts`).
+  Transform + write path remain **out of scope until explicitly requested**.
+- Prefer matching `gateway-api` Drizzle patterns (Neon serverless, `casing: "snake_case"`, lazy `db` proxy).
 
 ## Testing Expectations
 
