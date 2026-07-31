@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  date,
   doublePrecision,
   index,
   integer,
@@ -149,6 +150,31 @@ export const childKeys = pgTable(
   ],
 );
 
+/**
+ * Request/response header + payload capture for gateway calls.
+ * Primary key `id` is the gateway `request_id`.
+ *
+ * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
+ *   PARTITION BY RANGE (log_date)
+ */
+export const requestLogs = pgTable(
+  "request_log",
+  {
+    id: text().primaryKey(),
+    requestHeadersJson: jsonb().$type<Record<string, unknown>>(),
+    requestPayloadJson: jsonb().$type<unknown>(),
+    responseHeadersJson: jsonb().$type<Record<string, unknown>>(),
+    responsePayloadJson: jsonb().$type<unknown>(),
+    loggedAt: timestamp({ mode: "date" }).notNull(),
+    logDate: date().notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("logged_at_idx").on(table.loggedAt),
+    index("created_at_idx").on(table.createdAt),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -200,6 +226,8 @@ export type Verification = typeof verification.$inferSelect;
 export type LLMProvider = typeof llmProviders.$inferSelect;
 export type Model = typeof models.$inferSelect;
 export type ChildKey = typeof childKeys.$inferSelect;
+export type RequestLog = typeof requestLogs.$inferSelect;
 export type NewLLMProvider = typeof llmProviders.$inferInsert;
 export type NewModel = typeof models.$inferInsert;
 export type NewChildKey = typeof childKeys.$inferInsert;
+export type NewRequestLog = typeof requestLogs.$inferInsert;
