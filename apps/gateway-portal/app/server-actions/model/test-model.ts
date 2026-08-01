@@ -7,7 +7,7 @@ import { decryptChildKey } from "@/lib/child-key/service";
 import { db, childKeys, llmProviders, models } from "@/lib/db";
 
 const DEFAULT_PROXY_API_URL = "http://localhost:8080";
-
+const STREAM = false;
 export type TestModelResult =
   | {
       ok: true;
@@ -22,9 +22,8 @@ export type TestModelResult =
 
 function getProxyBaseUrl(): string {
   const configured = process.env.NEXT_PUBLIC_PROXY_API_URL?.trim();
-  const base = configured && configured.length > 0
-    ? configured
-    : DEFAULT_PROXY_API_URL;
+  const base =
+    configured && configured.length > 0 ? configured : DEFAULT_PROXY_API_URL;
   return base.replace(/\/+$/, "");
 }
 
@@ -32,6 +31,7 @@ function buildTestPayload(
   compatibilityType: "openai" | "anthropic",
   modelAlias: string,
   userEmail: string,
+  stream: boolean = STREAM,
 ): Record<string, unknown> {
   if (compatibilityType === "openai") {
     return {
@@ -46,7 +46,7 @@ function buildTestPayload(
           content: "Hi there!",
         },
       ],
-      stream: false,
+      stream: stream,
       metadata: {
         user_email: userEmail,
       },
@@ -81,9 +81,7 @@ function buildTestPayload(
   };
 }
 
-function testEndpointPath(
-  compatibilityType: "openai" | "anthropic",
-): string {
+function testEndpointPath(compatibilityType: "openai" | "anthropic"): string {
   return compatibilityType === "openai"
     ? "/openai/chat/completions"
     : "/anthropic/v1/messages";
@@ -204,6 +202,7 @@ export async function testModel(modelId: string): Promise<TestModelResult> {
     row.compatibilityType,
     row.modelAlias,
     childKey.userEmail,
+    STREAM,
   );
 
   let response: Response;
