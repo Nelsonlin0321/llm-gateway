@@ -30,6 +30,11 @@ export type UpstreamProxyContext = {
   apiFamily: string;
   metadataJson: string;
 
+  // model pricing (USD per 1M tokens) for redis stream / cost attribution
+  inputPrice: number;
+  outputPrice: number;
+  inputCachePrice: number;
+
   // upstream context
   upstreamModel: string;
   upstreamUrl: string;

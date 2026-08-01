@@ -56,6 +56,9 @@ export function buildRequestLogFields(
     requested_model_alias: input.requestedModelAlias,
     upstream_model: input.upstreamModel,
     upstream_url: input.upstreamUrl,
+    input_price: String(input.inputPrice),
+    output_price: String(input.outputPrice),
+    input_cache_price: String(input.inputCachePrice),
     is_stream: input.isStream ? "true" : "false",
     response_mode: response.responseMode,
 

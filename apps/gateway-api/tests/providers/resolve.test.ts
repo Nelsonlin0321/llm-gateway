@@ -47,7 +47,13 @@ function buildProviderModelLookupRecord(
 ): ProviderModelLookupRecord {
   return {
     llmProvider: buildLookupRecord(),
-    llmModel: { alias: "openai/gateway-alias", name: "gpt-5.4-mini" },
+    llmModel: {
+      alias: "openai/gateway-alias",
+      name: "gpt-5.4-mini",
+      inputPrice: 0.15,
+      outputPrice: 0.6,
+      inputCachePrice: 0.075,
+    },
     ...overrides,
   };
 }
@@ -112,6 +118,9 @@ test("resolveProvider returns decrypted provider credentials", async () => {
     compatibilityType: "openai",
     modelAlias: "gateway-alias",
     model: "gpt-5.4-mini",
+    inputPrice: 0.15,
+    outputPrice: 0.6,
+    inputCachePrice: 0.075,
   });
 });
 
@@ -265,6 +274,9 @@ test("resolveProviderModel returns decrypted credentials and upstream model name
     compatibilityType: "openai",
     modelAlias: "gateway-alias",
     model: "gpt-5.4-mini",
+    inputPrice: 0.15,
+    outputPrice: 0.6,
+    inputCachePrice: 0.075,
   });
 });
 

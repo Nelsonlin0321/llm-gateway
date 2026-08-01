@@ -32,6 +32,12 @@ export type RequestLogV1Fields = {
   requested_model_alias: string;
   upstream_model: string;
   upstream_url: string;
+  /** USD per 1M tokens; decimal string for Redis Stream. */
+  input_price: string;
+  /** USD per 1M tokens; decimal string for Redis Stream. */
+  output_price: string;
+  /** USD per 1M tokens; decimal string for Redis Stream. */
+  input_cache_price: string;
   /** Redis stream values are strings; encode as `"true"` / `"false"`. */
   is_stream: "true" | "false";
   response_mode: ResponseMode;
@@ -103,6 +109,12 @@ export type BuildRequestLogInput = {
   requestedModelAlias: string;
   upstreamModel: string;
   upstreamUrl: string;
+  /** USD per 1M tokens. */
+  inputPrice: number;
+  /** USD per 1M tokens. */
+  outputPrice: number;
+  /** USD per 1M tokens. */
+  inputCachePrice: number;
   isStream: boolean;
 
   childKeyId: string;

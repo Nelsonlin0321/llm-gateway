@@ -53,11 +53,15 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
           ok: true,
           value: {
             providerId: "db-openai",
+            providerName: "db-openai",
             baseUrl: "https://example.com/v1",
             apiKey: "sk-db-provider-key",
             compatibilityType: "openai",
             modelAlias: "gateway-alias",
             model: "gpt-5.4-mini",
+            inputPrice: 0.15,
+            outputPrice: 0.6,
+            inputCachePrice: 0.075,
           },
         };
       },
@@ -95,11 +99,15 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
             gateway_path: input.proxyContext.gatewayPath,
             http_method: input.proxyContext.httpMethod,
             api_family: input.proxyContext.apiFamily,
+            provider_id: input.proxyContext.providerId,
             provider: input.proxyContext.provider,
             requested_model: input.proxyContext.requestedModel,
             requested_model_alias: input.proxyContext.requestedModelAlias,
             upstream_model: input.proxyContext.upstreamModel,
             upstream_url: input.proxyContext.upstreamUrl,
+            input_price: String(input.proxyContext.inputPrice),
+            output_price: String(input.proxyContext.outputPrice),
+            input_cache_price: String(input.proxyContext.inputCachePrice),
             is_stream: input.proxyContext.isStream ? "true" : "false",
             response_mode: input.response.responseMode,
             child_key_id: input.proxyContext.childKeyRecord.id,
@@ -111,6 +119,7 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
             child_key_tags_json: JSON.stringify(
               input.proxyContext.childKeyRecord.tags,
             ),
+            user_email: input.proxyContext.childKeyRecord.userEmail,
             request_headers_json: "{}",
             metadata_json: input.proxyContext.metadataJson,
             capture_level: "metadata",
@@ -165,6 +174,9 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
   assert.equal(capturedContext.isStream, false);
   assert.equal(capturedContext.provider, "db-openai");
   assert.equal(capturedContext.upstreamModel, "gpt-5.4-mini");
+  assert.equal(capturedContext.inputPrice, 0.15);
+  assert.equal(capturedContext.outputPrice, 0.6);
+  assert.equal(capturedContext.inputCachePrice, 0.075);
 
   await emitDone;
   assert.ok(emitted);
@@ -200,11 +212,15 @@ test("proxyToOpenai instruments SSE and emits first_token_ms", async () => {
         ok: true,
         value: {
           providerId: "db-openai",
+          providerName: "db-openai",
           baseUrl: "https://example.com/v1",
           apiKey: "sk-db-provider-key",
           compatibilityType: "openai",
           modelAlias: "gateway-alias",
           model: "gpt-5.4-mini",
+          inputPrice: 0.15,
+          outputPrice: 0.6,
+          inputCachePrice: 0.075,
         },
       }),
     }),
@@ -279,11 +295,15 @@ test("proxyToOpenai emits error log when upstream is unreachable", async () => {
         ok: true,
         value: {
           providerId: "db-openai",
+          providerName: "db-openai",
           baseUrl: "https://example.com/v1",
           apiKey: "sk-db",
           compatibilityType: "openai",
           modelAlias: "gateway-alias",
           model: "gpt-5.4-mini",
+          inputPrice: 0.15,
+          outputPrice: 0.6,
+          inputCachePrice: 0.075,
         },
       }),
     }),

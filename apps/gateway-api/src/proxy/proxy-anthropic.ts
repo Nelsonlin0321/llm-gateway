@@ -72,6 +72,11 @@ async function handleAnthropicProxy(
     apiFamily: resolved.value.compatibilityType,
     metadataJson: JSON.stringify(metadata ?? {}),
 
+    // model pricing (USD per 1M tokens)
+    inputPrice: resolved.value.inputPrice,
+    outputPrice: resolved.value.outputPrice,
+    inputCachePrice: resolved.value.inputCachePrice,
+
     // upstream context
     upstreamModel: resolved.value.model,
     upstreamUrl: upstreamUrl,

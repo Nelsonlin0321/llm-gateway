@@ -35,6 +35,9 @@ export type ProviderLookup = {
 export type ResolvedProviderModel = ResolvedProvider & {
   modelAlias: string;
   model: string;
+  inputPrice: number;
+  outputPrice: number;
+  inputCachePrice: number;
 };
 
 export type ProviderModelLookupRecord = {
@@ -42,6 +45,9 @@ export type ProviderModelLookupRecord = {
   llmModel: {
     alias: string;
     name: string;
+    inputPrice: number;
+    outputPrice: number;
+    inputCachePrice: number;
   };
 };
 
@@ -114,6 +120,9 @@ const defaultProviderModelLookup: ProviderModelLookup = {
         .select({
           alias: models.alias,
           name: models.name,
+          inputPrice: models.inputPrice,
+          outputPrice: models.outputPrice,
+          inputCachePrice: models.inputCachePrice,
           providerId: llmProviders.id,
           providerName: llmProviders.name,
           apiUrl: llmProviders.apiUrl,
@@ -141,6 +150,9 @@ const defaultProviderModelLookup: ProviderModelLookup = {
       return {
         alias: row.alias,
         name: row.name,
+        inputPrice: row.inputPrice,
+        outputPrice: row.outputPrice,
+        inputCachePrice: row.inputCachePrice,
         provider: {
           id: row.providerId,
           name: row.providerName,
@@ -172,6 +184,9 @@ const defaultProviderModelLookup: ProviderModelLookup = {
       llmModel: {
         alias: llmAndModel.alias,
         name: llmAndModel.name,
+        inputPrice: llmAndModel.inputPrice,
+        outputPrice: llmAndModel.outputPrice,
+        inputCachePrice: llmAndModel.inputCachePrice,
       },
     };
   },
@@ -297,6 +312,9 @@ export async function resolveProviderModel(
         compatibilityType: record.llmProvider.compatibilityType,
         modelAlias,
         model: record.llmModel.name,
+        inputPrice: record.llmModel.inputPrice,
+        outputPrice: record.llmModel.outputPrice,
+        inputCachePrice: record.llmModel.inputCachePrice,
       },
     };
   } catch {

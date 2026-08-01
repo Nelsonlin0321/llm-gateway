@@ -52,11 +52,15 @@ function buildProxyContext(
       messages: [{ role: "user", content: "hi" }],
       metadata: { session: "s1" },
     }),
+    providerId: "provider_openai",
     provider: "openai",
     requestedModel: "gpt-5.4-mini",
     requestedModelAlias: "openai/gpt-5.4-mini",
     apiFamily: "openai",
     metadataJson: JSON.stringify({ session: "s1" }),
+    inputPrice: 0.15,
+    outputPrice: 0.6,
+    inputCachePrice: 0.075,
     upstreamModel: "gpt-5.4-mini-upstream",
     upstreamUrl: "https://api.openai.com/v1/chat/completions",
     masterApiKey: "sk-provider-secret",
@@ -251,6 +255,9 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
   assert.equal(flat.duration_ms, "150");
   assert.equal(flat.response_id, "chatcmpl-1");
   assert.equal(flat.response_mode, "json");
+  assert.equal(flat.input_price, "0.15");
+  assert.equal(flat.output_price, "0.6");
+  assert.equal(flat.input_cache_price, "0.075");
   assert.ok(flat.response_payload_json);
 
   const joined = JSON.stringify(flat);
