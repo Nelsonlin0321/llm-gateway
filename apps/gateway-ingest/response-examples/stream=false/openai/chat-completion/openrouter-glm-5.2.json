@@ -1,0 +1,54 @@
+{
+    "id": "gen-1785598273-lIfUXHHzD5YGSeIxjA58",
+    "object": "chat.completion",
+    "created": 1785598273,
+    "model": "z-ai/glm-5.2",
+    "provider": "DeepInfra",
+    "system_fingerprint": null,
+    "service_tier": null,
+    "choices": [
+        {
+            "index": 0,
+            "logprobs": null,
+            "finish_reason": "stop",
+            "native_finish_reason": "stop",
+            "message": {
+                "role": "assistant",
+                "content": "Hello! How can I help you today?",
+                "refusal": null,
+                "reasoning": "Hello! I'm the assistant. How can I help you?",
+                "reasoning_details": [
+                    {
+                        "type": "reasoning.text",
+                        "text": "Hello! I'm the assistant. How can I help you?",
+                        "format": "unknown",
+                        "index": 0
+                    }
+                ]
+            }
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 26,
+        "completion_tokens": 24,
+        "total_tokens": 50,
+        "cost": 0,
+        "is_byok": true,
+        "prompt_tokens_details": {
+            "cached_tokens": 0,
+            "cache_write_tokens": 0,
+            "audio_tokens": 0,
+            "video_tokens": 0
+        },
+        "cost_details": {
+            "upstream_inference_cost": 0.0000771,
+            "upstream_inference_prompt_cost": 0.0000195,
+            "upstream_inference_completions_cost": 0.0000576
+        },
+        "completion_tokens_details": {
+            "reasoning_tokens": 12,
+            "image_tokens": 0,
+            "audio_tokens": 0
+        }
+    }
+}

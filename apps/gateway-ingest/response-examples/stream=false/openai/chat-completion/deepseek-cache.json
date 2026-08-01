@@ -1,0 +1,32 @@
+{
+    "id": "cbb908ec-fe2e-4a80-8beb-634cc5973bdb",
+    "object": "chat.completion",
+    "created": 1785599209,
+    "model": "deepseek-v4-flash",
+    "choices": [
+        {
+            "index": 0,
+            "message": {
+                "role": "assistant",
+                "content": "Hello! How can I help you today?",
+                "reasoning_content": "The user greeted me with a casual \"Hi there!\" This is a friendly, open-ended greeting. Since they didn't ask a specific question, the best response is a warm, polite greeting that invites them to share what they need help with. Keep it brief and helpful, as per my guidelines. No need to overthink this—just a simple, friendly opener that leaves the door open for their next message."
+            },
+            "logprobs": null,
+            "finish_reason": "stop"
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 96,
+        "completion_tokens": 93,
+        "total_tokens": 189,
+        "prompt_tokens_details": {
+            "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+            "reasoning_tokens": 83
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 96
+    },
+    "system_fingerprint": "fp_a18b46594c_prod0820_fp8_kvcache_20260402"
+}
