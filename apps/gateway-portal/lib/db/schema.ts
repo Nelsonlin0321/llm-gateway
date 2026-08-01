@@ -223,6 +223,9 @@ export const eventLog = pgTable(
     cost: doublePrecision().default(0),
     loggedAt: timestamp().notNull(),
     logDate: date().notNull(),
+    inputPrice: doublePrecision(),
+    outputPrice: doublePrecision(),
+    inputCachePrice: doublePrecision(),
     ...timestamps,
   },
   (table) => [

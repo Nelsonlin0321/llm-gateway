@@ -15,6 +15,13 @@
       "when": 1785535959346,
       "tag": "0001_youthful_scourge",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785605314049,
+      "tag": "0002_square_ezekiel",
+      "breakpoints": true
     }
   ]
 }
