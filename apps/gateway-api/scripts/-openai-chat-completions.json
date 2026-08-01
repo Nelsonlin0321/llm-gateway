@@ -1,5 +1,5 @@
 {
-    "model": "minimax/minimax-m3",
+    "model": "{models.alias}",
     "messages": [
         {
             "role": "system",

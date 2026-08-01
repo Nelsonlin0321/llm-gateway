@@ -61,9 +61,5 @@ bun test
 ```
 
 ```shell
-bun run scripts/openai/chat-completion/test-non-stream.ts
-bun run scripts/openai/chat-completion/test-stream.ts
-bun run scripts/anthropic/messages/test-non-stream.ts
-bun run scripts/anthropic/messages/test-stream.ts
-bun run scripts/drizzle-query.ts
+bun run scripts/bulk-proxy-test.ts
 ```
