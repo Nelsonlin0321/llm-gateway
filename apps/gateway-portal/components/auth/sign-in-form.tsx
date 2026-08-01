@@ -16,7 +16,7 @@ type FormSubmitEvent = Parameters<
 
 function safeReturnPath(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/workspace/overview";
+    return "/workspace";
   }
   return next;
 }
@@ -51,7 +51,7 @@ export function SignInForm() {
   return (
     <AuthShell
       title="Sign in"
-      description="Access your workspace to manage providers, API keys, budgets, and analytics."
+      description="Sign in to manage providers, child keys, and workspace settings."
       footerLabel="Need an account?"
       footerHref="/sign-up"
       footerLinkText="Create one"
@@ -94,7 +94,7 @@ export function SignInForm() {
         </div>
 
         {error ? (
-          <p className="rounded-xl border border-(--error)/20 bg-error-bg px-4 py-3 text-sm text-error">
+          <p className="rounded-md border border-error/20 bg-error-bg px-3 py-2.5 text-sm text-error">
             {error}
           </p>
         ) : null}

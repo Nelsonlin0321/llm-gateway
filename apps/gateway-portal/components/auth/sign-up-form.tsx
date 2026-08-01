@@ -38,13 +38,13 @@ export function SignUpForm() {
       return;
     }
 
-    router.push("/workspace/overview");
+    router.push("/workspace");
   };
 
   return (
     <AuthShell
       title="Create account"
-      description="Start managing gateway credentials, pricing, and usage in your own workspace."
+      description="Create a workspace account to configure providers and issue API keys."
       footerLabel="Already have an account?"
       footerHref="/sign-in"
       footerLinkText="Sign in"
@@ -106,7 +106,7 @@ export function SignUpForm() {
         </div>
 
         {error ? (
-          <p className="rounded-xl border border-(--error)/20 bg-error-bg px-4 py-3 text-sm text-error">
+          <p className="rounded-md border border-error/20 bg-error-bg px-3 py-2.5 text-sm text-error">
             {error}
           </p>
         ) : null}
