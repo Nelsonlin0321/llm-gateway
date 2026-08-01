@@ -22,6 +22,9 @@ Extend `SUB_URLS` when adding surfaces; each path needs a matching payload file 
 | `DATABASE_URL` | yes | — | Load models via Drizzle |
 | `CHILD_API_KEY` | yes | — | Plain `sk_…` child key for `Authorization` |
 | `PROXY_BASE_URL` | no | `http://localhost:8080` | Gateway base (no trailing slash) |
+| `FORMAT_RESPONSES` | no | `false` | When `true`, pretty-print JSON and convert SSE → JSONL on save |
+
+CLI overrides (win over env): `--format` / `--no-format`.
 
 Prerequisites: proxy running (`bun run dev` in `apps/gateway-api`).
 
@@ -67,7 +70,7 @@ Anthropic templates must include `max_tokens` (API requirement).
 ```text
 for url in SUB_URLS:
   compatible_type = first path segment of url   # e.g. "anthropic"
-  payload_template = read_json(url_id + ".json")  # url_id = url with "/" → "-"
+  payload_template = read_json(payload_stem + ".json")  # leading "-" from leading "/"
   models = query aliases for compatible_type (see above)
 
   for stream in STREAMS:
@@ -78,19 +81,45 @@ for url in SUB_URLS:
         Content-Type: application/json
         Authorization: Bearer ${CHILD_API_KEY}
       print response body, status, ok
+      save response under scripts/response/ (see below)
 ```
+
+## Response files
+
+Written to `apps/gateway-api/scripts/response/`.
+
+| Mode | Extension | Content (`FORMAT_RESPONSES=false`, default) | Content (`FORMAT_RESPONSES=true` / `--format`) |
+|------|-----------|---------------------------------------------|------------------------------------------------|
+| non-stream | `.json` | Raw response body | Pretty-printed JSON when parseable |
+| stream | `.jsonl` | Raw response body (typically SSE) | SSE `data:` payloads as one JSON object per line |
+
+**Filename:** `{url-path}-{provider-name}-{model-name}.{json|jsonl}`
+
+- `url-path`: sub-URL without leading `/`, remaining `/` → `-`  
+  (`/anthropic/v1/messages` → `anthropic-v1-messages`)
+- `provider-name` / `model-name`: split model alias on the first `/`  
+  (`minimax/MiniMax-M3` → `minimax`, `MiniMax-M3`)
+
+Examples:
+
+- `anthropic-v1-messages-minimax-MiniMax-M3.json`
+- `anthropic-v1-messages-minimax-MiniMax-M3.jsonl`
+- `openai-chat-completions-minimax-MiniMax-M3.json`
 
 ## Expected output
 
-- Per request: payload dump, response text, status code, ok flag, latency  
-- End: PASS/FAIL summary lines for every (url × stream × model)  
+- Per request: payload dump, save path, response text, status code, ok flag, latency  
+- End: PASS/FAIL summary lines for every (url × stream × model), including saved path  
 - Non-zero exit if any request fails or no models were found  
+
 
 ## How to run
 
 ```bash
 cd apps/gateway-api
-bun run scripts/bulk-proxy-test.ts
+bun run scripts/bulk-proxy-test.ts              # raw bodies (default)
+bun run scripts/bulk-proxy-test.ts --format    # pretty JSON / SSE→JSONL
+FORMAT_RESPONSES=true bun run scripts/bulk-proxy-test.ts
 ```
 
 ## Extending

@@ -1,0 +1,1 @@
+{"id":"06bd7240e36921c717db6777f15c6e49","type":"message","role":"assistant","model":"MiniMax-M3","content":[{"text":"Hi! How can I help you today?","type":"text"}],"usage":{"input_tokens":170,"output_tokens":10,"service_tier":"standard"},"stop_reason":"end_turn","base_resp":{"status_code":0,"status_msg":""}}

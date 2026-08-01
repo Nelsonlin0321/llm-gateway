@@ -1,0 +1,11 @@
+
+         
+
+         
+
+         
+
+         
+
+         
+{"id":"gen-1785610064-Hs4Vl0190WlDRKYeo5Nm","object":"chat.completion","created":1785610064,"model":"z-ai/glm-5.2","provider":"DeepInfra","system_fingerprint":null,"service_tier":null,"choices":[{"index":0,"logprobs":null,"finish_reason":"stop","native_finish_reason":"stop","message":{"role":"assistant","content":"Hi there! How can I help you today?","refusal":null,"reasoning":"1.  **Analyze the Input:** The user said \"Hi there!\".\n2.  **Identify the Intent:** A simple greeting.\n3.  **Determine the Persona/Constraints:** Helpful assistant, keep answers brief.\n4.  **Formulate the Response:** Acknowledge the greeting and offer assistance briefly.\n    *   *Draft 1:* Hello! How can I help you today?\n    *   *Draft 2:* Hi! What can I do for you?\n    *   *Draft 3:* Hi there! How can I assist you today?\n5.  **Select Best Response:** \"Hi there! How can I help you today?\" (Simple, polite, brief).","reasoning_details":[{"type":"reasoning.text","text":"1.  **Analyze the Input:** The user said \"Hi there!\".\n2.  **Identify the Intent:** A simple greeting.\n3.  **Determine the Persona/Constraints:** Helpful assistant, keep answers brief.\n4.  **Formulate the Response:** Acknowledge the greeting and offer assistance briefly.\n    *   *Draft 1:* Hello! How can I help you today?\n    *   *Draft 2:* Hi! What can I do for you?\n    *   *Draft 3:* Hi there! How can I assist you today?\n5.  **Select Best Response:** \"Hi there! How can I help you today?\" (Simple, polite, brief).","format":"unknown","index":0}]}}],"usage":{"prompt_tokens":26,"completion_tokens":156,"total_tokens":182,"cost":0,"is_byok":true,"prompt_tokens_details":{"cached_tokens":0,"cache_write_tokens":0,"audio_tokens":0,"video_tokens":0},"cost_details":{"upstream_inference_cost":0.0003939,"upstream_inference_prompt_cost":0.0000195,"upstream_inference_completions_cost":0.0003744},"completion_tokens_details":{"reasoning_tokens":132,"image_tokens":0,"audio_tokens":0}}}

@@ -1,0 +1,28 @@
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":"","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":"<think>The user is greeting me. I should respond warmly","role":"assistant","reasoning":"The user is greeting me. I should respond warmly"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" and briefly as instructed.","role":"assistant","reasoning":" and briefly as instructed."}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":"</think>\n\nHi","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":"!","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" How","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" can","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" I","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" help","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" you","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":" today","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"index":0,"delta":{"content":"?","role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[{"finish_reason":"stop","index":0,"delta":{"role":"assistant"}}],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":null,"service_tier":"standard"}
+
+data: {"id":"06bd7243f499704e822cb51b9e8394c7","choices":[],"created":1785610052,"model":"MiniMax-M3","object":"chat.completion.chunk","usage":{"total_tokens":210,"total_characters":0,"prompt_tokens":183,"completion_tokens":27,"completion_tokens_details":{"reasoning_tokens":0},"prompt_tokens_details":{"cached_tokens":128}},"service_tier":"standard","base_resp":{"status_code":0,"status_msg":""}}
+
