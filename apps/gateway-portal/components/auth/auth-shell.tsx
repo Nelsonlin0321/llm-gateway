@@ -27,42 +27,44 @@ export function AuthShell({
   children,
 }: AuthShellProps) {
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center px-5 py-8 sm:px-6">
-      <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,420px)] lg:items-center">
-        <section className="space-y-5">
-          <div className="inline-flex rounded-sm border border-border bg-surface-1 px-2.5 py-1 text-[11px] font-medium tracking-[0.08em] text-text-secondary uppercase">
-            Gateway Portal
-          </div>
-          <div className="space-y-3">
-            <h1 className="max-w-2xl font-heading text-[2.25rem] leading-[1.1] font-bold tracking-[-0.02em] text-text-primary sm:text-[2.75rem]">
-              Manage gateway access, spend, and policies from one place.
-            </h1>
-            <p className="max-w-lg text-sm leading-6 text-text-secondary sm:text-base">
-              Configure provider credentials, issue child API keys, and track
-              usage across teams, users, and projects.
-            </p>
-          </div>
-        </section>
-
-        <Card className="border-border bg-surface-1">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-lg">{title}</CardTitle>
-            <CardDescription>{description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            {children}
-            <p className="text-sm text-text-secondary">
-              {footerLabel}{" "}
-              <Link
-                href={footerHref}
-                className="font-medium text-accent transition-colors hover:opacity-90"
-              >
-                {footerLinkText}
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-md flex-col justify-center px-4 py-10 sm:px-6">
+      <div className="mb-8 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 transition-opacity hover:opacity-90"
+        >
+          <span className="flex size-8 items-center justify-center rounded-md bg-accent text-[11px] font-bold tracking-tight text-accent-foreground">
+            GW
+          </span>
+          <span className="font-heading text-sm font-semibold tracking-[-0.02em] text-text-primary">
+            Gateway
+          </span>
+        </Link>
+        <p className="mt-3 text-[13px] text-text-secondary">
+          Enterprise LLM control plane
+        </p>
       </div>
+
+      <Card className="border-border bg-card shadow-card">
+        <CardHeader className="space-y-1.5 border-b border-border pb-4">
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <CardDescription className="text-[13px] leading-5">
+            {description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 pt-5">
+          {children}
+          <p className="text-center text-[13px] text-text-secondary">
+            {footerLabel}{" "}
+            <Link
+              href={footerHref}
+              className="font-medium text-accent transition-colors hover:opacity-90"
+            >
+              {footerLinkText}
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </main>
   );
 }

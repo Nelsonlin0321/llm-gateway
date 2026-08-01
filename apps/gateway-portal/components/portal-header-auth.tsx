@@ -22,12 +22,10 @@ export function PortalHeaderAuth() {
 
   if (isPending) {
     return (
-      <div className="flex items-center gap-2">
-        <div
-          className="size-8 animate-pulse rounded-full bg-surface-2"
-          aria-hidden
-        />
-      </div>
+      <div
+        className="size-8 animate-pulse rounded-full bg-surface-2"
+        aria-hidden
+      />
     );
   }
 
@@ -37,10 +35,18 @@ export function PortalHeaderAuth() {
     const initials = getInitials(user.name, user.email);
 
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <div className="hidden text-right sm:block">
+          <p className="max-w-[10rem] truncate text-[13px] font-medium text-text-primary">
+            {user.name || "Account"}
+          </p>
+          <p className="max-w-[10rem] truncate text-[11px] text-text-tertiary">
+            {user.email}
+          </p>
+        </div>
         <Link
-          href="/workspace/overview"
-          className="inline-flex size-8 shrink-0 overflow-hidden rounded-full border border-border bg-surface-2 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          href="/workspace"
+          className="inline-flex size-8 shrink-0 overflow-hidden rounded-full border border-border bg-surface-2 transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label={label}
           title={label}
         >
@@ -53,7 +59,7 @@ export function PortalHeaderAuth() {
               className="size-full object-cover"
             />
           ) : (
-            <span className="flex size-full items-center justify-center bg-accent text-[11px] font-semibold tracking-tight text-accent-foreground">
+            <span className="flex size-full items-center justify-center bg-surface-3 text-[11px] font-semibold tracking-tight text-text-primary">
               {initials}
             </span>
           )}
@@ -65,10 +71,22 @@ export function PortalHeaderAuth() {
   return (
     <div className="flex items-center gap-2">
       <Link
-        href="/workspace/overview"
-        className={cn(buttonVariants({ variant: "default", size: "sm" }))}
+        href="/sign-in"
+        className={cn(
+          buttonVariants({ variant: "ghost", size: "sm" }),
+          "text-[13px]",
+        )}
       >
-        Launch portal
+        Sign in
+      </Link>
+      <Link
+        href="/workspace"
+        className={cn(
+          buttonVariants({ variant: "default", size: "sm" }),
+          "text-[13px]",
+        )}
+      >
+        Open console
       </Link>
     </div>
   );

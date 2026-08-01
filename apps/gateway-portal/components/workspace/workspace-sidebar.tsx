@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   BarChart3,
   Boxes,
-  ChevronRight,
   CreditCard,
   KeyRound,
   LayoutGrid,
@@ -15,8 +14,6 @@ import {
   Waypoints,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const workspaceNavigation = [
@@ -40,28 +37,31 @@ const workspaceNavigation = [
       /^\/workspace\/[^/]+\/models(?:\/|$)/.test(pathname),
   },
   {
-    label: "Analytics",
-    href: "/workspace#analytics",
-    icon: BarChart3,
-    match: () => false,
-  },
-  {
-    label: "Guardrails",
-    href: "/workspace#guardrails",
-    icon: ShieldCheck,
-    match: () => false,
-  },
-  {
     label: "Child Keys",
     href: "/workspace/child-keys",
     icon: KeyRound,
     match: (pathname: string) => pathname.startsWith("/workspace/child-keys"),
   },
   {
+    label: "Guardrails",
+    href: "/workspace#guardrails",
+    icon: ShieldCheck,
+    match: () => false,
+    disabled: true,
+  },
+  {
+    label: "Analytics",
+    href: "/workspace#analytics",
+    icon: BarChart3,
+    match: () => false,
+    disabled: true,
+  },
+  {
     label: "Routing",
     href: "/workspace#routing",
     icon: Waypoints,
     match: () => false,
+    disabled: true,
   },
 ] as const;
 
@@ -71,12 +71,14 @@ const accountNavigation = [
     href: "/workspace",
     icon: UserRound,
     match: () => false,
+    disabled: true,
   },
   {
     label: "Billing",
     href: "/workspace#billing",
     icon: CreditCard,
     match: () => false,
+    disabled: true,
   },
 ] as const;
 
@@ -92,39 +94,22 @@ export function WorkspaceSidebar({
   const pathname = usePathname();
 
   return (
-    <Card className="border-border bg-surface-1">
-      <CardHeader className="gap-2 border-b border-border">
-        <div className="rounded-lg border border-border bg-background px-3 py-2.5">
-          <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
-            Workspace
-          </p>
-          <div className="mt-1 flex items-center justify-between gap-3">
-            <div>
-              <p className="font-heading text-[0.95rem] font-semibold text-text-primary">
-                Default Workspace
-              </p>
-              <p className="text-xs text-text-secondary">
-                Personal environment
-              </p>
-            </div>
-            <Badge variant="info">Active</Badge>
-          </div>
-        </div>
+    <div className="flex h-full flex-col">
+      <div className="border-b border-sidebar-border px-4 py-4">
+        <p className="text-[10px] font-medium tracking-[0.14em] text-text-tertiary uppercase">
+          Organization
+        </p>
+        <p className="mt-1.5 truncate text-sm font-semibold tracking-[-0.01em] text-sidebar-foreground">
+          Default Workspace
+        </p>
+        <p className="mt-0.5 truncate text-[12px] text-text-tertiary">
+          {userName || userEmail}
+        </p>
+      </div>
 
-        <div className="rounded-lg border border-border bg-background px-3 py-2.5">
-          <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
-            Signed in
-          </p>
-          <p className="mt-1 text-sm font-medium text-text-primary">
-            {userName || "Workspace Admin"}
-          </p>
-          <p className="truncate text-xs text-text-secondary">{userEmail}</p>
-        </div>
-      </CardHeader>
-
-      <CardContent className="grid gap-3 pt-2">
+      <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-4">
         <NavSection
-          title="Workspace"
+          title="Console"
           items={workspaceNavigation}
           pathname={pathname}
         />
@@ -133,8 +118,12 @@ export function WorkspaceSidebar({
           items={accountNavigation}
           pathname={pathname}
         />
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="border-t border-sidebar-border px-4 py-3">
+        <p className="truncate text-[11px] text-text-tertiary">{userEmail}</p>
+      </div>
+    </div>
   );
 }
 
@@ -149,27 +138,43 @@ function NavSection({
     href: string;
     icon: typeof LayoutGrid;
     match: (pathname: string) => boolean;
+    disabled?: boolean;
   }>;
   pathname: string;
 }) {
   return (
-    <div className="space-y-2">
-      <p className="text-[11px] font-medium tracking-[0.12em] text-text-tertiary uppercase">
+    <div className="space-y-1.5">
+      <p className="px-2 text-[10px] font-medium tracking-[0.14em] text-text-tertiary uppercase">
         {title}
       </p>
-      <nav className="space-y-1">
+      <nav className="space-y-0.5">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = item.match(pathname);
+          const disabled = "disabled" in item && item.disabled;
+
+          if (disabled) {
+            return (
+              <span
+                key={item.label}
+                className="flex cursor-not-allowed items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-text-muted"
+                title="Coming soon"
+              >
+                <Icon className="size-4 opacity-60" />
+                <span className="flex-1">{item.label}</span>
+                <span className="text-[10px] tracking-wide uppercase">Soon</span>
+              </span>
+            );
+          }
 
           return (
             <Link
               key={item.label}
               href={item.href}
               className={cn(
-                "group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
+                "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
                 isActive
-                  ? "bg-accent-subtle text-text-primary"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-text-secondary hover:bg-surface-2 hover:text-text-primary",
               )}
             >
@@ -180,12 +185,9 @@ function NavSection({
                 )}
               />
               <span className="flex-1">{item.label}</span>
-              <ChevronRight
-                className={cn(
-                  "size-4 transition-transform group-hover:translate-x-0.5",
-                  isActive ? "text-accent" : "text-text-tertiary",
-                )}
-              />
+              {isActive ? (
+                <span className="size-1.5 rounded-full bg-accent" aria-hidden />
+              ) : null}
             </Link>
           );
         })}
