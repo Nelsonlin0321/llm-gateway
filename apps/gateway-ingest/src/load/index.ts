@@ -1,5 +1,13 @@
+export { loadRows, type LoadRowsInput, type LoadRowsResult } from "./insert.js";
 export {
-  loadRows,
-  type LoadRowsInput,
-  type LoadRowsResult,
-} from "./insert.js";
+  buildCreatePartitionSql,
+  clearEnsuredPartitionCache,
+  ensureDayPartitions,
+  isAlreadyExistsError,
+  isMissingPartitionError,
+  isValidLogDate,
+  nextLogDate,
+  normalizeLogDate,
+  partitionTableName,
+  PARTITIONED_TABLES,
+} from "./partitions";
