@@ -5,7 +5,9 @@
     "dev": "bun run --hot src/index.ts",
     "build": "tsc --noEmit",
     "start": "bun run src/index.ts",
-    "test": "bun test tests"
+    "test": "bun test tests",
+    "seed:event-log": "bun run scripts/seed-event-log/seed.ts",
+    "seed:event-log:json": "bun run scripts/seed-event-log/seed.ts --dry-run --write-json=scripts/data/event-log-mock.json"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

@@ -88,9 +88,39 @@ With `REQUEST_LOG_DEBUG=1`, loaded entries log token/cost summaries.
 | `bun run start` | Run consumer once (long-lived loop) |
 | `bun run build` | Typecheck (`tsc --noEmit`) |
 | `bun test` | Unit tests |
+| `bun run seed:event-log` | Ensure daily partitions + insert mock `event_log` rows (2026-06-01..2026-08-01) |
+| `bun run seed:event-log:json` | Dry-run: write mock rows to `scripts/data/event-log-mock.json` only |
 | `bun run db:generate` | Generate Drizzle migrations from `src/db/schema.ts` |
 | `bun run db:migrate` | Apply Drizzle migrations |
 | `bun run db:studio` | Open Drizzle Studio |
+
+### Seed mock event_log
+
+Scripts live under `scripts/seed-event-log/`:
+
+| File | Role |
+| ---- | ---- |
+| `scripts/seed-event-log/generate.ts` | Mock row generator |
+| `scripts/seed-event-log/seed.ts` | CLI: partition ensure + insert |
+
+```bash
+# Insert into Postgres (needs DATABASE_URL).
+# Default: 2026-06-01..2026-08-01, random 10–1000 rows per log_date.
+bun run seed:event-log
+
+# Customize volume / range / also dump JSON
+bun run scripts/seed-event-log/seed.ts \
+  --per-day-min=10 --per-day-max=1000 \
+  --write-json=scripts/data/event-log-mock.json
+
+# Fixed count per day
+bun run scripts/seed-event-log/seed.ts --per-day=50
+
+# Generate JSON only (no DB)
+bun run seed:event-log:json
+```
+
+The seeder creates missing daily partitions (`event_log_YYYY_MM_DD` / `request_log_YYYY_MM_DD`) before insert.
 
 ## Database (Drizzle)
 
