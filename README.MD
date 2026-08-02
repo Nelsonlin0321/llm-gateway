@@ -11,7 +11,7 @@
   <a href="#tech-stack"><img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript" /></a>
   <a href="apps/gateway-api"><img src="https://img.shields.io/badge/proxy-Hono%20%2B%20Bun-orange" alt="Hono" /></a>
   <a href="apps/gateway-portal"><img src="https://img.shields.io/badge/portal-Next.js-black?logo=next.js" alt="Next.js" /></a>
-  <a href="#license"><img src="https://img.shields.io/badge/license-TBD-lightgrey" alt="License" /></a>
+  <a href="#license"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License" /></a>
   <a href="#contributing"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4" alt="PRs welcome" /></a>
 </p>
 
@@ -315,7 +315,23 @@ Found a vulnerability? Report it privately to the maintainers — please do not 
 
 ## License
 
-License TBD — an SPDX license (MIT or Apache-2.0 recommended) will be added before a formal public release.
+This project is licensed under the [Apache License, Version 2.0](./LICENSE).
+
+```text
+Copyright 2026 Open LLM Gateway contributors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
 
 ---
 
