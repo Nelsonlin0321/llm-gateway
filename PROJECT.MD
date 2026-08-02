@@ -1,120 +1,207 @@
-**Product Vision: LLM-Proxy**
+# Open LLM Gateway — Product Vision
 
-**LLM-Proxy** is an enterprise-grade, unified proxy layer for Large Language Model (LLM) APIs. It acts as a secure, intelligent gateway that abstracts away the complexities of working with multiple LLM providers (OpenAI, Anthropic, Google Gemini, Grok/xAI, Azure OpenAI, AWS Bedrock, self-hosted models, etc.), while delivering centralized control, observability, cost governance, and security.
+**Self-hosted control plane for multi-provider LLM access.**
 
-### Core Value Proposition
-
-Enterprises and development teams struggle with:
-
-- Fragmented integrations across multiple LLM vendors
-- Lack of visibility into usage and spend
-- Security risks from exposing raw API keys to teams or applications
-- Inconsistent logging, rate limiting, and compliance across providers
-- Difficulty in enforcing policies and tracking costs per team/project
-
-**LLM-Proxy** solves these by providing a single, high-performance proxy with enterprise controls, turning chaotic multi-vendor LLM usage into a governed, observable, and cost-efficient platform.
-
-### Target Users & Use Cases
-
-- **Enterprise AI Platforms / Internal Tools Teams**: Centralize LLM access for all internal applications.
-- **AI Startups & Scale-ups**: Manage client keys, track usage per customer, and control costs.
-- **Development & Platform Teams**: Provide safe, metered API access to developers without sharing master keys.
-- **Compliance & Security Teams**: Audit every request/response and enforce data policies.
-- **FinOps / Engineering Leadership**: Get real-time token usage, cost attribution, and budget alerts.
-
-### Detailed Feature Description
-
-#### 1. Unified LLM Provider Interface
-
-- Single, OpenAI-compatible endpoint (`/v1/chat/completions`, `/v1/embeddings`, etc.) that works with any backend provider.
-- Intelligent routing based on model name, custom tags, load balancing, fallback policies, or cost optimization rules.
-- Provider-agnostic request/response transformation (normalize differences in tool calling, streaming formats, error handling, etc.).
-- Support for streaming, function/tool calling, vision, and future modalities.
-- Configurable model aliases (e.g., `gpt-4o` → actual provider model) for easy migration.
-
-#### 2. Comprehensive Request & Response Logging
-
-- Persistent, searchable logging of every request/response (prompts, completions, metadata, latency, tokens, errors).
-- Structured storage (e.g., PostgreSQL + object storage for large payloads) with optional PII redaction/anonymization.
-- Searchable UI + API for logs with filters (user, key tag, model, provider, time range, cost).
-- Export capabilities (CSV, JSON, integration with ELK, Datadog, OpenSearch, etc.).
-- Compliance features: retention policies, audit trails, GDPR/CCPA support.
-
-#### 3. Token Usage Tracking & Cost Governance
-
-- Real-time and historical token consumption tracking (input/output/total) per request.
-- **Tagging system**: Apply custom tags to API keys (e.g., `team:engineering`, `project:customer-support`, `customer:acme-corp`, `environment:prod`).
-- Granular cost attribution and reporting (daily/weekly/monthly dashboards, per-tag, per-provider).
-- Budget alerts, soft/hard limits, and automatic key suspension when quotas are reached.
-- Integration with internal billing systems or showback/chargeback mechanisms.
-
-#### 4. Hierarchical API Key Management (Parent → Children Keys)
-
-- **Parent Keys**: Master keys tied to a specific LLM provider account and base URL.
-- **Child Keys**: Derived, scoped keys generated from a parent key.
-  - Each child key inherits provider access but can be further restricted (models allowed, rate limits, daily token budgets, IP allowlisting, etc.).
-  - Children keys are "released" (generated) with a specific `parent_key_id` + target `api_url` combination for traceability.
-- Use cases:
-  - Issue temporary or team-specific keys without exposing master credentials.
-  - Rotate or revoke child keys instantly without affecting the parent.
-  - Multi-tenant SaaS: One parent key per customer, many child keys per end-user/application.
-
-#### 5. Full Key Lifecycle Management
-
-- CRUD operations for parent and child keys via Admin UI + REST API + Terraform provider (future).
-- Status management (active, paused, revoked, expired).
-- Usage analytics per key.
-- Bulk operations, key rotation workflows, and audit history of key changes.
-- Secret storage best practices (integration with HashiCorp Vault, AWS Secrets Manager, etc.).
-
-### Additional Enterprise-Grade Capabilities (MVP+)
-
-- **Security & Compliance**:
-  - End-to-end encryption, mTLS support.
-  - Request validation, prompt injection guardrails (optional integration).
-  - Role-Based Access Control (RBAC) for admin vs. application keys.
-  - SOC2, ISO27001 ready logging and controls.
-- **Performance & Reliability**:
-  - High-throughput, low-latency proxy (Rust/Go recommended for core).
-  - Caching layer (semantic or exact-match).
-  - Automatic retries, circuit breakers, load balancing across regions/providers.
-  - Rate limiting (global, per-key, per-model).
-- **Observability**:
-  - Prometheus + Grafana metrics (tokens/sec, latency p95, error rates, cost burn rate).
-  - OpenTelemetry tracing.
-- **Admin & User Interfaces**:
-  - Modern web dashboard (React/Next.js or similar) for key management, analytics, logs.
-  - CLI tool for developers.
-- **Extensibility**:
-  - Webhook notifications on events (budget exceeded, suspicious usage).
-  - Plugin system for custom middleware (guardrails, logging enrichment, cost modifiers).
-
-### Non-Functional Requirements
-
-- **Scalability**: Horizontal scaling, Kubernetes-native.
-- **High Availability**: Multi-region deployment support.
-- **Deployment Options**: Self-hosted (Docker/K8s), managed SaaS, or air-gapped enterprise.
-- **Tech Stack Recommendations**:
-  - Core Proxy: Rust (high performance) or Go.
-  - Backend: PostgreSQL, Redis.
-  - Auth: JWT + API keys.
-  - Observability: OpenTelemetry, Prometheus.
-
-### Success Metrics
-
-- Reduction in LLM spend through better visibility and optimization (target: 20-40%).
-- 90%+ of company LLM traffic routed through proxy.
-- Near-zero incidents of exposed master API keys.
-- Full auditability for all AI interactions.
+One gateway. Many providers. Governed keys. Observable spend.
 
 ---
 
-**Next Steps as Product Manager**:
+## One-liner
 
-1. Validate with stakeholders (feature prioritization workshop).
-2. Create detailed PRD + user stories.
-3. Define MVP scope (e.g., OpenAI + Anthropic support, basic key hierarchy, logging, basic dashboard).
-4. Architecture decision record (ADR) for tech choices.
-5. Competitor analysis (e.g., LiteLLM, OpenRouter, Helicone, LangSmith, Phoenix).
+Open LLM Gateway is an open-source platform that sits between your applications and upstream model providers. It centralizes credentials, issues scoped child API keys, routes traffic by model alias, and turns every request into durable usage analytics — without shipping master API keys to every teammate or microservice.
 
-Would you like me to expand any section (e.g., detailed User Stories, API Spec, UI Mockups description, Roadmap, or Technical Architecture)? Or should I start drafting the full Product Requirements Document (PRD)?
+---
+
+## Problem
+
+Teams adopting multiple LLM vendors hit the same walls:
+
+| Problem | Impact |
+| ------- | ------ |
+| Master keys copied into services, CI, and chat threads | Security incidents, painful rotation |
+| Different base URLs, auth headers, and SDKs per vendor | Slow integration, inconsistent tooling |
+| No shared view of tokens, cost, or ownership | Surprise bills, no FinOps story |
+| Logging bolted on after the fact | Incomplete audit trail, high proxy latency |
+| SaaS gateways that own your traffic and data | Lock-in, data residency constraints |
+
+Raw reverse proxies solve connectivity but not **governance**. Full SaaS gateways solve dashboards but not **ownership**. Open LLM Gateway targets the self-hosted middle ground.
+
+---
+
+## Solution
+
+A three-service monorepo that separates the **hot path** from **telemetry** and **control**:
+
+| Service | Job |
+| ------- | --- |
+| **gateway-api** | Authenticate child keys, route `provider/alias`, proxy OpenAI + Anthropic surfaces, emit async logs |
+| **gateway-ingest** | Consume Redis Streams, compute tokens/cost, load Postgres |
+| **gateway-portal** | Admin UI: providers, models, child keys, analytics, workspace overview |
+
+Clients keep using familiar OpenAI-style or Anthropic-style HTTP APIs. Operators keep master keys encrypted in one place. Finance and eng leadership get honest spend and usage by dimension.
+
+---
+
+## Personas
+
+| Persona | Goals |
+| ------- | ----- |
+| **Platform / AI infra eng** | One endpoint, multi-provider routing, safe key distribution |
+| **App / product eng** | Drop-in proxy URL + child key; no master secrets in app env |
+| **Team lead** | Tag keys by team/env/project; see who spends what |
+| **FinOps / leadership** | Token and cost trends, attribution, budget readiness |
+| **Security / compliance** | Encrypted secrets, audit of admin actions, capture levels for payloads |
+| **Open-source adopter** | Self-host, extend providers, contribute without a sales call |
+
+---
+
+## Core product pillars
+
+### 1. Unified multi-provider proxy
+
+- OpenAI-compatible surface: `POST /openai/*`
+- Anthropic Messages surface: `POST /anthropic/*`
+- Model routing via `provider/alias` (e.g. `deepseek/chat`, `openai/gpt-4.1-mini`)
+- Streaming pass-through (SSE) with usage-friendly options where supported
+- Provider registry stores base URL, compatibility type, and encrypted master key
+
+### 2. Hierarchical key model
+
+| Concept | Meaning in this project |
+| ------- | ----------------------- |
+| **Provider credential** | Master upstream key + API URL (encrypted at rest) |
+| **Child API key** | Downstream `sk_…` JWT issued to a user/app/team; never stores master secrets |
+| **Tags / metadata** | Free-form labels (env, team, project, application) for attribution |
+
+Lifecycle: create → reveal once → rotate (stable key id for analytics) → disable → delete.
+
+### 3. Observable traffic without slowing chat
+
+- Gateway emits best-effort Redis Stream events **after** the client response path
+- Ingest transforms usage, prices, and attribution into Postgres
+- Capture levels: `metadata` · `redacted` · `full` (bodies never required for cost math)
+
+### 4. Analytics that operators actually use
+
+Three controls define every chart:
+
+| Control | Role | Examples |
+| ------- | ---- | -------- |
+| **Metric** | Y-axis | request count, total tokens, cost |
+| **Dimension** | Stack segments | provider, model, env, team, metadata fields |
+| **Filter** | Scope | multi-select tags + user-email autocomplete + date range |
+
+Workspace overview surfaces the same series for spend-by-provider, requests-by-env, and tokens-by-model.
+
+### 5. Self-hosted by default
+
+- Your Postgres, your Redis, your VPC
+- No mandatory cloud vendor for the control plane
+- Schema owned by the portal app; services share typed Drizzle models
+
+---
+
+## What ships today (MVP reality)
+
+Honest status — not a vaporware list.
+
+| Capability | Status |
+| ---------- | ------ |
+| OpenAI + Anthropic proxy paths | **Shipped** |
+| Child key auth (JWT `sk_…`) | **Shipped** |
+| Provider + model admin UI | **Shipped** |
+| Child key create / rotate / reveal / tags | **Shipped** |
+| Redis Stream request logging | **Shipped** |
+| Ingest worker → `event_log` / `request_log` | **Shipped** |
+| Token + cost calculation on ingest | **Shipped** |
+| Analytics dashboard (metric × dimension × filters) | **Shipped** |
+| Workspace overview with live usage panels | **Shipped** |
+| Better Auth portal login | **Shipped** |
+| Per-key rate limits / hard budgets | Roadmap |
+| Guardrails / model allow-lists middleware | Roadmap |
+| Unified single `/v1` OpenAI surface | Roadmap |
+| Full log explorer UI | Roadmap |
+| RBAC multi-tenant orgs | Roadmap |
+| Terraform provider / public REST admin API | Roadmap |
+
+---
+
+## Competitive landscape (positioning)
+
+| Option | Strength | Gap we address |
+| ------ | -------- | -------------- |
+| **LiteLLM** | Broad provider adapters | We emphasize child-key governance + portal analytics as first-class product |
+| **OpenRouter** | Hosted multi-model marketplace | We are self-hosted; you keep keys and logs |
+| **Helicone / Langfuse-style** | Observability UX | We combine **proxy + keys + cost** in one monorepo |
+| **Raw nginx / custom proxy** | Simple | No key hierarchy, pricing, or dimensional analytics |
+
+Open LLM Gateway is for teams who want **control-plane UX + data-plane proxy + durable telemetry** under one roof, open source.
+
+---
+
+## Success metrics
+
+| Metric | Target signal |
+| ------ | ------------- |
+| Master key exposure | Near-zero master keys outside the portal vault |
+| Traffic centralization | Majority of org LLM calls through the gateway |
+| FinOps clarity | Cost & tokens attributable by team/env/app |
+| Operator time | Provider + key onboarding in minutes, not days |
+| Community | Stars, issues, and PRs that extend providers and policies |
+
+---
+
+## Product principles
+
+1. **Hot path stays hot** — never block completions on analytics writes.  
+2. **Honest empty states** — no fabricated dashboard numbers.  
+3. **Secrets stay server-side** — encrypt at rest; reveal child secrets once.  
+4. **Dimensions over dashboards** — one flexible analytics model beats ten hardcoded charts.  
+5. **Ship the boring backbone** — routing, keys, logs, cost before exotic agent features.  
+6. **Open by default** — readable code, documented architecture, contribution-friendly modules.
+
+---
+
+## Non-goals (near term)
+
+- Replacing full observability platforms (Datadog, full ELK)
+- Being a model marketplace or hosting GPUs
+- Guaranteeing byte-identical behavior for every proprietary provider quirk on day one
+- Multi-region active-active in the first public release
+
+---
+
+## Roadmap themes
+
+### Near term
+- Rate limits and spend budgets on child keys  
+- Policy / guardrails middleware (allow-lists, basic privacy controls)  
+- Analytics URL state (shareable views) + top-N “Other” segment caps  
+
+### Medium term
+- Unified `/v1` OpenAI surface  
+- Log explorer with search over `request_log`  
+- Audit log for admin actions  
+- More provider token-path coverage  
+
+### Longer term
+- Org/team RBAC  
+- Fallbacks and weighted routing  
+- Webhooks (budget exceeded, anomaly)  
+- Optional object storage for full payloads  
+
+Architecture detail: [`SYSTEM_DESIGN.MD`](./SYSTEM_DESIGN.MD)  
+User-facing setup: [`README.MD`](./README.MD)
+
+---
+
+## Out of scope for this document
+
+Implementation tickets live under each app’s `tasks/` folders. This file is the **product north star** for contributors, users, and stargazers — not a sprint backlog.
+
+---
+
+<p align="center">
+  <strong>Open LLM Gateway</strong> — govern multi-provider LLM access without giving up your data.<br />
+  If this product vision matches a problem you have, ★ star the repo and open an issue with your use case.
+</p>

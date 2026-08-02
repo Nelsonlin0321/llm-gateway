@@ -275,7 +275,7 @@ Please keep the proxy hot path lean and logging non-blocking.
 
 ## License
 
-Same as the monorepo root (license TBD until SPDX file is added).
+Licensed under the [Apache License, Version 2.0](../../LICENSE) — same as the monorepo root.
 
 ---
 
