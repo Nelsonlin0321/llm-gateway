@@ -51,10 +51,9 @@ const workspaceNavigation = [
   },
   {
     label: "Analytics",
-    href: "/workspace#analytics",
+    href: "/workspace/analytics",
     icon: BarChart3,
-    match: () => false,
-    disabled: true,
+    match: (pathname: string) => pathname.startsWith("/workspace/analytics"),
   },
   {
     label: "Routing",

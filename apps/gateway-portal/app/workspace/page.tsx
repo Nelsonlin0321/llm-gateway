@@ -103,10 +103,10 @@ const workspaceCards = [
   {
     title: "Analytics",
     description: "Requests, tokens, latency, and spend by dimension.",
-    href: "#analytics",
+    href: "/workspace/analytics",
     icon: BarChart3,
-    badge: "Preview",
-    badgeVariant: "info" as const,
+    badge: "Live",
+    badgeVariant: "success" as const,
   },
   {
     title: "Routing",
@@ -160,7 +160,14 @@ export default function WorkspacePage() {
               Usage this week
             </h2>
             <p className="mt-0.5 text-sm text-text-secondary">
-              Preview metrics — connect analytics for live data.
+              Preview snapshot — open{" "}
+              <Link
+                href="/workspace/analytics"
+                className="font-medium text-text-primary underline-offset-4 hover:underline"
+              >
+                Analytics
+              </Link>{" "}
+              for live stacked usage by dimension.
             </p>
           </div>
         </div>
