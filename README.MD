@@ -15,6 +15,10 @@
   <a href="#contributing"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4" alt="PRs welcome" /></a>
 </p>
 
+<p align="center">
+  <img src="./readme.png" alt="Open LLM Gateway — self-hosted multi-provider control plane with child keys and cost analytics" width="800" />
+</p>
+
 Open LLM Gateway sits between your applications and upstream model providers. It gives you a **single place** to manage credentials, issue scoped child API keys, route by model alias, stream request telemetry, and explore spend — without shipping master provider keys to every teammate or microservice.
 
 > **Star this repo** if you care about self-hosted LLM governance, multi-provider routing, and honest usage analytics. Stars help others discover the project.
