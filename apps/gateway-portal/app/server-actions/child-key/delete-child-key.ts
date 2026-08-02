@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
-import prisma from "@/lib/prisma";
+import { db, childKeys } from "@/lib/db";
 
 import {
-  childKeySelect,
+  childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
   type ChildKeyActionResult,
@@ -22,23 +23,23 @@ export async function deleteChildKey(
     return childKeyValidationError("Child key id is required.");
   }
 
-  const existing = await prisma.childKey.findFirst({
-    where: {
-      id,
-      creatorId: session.user.id,
-    },
-    select: { id: true },
-  });
+  const [existing] = await db
+    .select({ id: childKeys.id })
+    .from(childKeys)
+    .where(
+      and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)),
+    )
+    .limit(1);
 
   if (!existing) {
     return childKeyValidationError("Child key not found.");
   }
 
   try {
-    const childKey = await prisma.childKey.delete({
-      where: { id: existing.id },
-      select: childKeySelect,
-    });
+    const [childKey] = await db
+      .delete(childKeys)
+      .where(eq(childKeys.id, existing.id))
+      .returning(childKeyReturning);
 
     await invalidate_child_key_cache(id);
     revalidatePath("/workspace/child-keys");

@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 
-import prisma from "@/lib/prisma";
+import { db, llmProviders } from "@/lib/db";
 import { requireSession } from "@/lib/auth-server";
 import { toProviderListItem } from "@/lib/llm-provider/service";
 
 import {
-  providerSelect,
+  providerReturning,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -21,23 +22,23 @@ export async function deleteProvider(
     return validationErrorResult("Provider id is required.");
   }
 
-  const existing = await prisma.lLMProvider.findFirst({
-    where: {
-      id,
-      creatorId: session.user.id,
-    },
-    select: { id: true },
-  });
+  const [existing] = await db
+    .select({ id: llmProviders.id })
+    .from(llmProviders)
+    .where(
+      and(eq(llmProviders.id, id), eq(llmProviders.creatorId, session.user.id)),
+    )
+    .limit(1);
 
   if (!existing) {
     return validationErrorResult("Provider not found.");
   }
 
   try {
-    const provider = await prisma.lLMProvider.delete({
-      where: { id },
-      select: providerSelect,
-    });
+    const [provider] = await db
+      .delete(llmProviders)
+      .where(eq(llmProviders.id, id))
+      .returning(providerReturning);
 
     revalidatePath("/providers");
     revalidatePath("/dashboard");

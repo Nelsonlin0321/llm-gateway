@@ -1,19 +1,21 @@
 "use server";
 
+import { desc, eq } from "drizzle-orm";
+
 import { requireSession } from "@/lib/auth-server";
 import { toChildKeyListItem } from "@/lib/child-key/service";
-import prisma from "@/lib/prisma";
+import { db, childKeys } from "@/lib/db";
 
-import { childKeySelect } from "./shared";
+import { childKeyReturning } from "./shared";
 
 export async function getChildKeys() {
   const session = await requireSession();
 
-  const keys = await prisma.childKey.findMany({
-    where: { creatorId: session.user.id },
-    select: childKeySelect,
-    orderBy: [{ updatedAt: "desc" }],
-  });
+  const keys = await db
+    .select(childKeyReturning)
+    .from(childKeys)
+    .where(eq(childKeys.creatorId, session.user.id))
+    .orderBy(desc(childKeys.updatedAt));
 
   return keys.map(toChildKeyListItem);
 }

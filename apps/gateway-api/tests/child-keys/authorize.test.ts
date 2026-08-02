@@ -6,7 +6,7 @@ import {
   encryptApiKey,
   type ChildKeyDbRecord,
 } from "../../src/child-keys/index";
-import prisma from "../../src/lib/prisma";
+import { childKeyRepository } from "../../src/child-keys/repository";
 import type { ChildKeyJwtPayload } from "../../src/child-keys/types";
 import { mintTestChildApiKey } from "./mint-test-key";
 
@@ -32,27 +32,21 @@ function buildChildKeyRecord(
   };
 }
 
-type FindUniqueHandler = (
+type FindByIdHandler = (
   id: string,
 ) => ChildKeyDbRecord | null | Promise<ChildKeyDbRecord | null>;
 
-function mockFindUnique(t: TestContext, handler: FindUniqueHandler) {
-  const calls: Array<{ where: { id: string } }> = [];
-  const originalFindUnique = prisma.childKey.findUnique;
+function mockFindById(t: TestContext, handler: FindByIdHandler) {
+  const calls: Array<{ id: string }> = [];
+  const originalFindById = childKeyRepository.findById;
 
-  prisma.childKey.findUnique = (async (args: { where: { id?: string } }) => {
-    const id = args.where.id;
-    if (typeof id !== "string") {
-      throw new TypeError(
-        "Expected prisma.childKey.findUnique to receive an id.",
-      );
-    }
-    calls.push({ where: { id } });
+  childKeyRepository.findById = async (id: string) => {
+    calls.push({ id });
     return handler(id);
-  }) as unknown as typeof prisma.childKey.findUnique;
+  };
 
   t.after(() => {
-    prisma.childKey.findUnique = originalFindUnique;
+    childKeyRepository.findById = originalFindById;
   });
 
   return { calls };
@@ -99,12 +93,10 @@ async function mintWithDb(overrides?: {
 
 test("authorizeChildKey accepts active matching key", async (t) => {
   const { plainApiKey, payload, record } = await mintWithDb();
-  const findUnique = mockFindUnique(t, (id) =>
-    id === record.id ? record : null,
-  );
+  const findById = mockFindById(t, (id) => (id === record.id ? record : null));
   const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, true);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
 });
 
 test("authorizeChildKey rejects missing key", async (t) => {
@@ -119,7 +111,7 @@ test("authorizeChildKey rejects missing key", async (t) => {
     issued_at: issuedAt,
   });
 
-  const findUnique = mockFindUnique(t, () => null);
+  const findById = mockFindById(t, () => null);
   const result = await authorizeChildKey(plainApiKey, {
     key_id: "missing",
     name: "x",
@@ -128,7 +120,7 @@ test("authorizeChildKey rejects missing key", async (t) => {
   });
 
   assert.equal(result.ok, false);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /not found|revoked/i);
@@ -139,12 +131,10 @@ test("authorizeChildKey rejects deactivated key", async (t) => {
   const { plainApiKey, payload, record } = await mintWithDb({
     isActive: false,
   });
-  const findUnique = mockFindUnique(t, (id) =>
-    id === record.id ? record : null,
-  );
+  const findById = mockFindById(t, (id) => (id === record.id ? record : null));
   const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /deactivated/i);
@@ -155,12 +145,10 @@ test("authorizeChildKey rejects expired row expiresAt", async (t) => {
   const { plainApiKey, payload, record } = await mintWithDb({
     expiresAt: new Date(Date.now() - 60_000),
   });
-  const findUnique = mockFindUnique(t, (id) =>
-    id === record.id ? record : null,
-  );
+  const findById = mockFindById(t, (id) => (id === record.id ? record : null));
   const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /expir/i);
@@ -173,13 +161,13 @@ test("authorizeChildKey rejects rotated issuedAt mismatch", async (t) => {
     ...record,
     issuedAt: record.issuedAt + 10,
   };
-  const findUnique = mockFindUnique(t, (id) =>
+  const findById = mockFindById(t, (id) =>
     id === rotatedRecord.id ? rotatedRecord : null,
   );
 
   const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /rotated|no longer valid/i);
@@ -195,12 +183,10 @@ test("authorizeChildKey rejects secret mismatch", async (t) => {
   });
 
   // stored key decrypts to different plain value → mismatch (or verify fail)
-  const findUnique = mockFindUnique(t, (id) =>
-    id === record.id ? record : null,
-  );
+  const findById = mockFindById(t, (id) => (id === record.id ? record : null));
   const result = await authorizeChildKey(plainApiKey, payload);
   assert.equal(result.ok, false);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
   }
@@ -218,14 +204,14 @@ test("authorizeChildKey returns 503 on database errors", async (t) => {
     issued_at: issuedAt,
   });
 
-  const originalFindUnique = prisma.childKey.findUnique;
+  const originalFindById = childKeyRepository.findById;
   let callCount = 0;
-  prisma.childKey.findUnique = (async () => {
+  childKeyRepository.findById = async () => {
     callCount += 1;
     throw new Error("connection refused");
-  }) as unknown as typeof prisma.childKey.findUnique;
+  };
   t.after(() => {
-    prisma.childKey.findUnique = originalFindUnique;
+    childKeyRepository.findById = originalFindById;
   });
   const result = await authorizeChildKey(plainApiKey, {
     key_id: "key-db-err",

@@ -91,9 +91,12 @@ export function createAnthropicProxyHandler(
   Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
 }> {
   return async (c, next) => {
-    const result = await handleAnthropicProxy(c, deps);
-    if (result) {
-      return result;
+    const started = performance.now();
+    const failureResponse = await handleAnthropicProxy(c, deps);
+    const elapsedMs = performance.now() - started;
+    console.log(`Parse Anthropic request took ${elapsedMs.toFixed(2)} ms`);
+    if (failureResponse) {
+      return failureResponse;
     }
     await next();
   };

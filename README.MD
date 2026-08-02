@@ -2,7 +2,7 @@
 
 **Open-source control plane for multi-provider LLM access.**
 
-LLM Gateway sits between your applications and upstream model providers (OpenAI-compatible APIs, Anthropic Messages, and more). It gives you a single place to manage credentials, issue scoped child API keys, route by model alias, and capture request/response telemetry—without shipping master provider keys to every service or teammate.
+Open LLM Gateway sits between your applications and upstream model providers (OpenAI-compatible APIs, Anthropic Messages, and more). It gives you a single place to manage credentials, issue scoped child API keys, route by model alias, and capture request/response telemetry—without shipping master provider keys to every service or teammate.
 
 ```
 Clients / apps
@@ -89,7 +89,7 @@ llm-gateway/
 └── README.MD             # You are here
 ```
 
-Each app has its own `package.json`, Prisma schema, and tests.
+Each app has its own `package.json`, Drizzle schema, and tests.
 
 ---
 
@@ -107,7 +107,8 @@ Each app has its own `package.json`, Prisma schema, and tests.
 cd apps/gateway-portal
 cp .env.example .env   # if present; otherwise create .env (see Environment)
 npm install
-npx prisma migrate dev
+# Schema already applied via historical migrations under prisma/migrations
+# For new schema changes: npm run db:generate && npm run db:migrate
 npm run dev
 ```
 
@@ -123,8 +124,6 @@ Open [http://localhost:3000](http://localhost:3000), sign up, then:
 cd apps/gateway-api
 cp .env.example .env   # if present; otherwise create .env (see Environment)
 npm install
-# Prisma client generation if needed for your checkout
-npx prisma generate
 npm run dev
 ```
 
@@ -176,7 +175,7 @@ Share the same crypto secrets between portal and gateway so child keys and provi
 
 | Variable             | Purpose                                                                               |
 | -------------------- | ------------------------------------------------------------------------------------- |
-| `DATABASE_URL`       | Postgres connection string (Neon / Prisma)                                            |
+| `DATABASE_URL`       | Postgres connection string (Neon / Drizzle)                                           |
 | `JWT_SIGNING_SECRET` | Signs / verifies child API key JWTs                                                   |
 | `API_ENCRYPT_KEY`    | AES key for encrypting provider keys and stored child-key ciphertext                  |
 | `REDIS_URL`          | Redis for cache + request-log stream (omit to skip Redis; logs will not be published) |
@@ -187,6 +186,7 @@ Share the same crypto secrets between portal and gateway so child keys and provi
 | --------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
 | `PORT`                      | `8080`     | HTTP listen port                                                                         |
 | `REQUEST_LOG_CAPTURE_LEVEL` | `metadata` | `metadata` \| `redacted` \| `full` — how much request/response body to put on the stream |
+| `REQUEST_LOG_STREAM_MAXLEN` | `10000`    | Max entries kept in the request-log Redis Stream (uses `XADD MAXLEN ~ <n>` when `> 0`)  |
 
 ### Portal
 
@@ -278,7 +278,7 @@ Work on a feature? Meaningful changes are logged under each app’s `tasks/ai/` 
 | ------ | -------------------------------------------------------------- |
 | Proxy  | [Hono](https://hono.dev), Node.js, TypeScript, ioredis         |
 | Portal | Next.js (App Router), Better Auth, shadcn/ui, Tailwind         |
-| Data   | PostgreSQL via Prisma, Redis (cache + streams)                 |
+| Data   | PostgreSQL via Drizzle, Redis (cache + streams)                |
 | Crypto | `jose` (child key JWT), AES-GCM (provider / child key at rest) |
 
 ---

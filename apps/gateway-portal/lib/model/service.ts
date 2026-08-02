@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { Model } from "@/generated/prisma/client";
+import type { Model } from "@/lib/db/schema";
 import {
   buildModelAlias,
   createModelInputSchema,

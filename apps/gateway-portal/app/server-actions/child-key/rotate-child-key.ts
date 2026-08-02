@@ -1,13 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
 import { buildChildKeyRotateData } from "@/lib/child-key/service";
-import prisma from "@/lib/prisma";
+import { db, childKeys } from "@/lib/db";
 
 import {
-  childKeySelect,
+  childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
   type ChildKeyActionResult,
@@ -30,22 +31,22 @@ export async function rotateChildKey(
     return childKeyValidationError("Child key id is required.");
   }
 
-  const existing = await prisma.childKey.findFirst({
-    where: {
-      id,
-      creatorId: session.user.id,
-    },
-    select: {
-      id: true,
-      name: true,
-      creatorId: true,
-      userEmail: true,
-      tags: true,
-      expiresAt: true,
-      issuedAt: true,
-      key: true,
-    },
-  });
+  const [existing] = await db
+    .select({
+      id: childKeys.id,
+      name: childKeys.name,
+      creatorId: childKeys.creatorId,
+      userEmail: childKeys.userEmail,
+      tags: childKeys.tags,
+      expiresAt: childKeys.expiresAt,
+      issuedAt: childKeys.issuedAt,
+      key: childKeys.key,
+    })
+    .from(childKeys)
+    .where(
+      and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)),
+    )
+    .limit(1);
 
   if (!existing) {
     return childKeyValidationError("Child key not found.");
@@ -54,11 +55,11 @@ export async function rotateChildKey(
   try {
     const { data, apiKey } = await buildChildKeyRotateData(existing);
 
-    const childKey = await prisma.childKey.update({
-      where: { id: existing.id },
-      data,
-      select: childKeySelect,
-    });
+    const [childKey] = await db
+      .update(childKeys)
+      .set(data)
+      .where(eq(childKeys.id, existing.id))
+      .returning(childKeyReturning);
 
     await invalidate_child_key_cache(id);
     revalidatePath("/workspace/child-keys");

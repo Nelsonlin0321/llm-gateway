@@ -1,5 +1,7 @@
-import type { ChildKey } from "../generated/prisma/client";
+import type { ChildKey } from "../lib/db";
+
 export type ChildKeyDbRecord = ChildKey;
+
 /** Claims embedded in a signed child API key JWT (`sk_<jwt>`). */
 export type ChildKeyJwtPayload = {
   name: string;

@@ -1,4 +1,4 @@
-import { serve } from "@hono/node-server";
+import { and, asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import {
@@ -15,7 +15,7 @@ import {
   requestIdMiddleware,
   type RequestIdVariables,
 } from "./request-log/index";
-import prisma from "./lib/prisma";
+import { db, llmProviders, models } from "./lib/db";
 
 const app = new Hono<{
   Variables: ChildKeyAuthVariables &
@@ -54,48 +54,42 @@ function buildAvailableModelRoutes(providers: ProviderWithModels[]) {
   );
 }
 
+async function loadActiveProvidersWithModels(
+  compatibilityType: "openai" | "anthropic",
+): Promise<ProviderWithModels[]> {
+  const rows = await db
+    .select({
+      providerName: llmProviders.name,
+      modelAlias: models.alias,
+    })
+    .from(llmProviders)
+    .leftJoin(models, eq(models.providerId, llmProviders.id))
+    .where(
+      and(
+        eq(llmProviders.compatibilityType, compatibilityType),
+        eq(llmProviders.isActive, true),
+      ),
+    )
+    .orderBy(asc(llmProviders.name), asc(models.alias));
+
+  const byName = new Map<string, ProviderWithModels>();
+  for (const row of rows) {
+    let provider = byName.get(row.providerName);
+    if (!provider) {
+      provider = { name: row.providerName, models: [] };
+      byName.set(row.providerName, provider);
+    }
+    if (row.modelAlias) {
+      provider.models.push({ alias: row.modelAlias });
+    }
+  }
+  return Array.from(byName.values());
+}
+
 app.get("/", async (c) => {
   const [openaiCompatible, anthropicCompatible] = await Promise.all([
-    prisma.lLMProvider.findMany({
-      where: {
-        compatibilityType: "openai",
-        isActive: true,
-      },
-      select: {
-        name: true,
-        models: {
-          select: {
-            alias: true,
-          },
-          orderBy: {
-            alias: "asc",
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    }),
-    prisma.lLMProvider.findMany({
-      where: {
-        compatibilityType: "anthropic",
-        isActive: true,
-      },
-      select: {
-        name: true,
-        models: {
-          select: {
-            alias: true,
-          },
-          orderBy: {
-            alias: "asc",
-          },
-        },
-      },
-      orderBy: {
-        name: "asc",
-      },
-    }),
+    loadActiveProvidersWithModels("openai"),
+    loadActiveProvidersWithModels("anthropic"),
   ]);
 
   return c.json({
@@ -109,7 +103,6 @@ app.get("/", async (c) => {
 });
 
 app.get("/health", (c) => c.json({ status: "ok" }));
-
 // Proxy routes require a valid child API key.
 app.use("/openai/*", requireChildKeyAuth);
 app.use("/anthropic/*", requireChildKeyAuth);
@@ -123,14 +116,13 @@ app.post(
 
 const port = Number(process.env.PORT) || 8080;
 
-serve(
-  {
-    fetch: app.fetch,
-    port,
-  },
-  (info) => {
-    console.log(`LLM proxy listening on http://localhost:${info.port}`);
-  },
-);
+// Bun runtime: export a server config (fetch + port) so `bun run src/index.ts` serves natively.
+export default {
+  port,
+  fetch: app.fetch,
+  idleTimeout: 255,
+};
 
-export default app;
+console.log(`LLM proxy listening on http://localhost:${port}`);
+
+export { app };

@@ -1,4 +1,3 @@
-import "dotenv/config";
 import Redis from "ioredis";
 
 const DEFAULT_TTL = 60 * 60 * 24 * 30;
@@ -15,11 +14,7 @@ export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ...args: unknown[]): Promise<unknown>;
   del(key: string): Promise<number>;
-  xadd(
-    key: string,
-    id: string,
-    ...fieldValues: (string | Buffer | number)[]
-  ): Promise<string>;
+  xadd(key: string, ...args: (string | Buffer | number)[]): Promise<string>;
 }
 
 const REDIS_URL = process.env.REDIS_URL;

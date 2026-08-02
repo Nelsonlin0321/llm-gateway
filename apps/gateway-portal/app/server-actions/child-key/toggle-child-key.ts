@@ -1,14 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { requireSession } from "@/lib/auth-server";
 import { validateToggleChildKeyInput } from "@/lib/child-key/service";
-import prisma from "@/lib/prisma";
+import { db, childKeys } from "@/lib/db";
 
 import {
-  childKeySelect,
+  childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
   type ChildKeyActionResult,
@@ -27,24 +28,27 @@ export async function toggleChildKey(
     );
   }
 
-  const existing = await prisma.childKey.findFirst({
-    where: {
-      id: parsed.data.id,
-      creatorId: session.user.id,
-    },
-    select: { id: true },
-  });
+  const [existing] = await db
+    .select({ id: childKeys.id })
+    .from(childKeys)
+    .where(
+      and(
+        eq(childKeys.id, parsed.data.id),
+        eq(childKeys.creatorId, session.user.id),
+      ),
+    )
+    .limit(1);
 
   if (!existing) {
     return childKeyValidationError("Child key not found.");
   }
 
   try {
-    const childKey = await prisma.childKey.update({
-      where: { id: existing.id },
-      data: { isActive: parsed.data.isActive },
-      select: childKeySelect,
-    });
+    const [childKey] = await db
+      .update(childKeys)
+      .set({ isActive: parsed.data.isActive })
+      .where(eq(childKeys.id, existing.id))
+      .returning(childKeyReturning);
 
     revalidatePath("/workspace/child-keys");
 

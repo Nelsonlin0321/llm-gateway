@@ -88,7 +88,7 @@ export function extractBearerToken(
  * 1. Require Bearer plain `sk_…` key
  * 2. Verify JWT signature and claims with `JWT_SIGNING_SECRET` → payload
  * 3. Reject expired JWT (`exp` claim)
- * 4. Authorize against Prisma `ChildKey` (active, expiresAt, issuedAt, secret match)
+ * 4. Authorize against `ChildKey` row (active, expiresAt, issuedAt, secret match)
  */
 export async function authenticateChildApiKey(
   authorizationHeader: string | undefined | null,

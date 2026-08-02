@@ -1,13 +1,7 @@
-import {
-  getRedisClient,
-  type RedisCacheClient,
-} from "../lib/redis-client.js";
+import { getRedisClient, type RedisCacheClient } from "../lib/redis-client.js";
 import { REQUEST_LOG_STREAM } from "../lib/redis-keys.js";
 import { getCaptureLevel } from "./capture.js";
-import {
-  buildRequestLogFields,
-  requestLogFieldsToXaddArgs,
-} from "./build.js";
+import { buildRequestLogFields, requestLogFieldsToXaddArgs } from "./build.js";
 import type {
   CaptureLevel,
   RequestLogResponseCapture,
@@ -46,12 +40,23 @@ export type EmitRequestLogInput = {
   response: RequestLogResponseCapture;
   captureLevel?: CaptureLevel;
   streamKey?: string;
+  streamMaxLen?: number;
   client?: RedisCacheClient | null;
 };
 
 export type EmitRequestLogResult =
   | { ok: true; streamId: string; fields: RequestLogV1Fields }
   | { ok: false; reason: "no_client" | "xadd_failed"; error?: unknown };
+
+const DEFAULT_REQUEST_LOG_STREAM_MAXLEN = 10_000;
+
+export function getRequestLogStreamMaxLen(
+  env: NodeJS.ProcessEnv = process.env,
+): number {
+  const value = (env.REQUEST_LOG_STREAM_MAXLEN ?? "").trim();
+  const parsed = Number(value);
+  return parsed > 0 ? parsed : DEFAULT_REQUEST_LOG_STREAM_MAXLEN;
+}
 
 /**
  * Best-effort publish of a request-log entry to the Redis Stream buffer.
@@ -60,8 +65,7 @@ export type EmitRequestLogResult =
 export async function emitRequestLog(
   input: EmitRequestLogInput,
 ): Promise<EmitRequestLogResult> {
-  const client =
-    input.client !== undefined ? input.client : getRedisClient();
+  const client = input.client !== undefined ? input.client : getRedisClient();
 
   if (!client) {
     return { ok: false, reason: "no_client" };
@@ -94,9 +98,13 @@ export async function emitRequestLog(
 
   const streamKey = input.streamKey ?? REQUEST_LOG_STREAM;
   const xaddArgs = requestLogFieldsToXaddArgs(fields);
+  const streamMaxLen = input.streamMaxLen ?? getRequestLogStreamMaxLen();
+  const xaddCommandArgs: (string | Buffer | number)[] = streamMaxLen
+    ? ["MAXLEN", "~", streamMaxLen, "*", ...xaddArgs]
+    : ["*", ...xaddArgs];
 
   try {
-    const streamId = await client.xadd(streamKey, "*", ...xaddArgs);
+    const streamId = await client.xadd(streamKey, ...xaddCommandArgs);
     return { ok: true, streamId, fields };
   } catch (error) {
     console.error(

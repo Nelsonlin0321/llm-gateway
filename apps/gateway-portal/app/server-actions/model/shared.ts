@@ -1,5 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
-
+import { models, type Model } from "@/lib/db";
 import { toModelListItem } from "@/lib/model/service";
 
 export type ModelActionResult =
@@ -14,17 +13,30 @@ export type ModelActionResult =
       fieldErrors?: Record<string, string[] | undefined>;
     };
 
-export const modelSelect = {
-  id: true,
-  name: true,
-  alias: true,
-  inputPrice: true,
-  outputPrice: true,
-  inputCachePrice: true,
-  providerId: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.ModelSelect;
+export type ModelSelect = Pick<
+  Model,
+  | "id"
+  | "name"
+  | "alias"
+  | "inputPrice"
+  | "outputPrice"
+  | "inputCachePrice"
+  | "providerId"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export const modelReturning = {
+  id: models.id,
+  name: models.name,
+  alias: models.alias,
+  inputPrice: models.inputPrice,
+  outputPrice: models.outputPrice,
+  inputCachePrice: models.inputCachePrice,
+  providerId: models.providerId,
+  createdAt: models.createdAt,
+  updatedAt: models.updatedAt,
+};
 
 export function modelValidationError(
   error: string,

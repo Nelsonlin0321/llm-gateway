@@ -1,5 +1,4 @@
-import type { Prisma } from "@/generated/prisma/client";
-
+import { llmProviders, type LLMProvider } from "@/lib/db";
 import { toProviderListItem } from "@/lib/llm-provider/service";
 
 export type ProviderActionResult =
@@ -14,16 +13,29 @@ export type ProviderActionResult =
       fieldErrors?: Record<string, string[] | undefined>;
     };
 
-export const providerSelect = {
-  id: true,
-  name: true,
-  apiUrl: true,
-  encryptedApiKey: true,
-  compatibilityType: true,
-  isActive: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.LLMProviderSelect;
+/** Fields selected for provider list/action responses. */
+export type ProviderSelect = Pick<
+  LLMProvider,
+  | "id"
+  | "name"
+  | "apiUrl"
+  | "encryptedApiKey"
+  | "compatibilityType"
+  | "isActive"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+export const providerReturning = {
+  id: llmProviders.id,
+  name: llmProviders.name,
+  apiUrl: llmProviders.apiUrl,
+  encryptedApiKey: llmProviders.encryptedApiKey,
+  compatibilityType: llmProviders.compatibilityType,
+  isActive: llmProviders.isActive,
+  createdAt: llmProviders.createdAt,
+  updatedAt: llmProviders.updatedAt,
+};
 
 export function validationErrorResult(
   error: string,

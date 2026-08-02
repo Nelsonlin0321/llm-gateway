@@ -75,7 +75,7 @@ When adding features to this app, prefer this stack by default:
   - shadcn/ui components: How to install component:
     if you're working on the root directory of the project, run `npx shadcn@latest add card -c apps/gateway-portal`
 - State management: React Context for simple shared state, TanStack React Query for server state, and Zustand for client-side app state where Context becomes cumbersome
-- ORM: Prisma
+- ORM: Drizzle
 - Auth: Better Auth
 - Backend integration: prefer Server Actions first when the workflow fits Next.js well
 

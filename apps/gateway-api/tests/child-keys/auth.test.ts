@@ -11,7 +11,7 @@ import {
   requirePlainChildApiKey,
   verifyChildKeyToken,
 } from "../../src/child-keys/index";
-import prisma from "../../src/lib/prisma.js";
+import { childKeyRepository } from "../../src/child-keys/repository";
 import { mintTestChildApiKey } from "./mint-test-key";
 
 const secret = "gateway-api-child-key-test-secret";
@@ -50,28 +50,22 @@ async function mintKey(overrides: { exp?: number } = {}) {
   });
 }
 
-function mockFindUnique(
+function mockFindById(
   t: TestContext,
   handler: (
     id: string,
   ) => ChildKeyDbRecord | null | Promise<ChildKeyDbRecord | null>,
 ) {
-  const calls: Array<{ where: { id: string } }> = [];
-  const originalFindUnique = prisma.childKey.findUnique;
+  const calls: Array<{ id: string }> = [];
+  const originalFindById = childKeyRepository.findById;
 
-  prisma.childKey.findUnique = (async (args: { where: { id?: string } }) => {
-    const id = args.where.id;
-    if (typeof id !== "string") {
-      throw new TypeError(
-        "Expected prisma.childKey.findUnique to receive an id.",
-      );
-    }
-    calls.push({ where: { id } });
+  childKeyRepository.findById = async (id: string) => {
+    calls.push({ id });
     return handler(id);
-  }) as unknown as typeof prisma.childKey.findUnique;
+  };
 
   t.after(() => {
-    prisma.childKey.findUnique = originalFindUnique;
+    childKeyRepository.findById = originalFindById;
   });
 
   return { calls };
@@ -98,13 +92,11 @@ test("authenticateChildApiKey accepts a plain sk_ JWT bearer token", async (t) =
   const apiKey = await mintKey();
   assert.ok(apiKey.startsWith("sk_"));
   const record = await acceptingRecord(apiKey);
-  const findUnique = mockFindUnique(t, (id) =>
-    id === record.id ? record : null,
-  );
+  const findById = mockFindById(t, (id) => (id === record.id ? record : null));
 
   const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
   assert.equal(result.ok, true);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   assert.equal(result.record.id, record.id);
 });
 
@@ -114,14 +106,14 @@ test("authenticateChildApiKey rejects encrypted DB values as bearer tokens", asy
   assert.notEqual(encrypted, apiKey);
   assert.equal(decryptChildKey(encrypted), apiKey);
   assert.equal(decryptApiKeyForProxy(encrypted), apiKey);
-  const originalFindUnique = prisma.childKey.findUnique;
+  const originalFindById = childKeyRepository.findById;
   let callCount = 0;
-  prisma.childKey.findUnique = (async () => {
+  childKeyRepository.findById = async () => {
     callCount += 1;
     throw new Error("DB lookup should not run for encrypted bearer tokens");
-  }) as unknown as typeof prisma.childKey.findUnique;
+  };
   t.after(() => {
-    prisma.childKey.findUnique = originalFindUnique;
+    childKeyRepository.findById = originalFindById;
   });
 
   const result = await authenticateChildApiKey(`Bearer ${encrypted}`);
@@ -154,14 +146,14 @@ test("authenticateChildApiKey rejects expired JWT", async (t) => {
     exp: issuedAt + 30,
   });
 
-  const originalFindUnique = prisma.childKey.findUnique;
+  const originalFindById = childKeyRepository.findById;
   let callCount = 0;
-  prisma.childKey.findUnique = (async () => {
+  childKeyRepository.findById = async () => {
     callCount += 1;
     throw new Error("DB lookup should not run for an expired JWT");
-  }) as unknown as typeof prisma.childKey.findUnique;
+  };
   t.after(() => {
-    prisma.childKey.findUnique = originalFindUnique;
+    childKeyRepository.findById = originalFindById;
   });
   const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
   assert.equal(result.ok, false);
@@ -174,14 +166,14 @@ test("authenticateChildApiKey rejects expired JWT", async (t) => {
 
 test("authenticateChildApiKey rejects invalid signatures", async (t) => {
   const apiKey = await mintKey();
-  const originalFindUnique = prisma.childKey.findUnique;
+  const originalFindById = childKeyRepository.findById;
   let callCount = 0;
-  prisma.childKey.findUnique = (async () => {
+  childKeyRepository.findById = async () => {
     callCount += 1;
     throw new Error("DB lookup should not run for invalid signatures");
-  }) as unknown as typeof prisma.childKey.findUnique;
+  };
   t.after(() => {
-    prisma.childKey.findUnique = originalFindUnique;
+    childKeyRepository.findById = originalFindById;
   });
 
   process.env.JWT_SIGNING_SECRET = "other-secret";
@@ -196,7 +188,7 @@ test("authenticateChildApiKey rejects invalid signatures", async (t) => {
 test("authenticateChildApiKey rejects deactivated DB key after JWT verify", async (t) => {
   const apiKey = await mintKey();
   const payload = await verifyChildKeyToken(apiKey);
-  const findUnique = mockFindUnique(t, (id) => {
+  const findById = mockFindById(t, (id) => {
     if (id !== payload.key_id) return null;
     return buildChildKeyRecord({
       id: payload.key_id,
@@ -210,7 +202,7 @@ test("authenticateChildApiKey rejects deactivated DB key after JWT verify", asyn
   const result = await authenticateChildApiKey(`Bearer ${apiKey}`);
 
   assert.equal(result.ok, false);
-  assert.equal(findUnique.calls.length, 1);
+  assert.equal(findById.calls.length, 1);
   if (!result.ok) {
     assert.equal(result.status, 401);
     assert.match(result.error.message, /deactivated/i);

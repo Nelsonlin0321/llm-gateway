@@ -1,7 +1,9 @@
+import { and, desc, eq } from "drizzle-orm";
+
 import { decryptApiKeyForProxy } from "../child-keys/crypto";
 import { redis_cache } from "../lib/redis-client";
 import { getProviderModelCacheKey } from "../lib/redis-keys";
-import prisma from "../lib/prisma";
+import { db, llmProviders, models } from "../lib/db";
 
 export type ProviderCompatibility = "openai" | "anthropic";
 
@@ -74,17 +76,26 @@ const defaultLookup: ProviderLookup = {
     compatibilityType: ProviderCompatibility,
     creatorId: string,
   ): Promise<ProviderLookupRecord | null> {
-    return prisma.lLMProvider.findFirst({
-      where: { name, compatibilityType, creatorId },
-      orderBy: { updatedAt: "desc" },
-      select: {
-        name: true,
-        apiUrl: true,
-        encryptedApiKey: true,
-        compatibilityType: true,
-        isActive: true,
-      },
-    });
+    const [record] = await db
+      .select({
+        name: llmProviders.name,
+        apiUrl: llmProviders.apiUrl,
+        encryptedApiKey: llmProviders.encryptedApiKey,
+        compatibilityType: llmProviders.compatibilityType,
+        isActive: llmProviders.isActive,
+      })
+      .from(llmProviders)
+      .where(
+        and(
+          eq(llmProviders.name, name),
+          eq(llmProviders.compatibilityType, compatibilityType),
+          eq(llmProviders.creatorId, creatorId),
+        ),
+      )
+      .orderBy(desc(llmProviders.updatedAt))
+      .limit(1);
+
+    return record ?? null;
   },
 };
 
@@ -95,27 +106,46 @@ const defaultProviderModelLookup: ProviderModelLookup = {
     compatibilityType: ProviderCompatibility,
     creatorId: string,
   ): Promise<ProviderModelLookupRecord | null> {
-    const query = () =>
-      prisma.model.findFirst({
-        where: {
-          alias: `${name}/${modelAlias}`,
-          provider: { name, compatibilityType, creatorId },
+    const query = async () => {
+      const [row] = await db
+        .select({
+          alias: models.alias,
+          name: models.name,
+          providerName: llmProviders.name,
+          apiUrl: llmProviders.apiUrl,
+          encryptedApiKey: llmProviders.encryptedApiKey,
+          compatibilityType: llmProviders.compatibilityType,
+          isActive: llmProviders.isActive,
+        })
+        .from(models)
+        .innerJoin(llmProviders, eq(models.providerId, llmProviders.id))
+        .where(
+          and(
+            eq(models.alias, `${name}/${modelAlias}`),
+            eq(llmProviders.name, name),
+            eq(llmProviders.compatibilityType, compatibilityType),
+            eq(llmProviders.creatorId, creatorId),
+          ),
+        )
+        .orderBy(desc(models.updatedAt))
+        .limit(1);
+
+      if (!row) {
+        return null;
+      }
+
+      return {
+        alias: row.alias,
+        name: row.name,
+        provider: {
+          name: row.providerName,
+          apiUrl: row.apiUrl,
+          encryptedApiKey: row.encryptedApiKey,
+          compatibilityType: row.compatibilityType,
+          isActive: row.isActive,
         },
-        orderBy: { updatedAt: "desc" },
-        select: {
-          alias: true,
-          name: true,
-          provider: {
-            select: {
-              name: true,
-              apiUrl: true,
-              encryptedApiKey: true,
-              compatibilityType: true,
-              isActive: true,
-            },
-          },
-        },
-      });
+      };
+    };
 
     const llmAndModel = await redis_cache(
       getProviderModelCacheKey({
@@ -141,12 +171,6 @@ const defaultProviderModelLookup: ProviderModelLookup = {
     };
   },
 };
-
-// const originalFindFirst = prisma.model.findFirst;
-
-// function shouldBypassProviderModelCache(): boolean {
-//   return process.env.NODE_ENV === "test";
-// }
 
 function resolutionFailure(
   status: ResolveProviderFailure["status"],

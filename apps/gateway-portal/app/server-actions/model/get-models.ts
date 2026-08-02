@@ -1,14 +1,16 @@
 "use server";
 
+import { desc, eq } from "drizzle-orm";
+
 import { requireSession } from "@/lib/auth-server";
-import prisma from "@/lib/prisma";
+import { db, llmProviders, models } from "@/lib/db";
 import {
   toModelListItem,
   validateGetModelsInput,
 } from "@/lib/model/service";
 import type { ModelListItem, ProviderSummary } from "@/lib/model/schema";
 
-import { modelSelect } from "./shared";
+import { modelReturning } from "./shared";
 
 export type GetModelsResult =
   | {
@@ -36,17 +38,18 @@ export async function getModelsForProvider(
     };
   }
 
-  const provider = await prisma.lLMProvider.findUnique({
-    where: { id: parsed.data.providerId },
-    select: {
-      id: true,
-      name: true,
-      apiUrl: true,
-      compatibilityType: true,
-      isActive: true,
-      creatorId: true,
-    },
-  });
+  const [provider] = await db
+    .select({
+      id: llmProviders.id,
+      name: llmProviders.name,
+      apiUrl: llmProviders.apiUrl,
+      compatibilityType: llmProviders.compatibilityType,
+      isActive: llmProviders.isActive,
+      creatorId: llmProviders.creatorId,
+    })
+    .from(llmProviders)
+    .where(eq(llmProviders.id, parsed.data.providerId))
+    .limit(1);
 
   if (!provider) {
     return {
@@ -64,11 +67,11 @@ export async function getModelsForProvider(
     };
   }
 
-  const models = await prisma.model.findMany({
-    where: { providerId: provider.id },
-    select: modelSelect,
-    orderBy: [{ updatedAt: "desc" }],
-  });
+  const modelRows = await db
+    .select(modelReturning)
+    .from(models)
+    .where(eq(models.providerId, provider.id))
+    .orderBy(desc(models.updatedAt));
 
   return {
     ok: true,
@@ -79,6 +82,6 @@ export async function getModelsForProvider(
       compatibilityType: provider.compatibilityType,
       isActive: provider.isActive,
     },
-    models: models.map(toModelListItem),
+    models: modelRows.map(toModelListItem),
   };
 }

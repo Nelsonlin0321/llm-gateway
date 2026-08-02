@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
-import prisma from "@/lib/prisma";
+import { db, llmProviders } from "@/lib/db";
 import { requireSession } from "@/lib/auth-server";
 import {
   buildProviderUpdateData,
@@ -12,7 +13,7 @@ import {
 } from "@/lib/llm-provider/service";
 
 import {
-  providerSelect,
+  providerReturning,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -30,31 +31,35 @@ export async function updateProvider(
     );
   }
 
-  const existing = await prisma.lLMProvider.findFirst({
-    where: {
-      id: parsed.data.id,
-      creatorId: session.user.id,
-    },
-    select: {
-      id: true,
-      encryptedApiKey: true,
-    },
-  });
+  const [existing] = await db
+    .select({
+      id: llmProviders.id,
+      encryptedApiKey: llmProviders.encryptedApiKey,
+    })
+    .from(llmProviders)
+    .where(
+      and(
+        eq(llmProviders.id, parsed.data.id),
+        eq(llmProviders.creatorId, session.user.id),
+      ),
+    )
+    .limit(1);
 
   if (!existing) {
     return validationErrorResult("Provider not found.");
   }
 
-  const duplicate = await prisma.lLMProvider.findFirst({
-    where: {
-      name: parsed.data.name,
-      compatibilityType: parsed.data.compatibilityType,
-      NOT: {
-        id: parsed.data.id,
-      },
-    },
-    select: { id: true },
-  });
+  const [duplicate] = await db
+    .select({ id: llmProviders.id })
+    .from(llmProviders)
+    .where(
+      and(
+        eq(llmProviders.name, parsed.data.name),
+        eq(llmProviders.compatibilityType, parsed.data.compatibilityType),
+        ne(llmProviders.id, parsed.data.id),
+      ),
+    )
+    .limit(1);
 
   if (duplicate) {
     return validationErrorResult(
@@ -64,11 +69,11 @@ export async function updateProvider(
   }
 
   try {
-    const provider = await prisma.lLMProvider.update({
-      where: { id: parsed.data.id },
-      data: buildProviderUpdateData(existing.encryptedApiKey, parsed.data),
-      select: providerSelect,
-    });
+    const [provider] = await db
+      .update(llmProviders)
+      .set(buildProviderUpdateData(existing.encryptedApiKey, parsed.data))
+      .where(eq(llmProviders.id, parsed.data.id))
+      .returning(providerReturning);
 
     revalidatePath("/providers");
     revalidatePath("/dashboard");

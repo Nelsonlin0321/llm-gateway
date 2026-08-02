@@ -2,29 +2,27 @@
   "name": "gateway-api",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "node --import tsx --test tests/**/*.test.ts",
-    "test:openai-chat": "LIVE_PROXY_TEST=1 node --import tsx --test tests/openai-chat-completions-*.live.test.ts",
-    "test:anthropic-messages": "LIVE_PROXY_TEST=1 node --import tsx --test tests/anthropic-messages-*.live.test.ts"
+    "dev": "bun run --hot src/index.ts",
+    "build": "tsc --noEmit",
+    "start": "bun run src/index.ts",
+    "test": "bun test tests --path-ignore-patterns='**/*.live.test.ts'",
+    "test:openai-chat": "LIVE_PROXY_TEST=1 bun test tests/openai-chat-completions-*.live.test.ts",
+    "test:anthropic-messages": "LIVE_PROXY_TEST=1 bun test tests/anthropic-messages-*.live.test.ts",
+    "db:generate": "bun --env-file=.env drizzle-kit generate",
+    "db:migrate": "bun --env-file=.env drizzle-kit migrate",
+    "db:studio": "bun --env-file=.env drizzle-kit studio"
   },
   "dependencies": {
-    "@hono/node-server": "^2.0.11",
     "@neondatabase/serverless": "^1.1.0",
-    "@prisma/adapter-neon": "^7.9.0",
-    "@prisma/client": "^7.9.0",
     "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.12.31",
     "ioredis": "^5.11.1",
-    "jose": "^6.2.4",
-    "ws": "^8.21.1"
+    "jose": "^6.2.4"
   },
   "devDependencies": {
-    "@types/node": "^26.1.1",
-    "@types/ws": "^8.18.1",
-    "prisma": "^7.9.0",
-    "tsx": "^4.23.0",
+    "@types/bun": "latest",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^7.0.2"
   }
 }

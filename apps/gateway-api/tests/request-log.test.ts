@@ -96,16 +96,14 @@ function baseResponse(
 class FakeStreamRedis implements RedisCacheClient {
   public xaddCalls: Array<{
     key: string;
-    id: string;
-    fieldValues: (string | Buffer | number)[];
+    args: (string | Buffer | number)[];
   }> = [];
 
   constructor(
     private readonly overrides: {
       xadd?: (
         key: string,
-        id: string,
-        ...fieldValues: (string | Buffer | number)[]
+        ...args: (string | Buffer | number)[]
       ) => Promise<string>;
     } = {},
   ) {}
@@ -124,15 +122,21 @@ class FakeStreamRedis implements RedisCacheClient {
 
   async xadd(
     key: string,
-    id: string,
-    ...fieldValues: (string | Buffer | number)[]
+    ...args: (string | Buffer | number)[]
   ): Promise<string> {
-    this.xaddCalls.push({ key, id, fieldValues });
+    this.xaddCalls.push({ key, args });
     if (this.overrides.xadd) {
-      return this.overrides.xadd(key, id, ...fieldValues);
+      return this.overrides.xadd(key, ...args);
     }
     return "1710000000000-0";
   }
+}
+
+function extractFieldValuesFromXaddArgs(
+  args: (string | Buffer | number)[],
+): (string | Buffer | number)[] {
+  const index = args.findIndex((item) => item === "*");
+  return index >= 0 ? args.slice(index + 1) : [];
 }
 
 function fieldsFromXaddArgs(
@@ -145,11 +149,12 @@ function fieldsFromXaddArgs(
   return out;
 }
 
-test("parseCaptureLevel defaults to metadata", () => {
-  assert.equal(parseCaptureLevel(undefined), "metadata");
-  assert.equal(parseCaptureLevel(""), "metadata");
-  assert.equal(parseCaptureLevel("nope"), "metadata");
+test("parseCaptureLevel defaults to full", () => {
+  assert.equal(parseCaptureLevel(undefined), "full");
+  assert.equal(parseCaptureLevel(""), "full");
+  assert.equal(parseCaptureLevel("nope"), "full");
   assert.equal(parseCaptureLevel("FULL"), "full");
+  assert.equal(parseCaptureLevel("metadata"), "metadata");
   assert.equal(parseCaptureLevel("redacted"), "redacted");
 });
 
@@ -297,10 +302,7 @@ test("buildRequestLogFields includes payloads and stream fields at full", () => 
   assert.equal(fields.is_stream, "true");
   assert.equal(fields.first_token_ms, "42");
   assert.equal(fields.stream_chunk_count, "3");
-  assert.equal(
-    fields.response_stream_text,
-    'data: {"id":"chatcmpl-sse"}\n\n',
-  );
+  assert.equal(fields.response_stream_text, 'data: {"id":"chatcmpl-sse"}\n\n');
   assert.equal(fields.response_payload_json, undefined);
   assert.equal(fields.capture_level, "full");
 });
@@ -364,8 +366,16 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
 
   assert.equal(redis.xaddCalls.length, 1);
   assert.equal(redis.xaddCalls[0]?.key, REQUEST_LOG_STREAM);
+  assert.deepEqual(redis.xaddCalls[0]!.args.slice(0, 4), [
+    "MAXLEN",
+    "~",
+    10_000,
+    "*",
+  ]);
 
-  const flat = fieldsFromXaddArgs(redis.xaddCalls[0]!.fieldValues);
+  const flat = fieldsFromXaddArgs(
+    extractFieldValuesFromXaddArgs(redis.xaddCalls[0]!.args),
+  );
   assert.equal(flat.request_id, "req-1");
   assert.equal(flat.status_code, "200");
   assert.equal(flat.duration_ms, "150");
@@ -378,6 +388,45 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
   assert.equal(joined.includes("sk-provider-secret"), false);
   assert.equal(joined.includes("encrypted-must-not-log"), false);
   assert.equal(joined.includes("user@example.com"), false);
+});
+
+test("emitRequestLog caps stream length when streamMaxLen is set", async () => {
+  const redis = new FakeStreamRedis();
+
+  const result = await emitRequestLog({
+    proxyContext: buildProxyContext(),
+    requestHeaders: {},
+    response: baseResponse(),
+    captureLevel: "metadata",
+    streamMaxLen: 100,
+    client: redis,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(redis.xaddCalls.length, 1);
+  assert.deepEqual(redis.xaddCalls[0]!.args.slice(0, 4), [
+    "MAXLEN",
+    "~",
+    100,
+    "*",
+  ]);
+});
+
+test("emitRequestLog disables stream length cap when streamMaxLen is 0", async () => {
+  const redis = new FakeStreamRedis();
+
+  const result = await emitRequestLog({
+    proxyContext: buildProxyContext(),
+    requestHeaders: {},
+    response: baseResponse(),
+    captureLevel: "metadata",
+    streamMaxLen: 0,
+    client: redis,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(redis.xaddCalls.length, 1);
+  assert.equal(redis.xaddCalls[0]!.args[0], "*");
 });
 
 test("emitRequestLog returns no_client without Redis and does not throw", async () => {

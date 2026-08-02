@@ -11,23 +11,23 @@ export type ParsedModel = {
 };
 
 export const openaiCompatibleProviders: Record<string, ProviderConfig> = {
-  minimax: {
-    // baseUrl: "https://api.minimaxi.com/v1",
-    exampleModel: "minimax-m3",
-  },
+  // minimax: {
+  //   // baseUrl: "https://api.minimaxi.com/v1",
+  //   exampleModel: "minimax-m3",
+  // },
   // openai: {
   //   // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
   //   exampleModel: "gpt-5.4-mini",
   // },
   // deepseek: {
-  //   // baseUrl: "https://api.deepseek.com",
+  //   //   // baseUrl: "https://api.deepseek.com",
   //   exampleModel: "deepseek-v4-flash",
   // },
   // azure: {
   //   // baseUrl: "https://llm-gateway-resource-01.openai.azure.com/openai/v1",
   //   exampleModel: "gpt-5.4-mini",
   // },
-  deepinfra: {
+  openrouter: {
     // baseUrl: "https://api.deepinfra.ai",
     exampleModel: "glm-5.2",
   },
@@ -38,9 +38,7 @@ export const anthropicCompatibleProviders: Record<string, ProviderConfig> = {
     // baseUrl: "https://api.minimaxi.com/anthropic",
     exampleModel: "minimax-m3",
   },
-};
-
-export const providers = {
-  ...openaiCompatibleProviders,
-  ...anthropicCompatibleProviders,
+  deepseek: {
+    exampleModel: "deepseek-v4-flash",
+  },
 };

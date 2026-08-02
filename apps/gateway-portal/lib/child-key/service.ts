@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import type { ChildKey, Prisma } from "@/generated/prisma/client";
+import type { ChildKey, NewChildKey } from "@/lib/db/schema";
 import {
   createChildKeyInputSchema,
   normalizeChildKeyTags,
@@ -139,7 +139,7 @@ export async function buildChildKeyCreateData(
     exp,
   });
 
-  const data: Prisma.ChildKeyCreateInput = {
+  const data: NewChildKey = {
     id,
     name: input.name,
     // Persist only the encrypted secret — never plaintext in the database.
@@ -149,16 +149,14 @@ export async function buildChildKeyCreateData(
     isActive: true,
     expiresAt: expiresAtDate,
     issuedAt,
-    creator: {
-      connect: { id: creator.id },
-    },
+    creatorId: creator.id,
   };
 
   return { data, apiKey, id };
 }
 
 /**
- * Build Prisma update payload + new plaintext secret for key rotation.
+ * Build update payload + new plaintext secret for key rotation.
  *
  * Keeps `id` (key_id) stable for analytics. Preserves name and expiresAt,
  * issues a new JWT with a new `issued_at`, encrypts it, and overwrites the
@@ -181,7 +179,7 @@ export async function buildChildKeyRotateData(record: ChildKeyRotateSource) {
     exp,
   });
 
-  const data: Prisma.ChildKeyUpdateInput = {
+  const data = {
     key: encryptChildKey(apiKey),
     issuedAt,
   };

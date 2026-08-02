@@ -8,19 +8,17 @@ import {
 
 const skip = getLiveTestSkipReason();
 
-test(
-  "live proxy returns JSON messages for each Anthropic-compatible provider",
-  { skip },
-  async (t) => {
-    const payloadTemplate = await loadPayloadTemplate();
-
-    for (const providerId of getProviderIds()) {
-      await t.test(providerId, async (t) => {
-        const result = await runJsonProviderTest(providerId, payloadTemplate);
-        t.diagnostic(
-          `model=${result.model} status=${result.status} latency=${result.latencyMs}ms`,
-        );
-      });
-    }
-  },
-);
+// Flat tests (no nested t.test) — Bun's node:test polyfill does not support nesting.
+for (const providerId of getProviderIds()) {
+  test(
+    `live proxy returns JSON messages: ${providerId}`,
+    { skip },
+    async () => {
+      const payloadTemplate = await loadPayloadTemplate();
+      const result = await runJsonProviderTest(providerId, payloadTemplate);
+      console.log(
+        `  model=${result.model} status=${result.status} latency=${result.latencyMs}ms`,
+      );
+    },
+  );
+}
