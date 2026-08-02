@@ -22,6 +22,13 @@
       "when": 1785605314049,
       "tag": "0002_square_ezekiel",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785659811081,
+      "tag": "0003_lying_aaron_stack",
+      "breakpoints": true
     }
   ]
 }
