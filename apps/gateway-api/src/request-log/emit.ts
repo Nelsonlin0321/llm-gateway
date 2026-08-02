@@ -7,35 +7,37 @@ import type {
   RequestLogResponseCapture,
   RequestLogV1Fields,
 } from "./schema.js";
+import type { UpstreamProxyContext } from "../proxy/upstream-proxy.js";
 
 /**
  * Structural snapshot of proxy handoff data needed for request-log emit.
  * Kept free of imports from `proxy/*` to avoid circular dependencies.
  */
-export type RequestLogProxySnapshot = {
-  gatewayPath: string;
-  httpMethod: string;
-  isStream: boolean;
-  requestPayloadJson: string;
-  provider: string;
-  requestedModel: string;
-  requestedModelAlias: string;
-  apiFamily: string;
-  metadataJson: string;
-  upstreamModel: string;
-  upstreamUrl: string;
-  upstreamBody: string;
-  childKeyRecord: {
-    id: string;
-    name: string;
-    creatorId: string;
-    issuedAt: number;
-    tags: unknown;
-  };
-};
+// export type RequestLogProxySnapshot = {
+//   gatewayPath: string;
+//   httpMethod: string;
+//   isStream: boolean;
+//   requestPayloadJson: string;
+//   provider: string;
+//   requestedModel: string;
+//   requestedModelAlias: string;
+//   apiFamily: string;
+//   metadataJson: string;
+//   upstreamModel: string;
+//   upstreamUrl: string;
+//   upstreamBody: string;
+//   childKeyRecord: {
+//     id: string;
+//     name: string;
+//     creatorId: string;
+//     userEmail: string;
+//     issuedAt: number;
+//     tags: unknown;
+//   };
+// };
 
 export type EmitRequestLogInput = {
-  proxyContext: RequestLogProxySnapshot;
+  proxyContext: UpstreamProxyContext;
   requestHeaders: Headers | Record<string, string>;
   response: RequestLogResponseCapture;
   captureLevel?: CaptureLevel;
@@ -78,17 +80,22 @@ export async function emitRequestLog(
     gatewayPath: ctx.gatewayPath,
     httpMethod: ctx.httpMethod,
     apiFamily: ctx.apiFamily,
+    providerId: ctx.providerId,
     provider: ctx.provider,
     requestedModel: ctx.requestedModel,
     requestedModelAlias: ctx.requestedModelAlias,
     upstreamModel: ctx.upstreamModel,
     upstreamUrl: ctx.upstreamUrl,
+    inputPrice: ctx.inputPrice,
+    outputPrice: ctx.outputPrice,
+    inputCachePrice: ctx.inputCachePrice,
     isStream: ctx.isStream,
     childKeyId: ctx.childKeyRecord.id,
     childKeyName: ctx.childKeyRecord.name,
     childKeyCreatorId: ctx.childKeyRecord.creatorId,
     childKeyIssuedAt: ctx.childKeyRecord.issuedAt,
     childKeyTags: ctx.childKeyRecord.tags,
+    userEmail: ctx.childKeyRecord.userEmail,
     requestHeaders: input.requestHeaders,
     requestPayloadJson: ctx.requestPayloadJson,
     metadataJson: ctx.metadataJson,
@@ -105,6 +112,7 @@ export async function emitRequestLog(
 
   try {
     const streamId = await client.xadd(streamKey, ...xaddCommandArgs);
+    console.log(`StreamId:${streamId} has been logged to redis stream`);
     return { ok: true, streamId, fields };
   } catch (error) {
     console.error(

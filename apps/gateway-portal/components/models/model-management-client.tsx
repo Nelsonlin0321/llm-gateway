@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { PencilLine, Plus, Trash2 } from "lucide-react";
+import { FlaskConical, PencilLine, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { z } from "zod";
 
 import { createModel } from "@/app/server-actions/model/create-model";
 import { deleteModel } from "@/app/server-actions/model/delete-model";
+import { testModel } from "@/app/server-actions/model/test-model";
 import { updateModel } from "@/app/server-actions/model/update-model";
 import { ModelFormModal } from "@/components/models/model-form-modal";
 import {
@@ -74,6 +75,7 @@ export function ModelManagementClient({
     useState<ModelListItem | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [testingId, setTestingId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     const avgInput =
@@ -132,6 +134,22 @@ export function ModelManagementClient({
     });
   };
 
+  const handleTest = async (model: ModelListItem) => {
+    setTestingId(model.id);
+    try {
+      const result = await testModel(model.id);
+
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.message);
+    } finally {
+      setTestingId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!modelPendingDelete) {
       return;
@@ -153,105 +171,119 @@ export function ModelManagementClient({
 
   return (
     <>
-      <section className="grid gap-3 sm:grid-cols-3">
-        <MetricCard
-          label="Models"
-          value={stats.total.toString()}
-          detail="Registered under this provider"
-        />
+      <section className="grid grid-cols-3 gap-3">
+        <MetricCard label="Models" value={stats.total.toString()} />
         <MetricCard
           label="Avg input / 1M"
           value={models.length ? formatPrice(stats.avgInput) : "—"}
-          detail="Mean input token price"
         />
         <MetricCard
           label="Avg output / 1M"
           value={models.length ? formatPrice(stats.avgOutput) : "—"}
-          detail="Mean output token price"
         />
       </section>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <CardTitle className="text-[1.45rem]">Registered models</CardTitle>
-            <CardDescription className="leading-6">
-              Map upstream model names to gateway aliases and token prices so
-              spend and routing stay accurate.
+      <Card className="border-border bg-card shadow-card">
+        <CardHeader className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-base">
+              {provider.name}
+              <span className="ml-2 font-normal text-text-secondary">
+                models
+              </span>
+            </CardTitle>
+            <CardDescription>
+              Upstream model IDs, aliases, and USD pricing per 1M tokens.
             </CardDescription>
           </div>
-          <Button onClick={() => setModalState({ mode: "create" })}>
-            <Plus className="size-4" />
+          <Button size="sm" onClick={() => setModalState({ mode: "create" })}>
+            <Plus className="size-3.5" />
             Add model
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {models.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border-strong bg-background px-5 py-10 text-center">
-              <p className="text-base font-medium text-text-primary">
-                No models registered yet.
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm font-medium text-text-primary">
+                No models registered
               </p>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-text-secondary">
-                Register a model with input, output, and cached-input prices per
-                1M tokens so cost estimates and routing can use this provider.
+              <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-5 text-text-secondary">
+                Add a model with input, output, and cache prices so routing and
+                cost attribution can use this provider.
               </p>
+              <Button
+                size="sm"
+                className="mt-4"
+                onClick={() => setModalState({ mode: "create" })}
+              >
+                <Plus className="size-3.5" />
+                Add model
+              </Button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background">
-              {models.map((model, index) => (
+            <div className="divide-y divide-border">
+              {models.map((model) => (
                 <div
                   key={model.id}
-                  className={[
-                    "flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between",
-                    index > 0
-                      ? "border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
-                      : "",
-                  ].join(" ")}
+                  className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
                 >
-                  <div className="min-w-0 space-y-2">
+                  <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle className="text-[1.05rem]">
+                      <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
                         {model.name}
-                      </CardTitle>
-                      <Badge variant="neutral" className="font-mono">
+                      </p>
+                      <Badge variant="neutral" className="font-mono text-[11px]">
                         {model.alias}
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-text-secondary">
-                      <span className="rounded-sm border border-border bg-surface-1 px-2 py-1 font-mono">
+                    <div className="flex flex-wrap gap-1.5 text-[11px] text-text-secondary">
+                      <span className="rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 font-mono tabular-nums">
                         in {formatPrice(model.inputPrice)}
                       </span>
-                      <span className="rounded-sm border border-border bg-surface-1 px-2 py-1 font-mono">
+                      <span className="rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 font-mono tabular-nums">
                         out {formatPrice(model.outputPrice)}
                       </span>
-                      <span className="rounded-sm border border-border bg-surface-1 px-2 py-1 font-mono">
+                      <span className="rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 font-mono tabular-nums">
                         cache {formatPrice(model.inputCachePrice)}
                       </span>
                     </div>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
+                    <p className="text-[11px] text-text-muted">
                       Updated {formatDate(model.updatedAt)}
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 flex-wrap items-center gap-2 self-start lg:self-center">
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="outline"
+                      size="sm"
+                      disabled={testingId === model.id}
+                      onClick={() => void handleTest(model)}
+                    >
+                      <FlaskConical className="size-3.5" />
+                      {testingId === model.id ? "Testing..." : "Test"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
                       size="sm"
                       onClick={() => setModalState({ mode: "edit", model })}
                     >
-                      <PencilLine className="size-4" />
+                      <PencilLine className="size-3.5" />
                       Edit
                     </Button>
                     <Button
                       type="button"
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
+                      className="text-error hover:bg-error-bg hover:text-error"
                       disabled={deletingId === model.id}
                       onClick={() => setModelPendingDelete(model)}
                     >
-                      <Trash2 className="size-4" />
-                      {deletingId === model.id ? "Deregistering..." : "Deregister"}
+                      <Trash2 className="size-3.5" />
+                      {deletingId === model.id
+                        ? "Deregistering..."
+                        : "Deregister"}
                     </Button>
                   </div>
                 </div>
@@ -335,26 +367,15 @@ export function ModelManagementClient({
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="bg-surface-1 shadow-none">
-      <CardHeader className="gap-1 pb-2">
-        <CardDescription className="font-mono text-[11px] uppercase tracking-[0.08em]">
-          {label}
-        </CardDescription>
-        <CardTitle className="font-mono text-[1.5rem]">{value}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm leading-5 text-text-secondary">{detail}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-lg border border-border bg-card px-3.5 py-3 shadow-card">
+      <p className="text-[11px] font-medium tracking-[0.08em] text-text-tertiary uppercase">
+        {label}
+      </p>
+      <p className="mt-1 font-heading text-xl font-semibold tracking-[-0.03em] text-text-primary tabular-nums">
+        {value}
+      </p>
+    </div>
   );
 }

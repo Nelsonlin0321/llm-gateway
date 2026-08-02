@@ -1,0 +1,26 @@
+{
+    "model": "{models.alias}",
+    "messages": [
+        {
+            "role": "system",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "You are a helpful assistant. Keep answers brief."
+                }
+            ]
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Hi there!"
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "user_email": "user@example.com"
+    }
+}

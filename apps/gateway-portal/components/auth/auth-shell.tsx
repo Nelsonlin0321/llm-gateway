@@ -27,7 +27,7 @@ export function AuthShell({
   children,
 }: AuthShellProps) {
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-6xl items-center px-5 py-8 sm:px-6">
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-6xl items-center px-5 py-8 sm:px-6">
       <div className="grid w-full gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,420px)] lg:items-center">
         <section className="space-y-5">
           <div className="inline-flex rounded-sm border border-border bg-surface-1 px-2.5 py-1 text-[11px] font-medium tracking-[0.08em] text-text-secondary uppercase">
@@ -44,7 +44,7 @@ export function AuthShell({
           </div>
         </section>
 
-        <Card className="border-border bg-surface-1">
+        <Card className="border-border bg-card shadow-card">
           <CardHeader className="space-y-2">
             <CardTitle className="text-lg">{title}</CardTitle>
             <CardDescription>{description}</CardDescription>

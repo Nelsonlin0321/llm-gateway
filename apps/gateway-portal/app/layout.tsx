@@ -31,18 +31,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LLM Gateway Portal",
+  title: "Gateway — LLM Control Plane",
   description:
-    "A self-service control plane for provider management, child API keys, policy governance, and usage analytics.",
+    "Enterprise control plane for LLM providers, child API keys, policy governance, and usage analytics.",
 };
 
 const portalHeaderNavItems = [
-  { label: "Home", href: "/" },
-  { label: "Workspace", href: "/workspace" },
-  // { label: "Pricing", href: "/pricing" },
-  // { label: "Keys", href: "/keys" },
-  // { label: "Policies", href: "/workflow" },
-  // { label: "Analytics", href: "/analytics" },
+  { label: "Product", href: "/" },
+  { label: "Console", href: "/workspace" },
 ] as const;
 
 export default function RootLayout({

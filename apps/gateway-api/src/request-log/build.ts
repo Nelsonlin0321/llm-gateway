@@ -50,11 +50,15 @@ export function buildRequestLogFields(
     gateway_path: input.gatewayPath,
     http_method: input.httpMethod,
     api_family: input.apiFamily,
+    provider_id: input.providerId,
     provider: input.provider,
     requested_model: input.requestedModel,
     requested_model_alias: input.requestedModelAlias,
     upstream_model: input.upstreamModel,
     upstream_url: input.upstreamUrl,
+    input_price: String(input.inputPrice),
+    output_price: String(input.outputPrice),
+    input_cache_price: String(input.inputCachePrice),
     is_stream: input.isStream ? "true" : "false",
     response_mode: response.responseMode,
 
@@ -63,6 +67,7 @@ export function buildRequestLogFields(
     child_key_creator_id: input.childKeyCreatorId,
     child_key_issued_at: String(input.childKeyIssuedAt),
     child_key_tags_json: stringifyChildKeyTags(input.childKeyTags),
+    user_email: input.userEmail,
 
     request_headers_json: JSON.stringify(sanitizeHeaders(input.requestHeaders)),
     metadata_json: input.metadataJson || "{}",
@@ -97,15 +102,14 @@ export function buildRequestLogFields(
   if (response.errorMessage) {
     fields.error_message = response.errorMessage;
   }
-  if (
-    response.firstTokenMs !== undefined &&
-    response.responseMode === "sse"
-  ) {
+  if (response.firstTokenMs !== undefined && response.responseMode === "sse") {
     fields.first_token_ms = String(response.firstTokenMs);
   }
   if (response.streamChunkCount !== undefined) {
     fields.stream_chunk_count = String(response.streamChunkCount);
   }
+
+  // console.log(`providerId:${fields.provider_id}`);
 
   return fields;
 }

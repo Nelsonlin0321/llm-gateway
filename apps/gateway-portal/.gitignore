@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local DB seed snapshots (may contain secrets: passwords, API keys, sessions)
+/scripts/seed/snapshot.json
+
 # vercel
 .vercel
 

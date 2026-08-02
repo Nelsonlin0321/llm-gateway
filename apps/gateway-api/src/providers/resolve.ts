@@ -8,6 +8,7 @@ import { db, llmProviders, models } from "../lib/db";
 export type ProviderCompatibility = "openai" | "anthropic";
 
 export type ProviderLookupRecord = {
+  id: string;
   name: string;
   apiUrl: string;
   encryptedApiKey: string;
@@ -17,6 +18,7 @@ export type ProviderLookupRecord = {
 
 export type ResolvedProvider = {
   providerId: string;
+  providerName: string;
   baseUrl: string;
   apiKey: string;
   compatibilityType: ProviderCompatibility;
@@ -33,6 +35,9 @@ export type ProviderLookup = {
 export type ResolvedProviderModel = ResolvedProvider & {
   modelAlias: string;
   model: string;
+  inputPrice: number;
+  outputPrice: number;
+  inputCachePrice: number;
 };
 
 export type ProviderModelLookupRecord = {
@@ -40,6 +45,9 @@ export type ProviderModelLookupRecord = {
   llmModel: {
     alias: string;
     name: string;
+    inputPrice: number;
+    outputPrice: number;
+    inputCachePrice: number;
   };
 };
 
@@ -78,6 +86,7 @@ const defaultLookup: ProviderLookup = {
   ): Promise<ProviderLookupRecord | null> {
     const [record] = await db
       .select({
+        id: llmProviders.id,
         name: llmProviders.name,
         apiUrl: llmProviders.apiUrl,
         encryptedApiKey: llmProviders.encryptedApiKey,
@@ -111,6 +120,10 @@ const defaultProviderModelLookup: ProviderModelLookup = {
         .select({
           alias: models.alias,
           name: models.name,
+          inputPrice: models.inputPrice,
+          outputPrice: models.outputPrice,
+          inputCachePrice: models.inputCachePrice,
+          providerId: llmProviders.id,
           providerName: llmProviders.name,
           apiUrl: llmProviders.apiUrl,
           encryptedApiKey: llmProviders.encryptedApiKey,
@@ -137,7 +150,11 @@ const defaultProviderModelLookup: ProviderModelLookup = {
       return {
         alias: row.alias,
         name: row.name,
+        inputPrice: row.inputPrice,
+        outputPrice: row.outputPrice,
+        inputCachePrice: row.inputCachePrice,
         provider: {
+          id: row.providerId,
           name: row.providerName,
           apiUrl: row.apiUrl,
           encryptedApiKey: row.encryptedApiKey,
@@ -167,6 +184,9 @@ const defaultProviderModelLookup: ProviderModelLookup = {
       llmModel: {
         alias: llmAndModel.alias,
         name: llmAndModel.name,
+        inputPrice: llmAndModel.inputPrice,
+        outputPrice: llmAndModel.outputPrice,
+        inputCachePrice: llmAndModel.inputCachePrice,
       },
     };
   },
@@ -285,12 +305,16 @@ export async function resolveProviderModel(
     return {
       ok: true,
       value: {
-        providerId: record.llmProvider.name,
+        providerId: record.llmProvider.id,
+        providerName: record.llmProvider.name,
         baseUrl: record.llmProvider.apiUrl,
         apiKey,
         compatibilityType: record.llmProvider.compatibilityType,
         modelAlias,
         model: record.llmModel.name,
+        inputPrice: record.llmModel.inputPrice,
+        outputPrice: record.llmModel.outputPrice,
+        inputCachePrice: record.llmModel.inputCachePrice,
       },
     };
   } catch {

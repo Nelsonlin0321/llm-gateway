@@ -23,11 +23,17 @@ export type UpstreamProxyContext = {
   requestPayloadJson: string;
 
   // downstream context
+  providerId: string;
   provider: string;
   requestedModel: string;
   requestedModelAlias: string;
   apiFamily: string;
   metadataJson: string;
+
+  // model pricing (USD per 1M tokens) for redis stream / cost attribution
+  inputPrice: number;
+  outputPrice: number;
+  inputCachePrice: number;
 
   // upstream context
   upstreamModel: string;

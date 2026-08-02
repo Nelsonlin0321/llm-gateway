@@ -26,11 +26,18 @@ export type RequestLogV1Fields = {
   gateway_path: string;
   http_method: string;
   api_family: string;
+  provider_id: string;
   provider: string;
   requested_model: string;
   requested_model_alias: string;
   upstream_model: string;
   upstream_url: string;
+  /** USD per 1M tokens; decimal string for Redis Stream. */
+  input_price: string;
+  /** USD per 1M tokens; decimal string for Redis Stream. */
+  output_price: string;
+  /** USD per 1M tokens; decimal string for Redis Stream. */
+  input_cache_price: string;
   /** Redis stream values are strings; encode as `"true"` / `"false"`. */
   is_stream: "true" | "false";
   response_mode: ResponseMode;
@@ -41,6 +48,7 @@ export type RequestLogV1Fields = {
   /** Unix seconds as decimal string. */
   child_key_issued_at: string;
   child_key_tags_json: string;
+  user_email: string;
 
   request_headers_json: string;
   /** Present when capture_level is `redacted` or `full`. */
@@ -95,11 +103,18 @@ export type BuildRequestLogInput = {
   gatewayPath: string;
   httpMethod: string;
   apiFamily: string;
+  providerId: string;
   provider: string;
   requestedModel: string;
   requestedModelAlias: string;
   upstreamModel: string;
   upstreamUrl: string;
+  /** USD per 1M tokens. */
+  inputPrice: number;
+  /** USD per 1M tokens. */
+  outputPrice: number;
+  /** USD per 1M tokens. */
+  inputCachePrice: number;
   isStream: boolean;
 
   childKeyId: string;
@@ -107,6 +122,7 @@ export type BuildRequestLogInput = {
   childKeyCreatorId: string;
   childKeyIssuedAt: number;
   childKeyTags: unknown;
+  userEmail: string;
 
   /** Original client headers (Authorization will be stripped). */
   requestHeaders: Headers | Record<string, string>;

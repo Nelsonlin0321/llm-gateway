@@ -11,16 +11,27 @@ export default async function WorkspaceLayout({
   const session = await requireSession("/workspace");
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-73px)] w-full flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-        <aside className="lg:sticky lg:top-6 lg:self-start">
+    <div className="flex min-h-[calc(100vh-3.5rem)] w-full">
+      <aside className="hidden w-60 shrink-0 border-r border-sidebar-border bg-sidebar lg:block">
+        <div className="sticky top-14 h-[calc(100vh-3.5rem)]">
           <WorkspaceSidebar
             userName={session.user.name}
             userEmail={session.user.email}
           />
-        </aside>
-        {children}
+        </div>
+      </aside>
+
+      <div className="min-w-0 flex-1">
+        <div className="border-b border-border bg-sidebar lg:hidden">
+          <WorkspaceSidebar
+            userName={session.user.name}
+            userEmail={session.user.email}
+          />
+        </div>
+        <main className="mx-auto w-full max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
       </div>
-    </main>
+    </div>
   );
 }

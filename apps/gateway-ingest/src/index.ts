@@ -1,69 +1,22 @@
 import { loadConfig } from "./lib/config.js";
+import { db } from "./lib/db.js";
 import { createRedisClient } from "./lib/redis-client.js";
 import {
   ackEntries,
   ensureConsumerGroup,
   readGroupEntries,
-  type ExtractedStreamEntry,
 } from "./consumer/index.js";
-
-/**
- * Log a single extracted Redis stream entry (no transform / no DB write).
- */
-function logExtractedEntry(entry: ExtractedStreamEntry): void {
-  const summary = {
-    stream: entry.stream,
-    id: entry.id,
-    source: entry.source,
-    payload_missing: entry.payloadMissing === true,
-    schema_version: entry.fields.schema_version,
-    event_type: entry.fields.event_type,
-    event_id: entry.fields.event_id,
-    request_id: entry.fields.request_id,
-    provider: entry.fields.provider,
-    requested_model_alias: entry.fields.requested_model_alias,
-    status_code: entry.fields.status_code,
-    field_count: Object.keys(entry.fields).length,
-  };
-
-  console.log("[gateway-ingest] extracted stream entry", summary);
-  // Full field map at debug level so large payloads stay optional.
-  if (process.env.REQUEST_LOG_DEBUG === "1") {
-    console.log("[gateway-ingest] entry fields", entry.fields);
-  }
-}
-
-/**
- * Phase A handle step: extract (already done) + log.
- * Returns entry ids that were handled successfully and should be XACK'd.
- */
-function handleExtractedEntries(entries: ExtractedStreamEntry[]): string[] {
-  const ackedIds: string[] = [];
-
-  for (const entry of entries) {
-    try {
-      if (entry.payloadMissing) {
-        console.warn(
-          "[gateway-ingest] pending entry has null payload (deleted from stream); will XACK",
-          { stream: entry.stream, id: entry.id, source: entry.source },
-        );
-      }
-      logExtractedEntry(entry);
-      ackedIds.push(entry.id);
-    } catch (error) {
-      console.error(
-        "[gateway-ingest] failed to handle entry; leaving pending for reclaim",
-        { id: entry.id, error },
-      );
-    }
-  }
-
-  return ackedIds;
-}
+import { processExtractedEntries } from "./process.js";
 
 async function main(): Promise<void> {
   const config = loadConfig();
   const client = createRedisClient(config.redisUrl);
+
+  if (!(process.env.DATABASE_URL ?? "").trim()) {
+    console.error("[gateway-ingest] DATABASE_URL is required");
+    client.disconnect();
+    process.exit(1);
+  }
 
   console.log("[gateway-ingest] starting", {
     stream: config.streamKey,
@@ -72,7 +25,7 @@ async function main(): Promise<void> {
     count: config.count,
     blockMs: config.blockMs,
     claimMinIdleMs: config.claimMinIdleMs,
-    mode: "xautoclaim + xreadgroup (Redis 6.2+ / 8.2 compatible)",
+    mode: "xautoclaim + xreadgroup → transform → load → xack",
   });
 
   const groupResult = await ensureConsumerGroup({
@@ -134,10 +87,7 @@ async function main(): Promise<void> {
     });
 
     if (!result.ok) {
-      console.error(
-        `[gateway-ingest] ${result.stage} failed`,
-        result.error,
-      );
+      console.error(`[gateway-ingest] ${result.stage} failed`, result.error);
       // Brief backoff so a Redis blip does not spin the CPU.
       await Bun.sleep(1000);
       continue;
@@ -150,13 +100,13 @@ async function main(): Promise<void> {
       continue;
     }
 
-    const idsToAck = handleExtractedEntries(result.entries);
+    const batch = await processExtractedEntries(db, result.entries);
 
     const ackResult = await ackEntries({
       client,
       streamKey: config.streamKey,
       groupName: config.groupName,
-      ids: idsToAck,
+      ids: batch.idsToAck,
     });
 
     if (!ackResult.ok) {
@@ -170,8 +120,12 @@ async function main(): Promise<void> {
       total: result.entries.length,
       claimed: result.claimedCount,
       new: result.newCount,
+      transformed: batch.transformed,
+      loaded: batch.loaded,
+      skippedMissingPayload: batch.skippedMissingPayload,
+      failed: batch.failed,
       acked: ackResult.ok ? ackResult.acked : 0,
-      ids: idsToAck,
+      ids: batch.idsToAck,
     });
   }
 }

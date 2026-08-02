@@ -118,11 +118,15 @@ test("proxyToAnthropic builds proxy context and emits response log", async () =>
           ok: true,
           value: {
             providerId: "minimax",
+            providerName: "minimax",
             baseUrl: "https://api.minimax.io/anthropic",
             apiKey: "sk-minimax",
             compatibilityType: "anthropic",
             modelAlias: "MiniMax-M3",
             model: "MiniMax-M3",
+            inputPrice: 0.3,
+            outputPrice: 1.2,
+            inputCachePrice: 0.03,
           },
         };
       },
@@ -172,6 +176,9 @@ test("proxyToAnthropic builds proxy context and emits response log", async () =>
   assert.equal(capturedContext.requestedModel, "MiniMax-M3");
   assert.equal(capturedContext.requestedModelAlias, "minimax/MiniMax-M3");
   assert.equal(capturedContext.upstreamModel, "MiniMax-M3");
+  assert.equal(capturedContext.inputPrice, 0.3);
+  assert.equal(capturedContext.outputPrice, 1.2);
+  assert.equal(capturedContext.inputCachePrice, 0.03);
 
   await emitDone;
   assert.ok(emitted);

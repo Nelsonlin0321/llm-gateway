@@ -200,86 +200,71 @@ export function ChildKeyManagementClient({
 
   return (
     <>
-      <section className="grid gap-3 sm:grid-cols-3">
-        <MetricCard
-          label="Child keys"
-          value={stats.total.toString()}
-          detail="Issued in this workspace"
-        />
-        <MetricCard
-          label="Active"
-          value={stats.active.toString()}
-          detail="Allowed to authenticate"
-        />
-        <MetricCard
-          label="Inactive"
-          value={stats.inactive.toString()}
-          detail="Disabled keys"
-        />
+      <section className="grid grid-cols-3 gap-3">
+        <MetricCard label="Total" value={stats.total.toString()} />
+        <MetricCard label="Active" value={stats.active.toString()} />
+        <MetricCard label="Inactive" value={stats.inactive.toString()} />
       </section>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <CardTitle className="text-[1.45rem]">Workspace child keys</CardTitle>
-            <CardDescription className="leading-6">
-              Issue downstream credentials with free-form tags (env, project,
-              team, or anything you define). Tokens are signed JWTs prefixed with{" "}
-              <span className="font-mono">sk_</span>.
+      <Card className="border-border bg-card shadow-card">
+        <CardHeader className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-base">Issued keys</CardTitle>
+            <CardDescription>
+              Signed <span className="font-mono">sk_</span> JWTs with optional
+              tags. Secrets are revealed on demand.
             </CardDescription>
           </div>
-          <Button onClick={() => setFormOpen(true)}>
-            <Plus className="size-4" />
-            Create child key
+          <Button size="sm" onClick={() => setFormOpen(true)}>
+            <Plus className="size-3.5" />
+            Create key
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {keys.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border-strong bg-background px-5 py-10 text-center">
-              <div className="mx-auto flex size-10 items-center justify-center rounded-md border border-border bg-surface-1 text-accent">
+            <div className="px-5 py-12 text-center">
+              <div className="mx-auto flex size-9 items-center justify-center rounded-md border border-border bg-surface-2 text-text-secondary">
                 <KeyRound className="size-4" />
               </div>
-              <p className="mt-4 text-base font-medium text-text-primary">
-                No child keys yet.
+              <p className="mt-3 text-sm font-medium text-text-primary">
+                No child keys yet
               </p>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-text-secondary">
-                Create a child key to grant scoped gateway access for a team,
-                project, or application without sharing master provider
-                credentials.
+              <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-5 text-text-secondary">
+                Create a scoped key for a team, project, or application without
+                sharing master provider credentials.
               </p>
+              <Button size="sm" className="mt-4" onClick={() => setFormOpen(true)}>
+                <Plus className="size-3.5" />
+                Create key
+              </Button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background">
-              {keys.map((key, index) => {
+            <div className="divide-y divide-border">
+              {keys.map((key) => {
                 const tags = tagEntries(key.tags);
 
                 return (
                   <div
                     key={key.id}
-                    className={[
-                      "flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between",
-                      index > 0
-                        ? "border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
-                        : "",
-                    ].join(" ")}
+                    className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
                   >
-                    <div className="min-w-0 space-y-2">
+                    <div className="min-w-0 space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <CardTitle className="text-[1.05rem]">
+                        <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
                           {key.name}
-                        </CardTitle>
-                        <Badge
-                          variant={key.isActive ? "success" : "warning"}
-                        >
+                        </p>
+                        <Badge variant={key.isActive ? "success" : "warning"}>
                           {key.isActive ? "Active" : "Inactive"}
                         </Badge>
-                        <Badge variant="neutral" className="font-mono text-[11px]">
+                        <Badge
+                          variant="neutral"
+                          className="font-mono text-[11px]"
+                        >
                           {key.keyPreview}
                         </Badge>
                       </div>
 
-                      <p className="text-sm text-text-secondary">
-                        User{" "}
+                      <p className="text-[13px] text-text-secondary">
                         <span className="font-mono text-text-primary">
                           {key.userEmail}
                         </span>
@@ -290,39 +275,36 @@ export function ChildKeyManagementClient({
                           {tags.map(([tagKey, tagValue]) => (
                             <span
                               key={`${key.id}-${tagKey}`}
-                              className="rounded-sm border border-border bg-surface-1 px-2 py-1 font-mono text-[11px] text-text-secondary"
+                              className="rounded-sm border border-border bg-surface-2 px-1.5 py-0.5 font-mono text-[11px] text-text-secondary"
                             >
                               {tagKey}:{tagValue}
                             </span>
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-xs text-text-tertiary">No tags</p>
-                      )}
+                      ) : null}
 
-                      <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
-                        Created {formatDate(key.createdAt)} · Updated{" "}
-                        {formatDate(key.updatedAt)}
+                      <p className="text-[11px] text-text-muted">
+                        Created {formatDate(key.createdAt)}
                         {key.expiresAt
                           ? ` · Expires ${formatDate(key.expiresAt)}`
                           : " · No expiration"}
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 flex-wrap items-center gap-2 self-start lg:self-center">
+                    <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">
                       <Button
                         type="button"
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
                         disabled={revealingId === key.id}
                         onClick={() => void handleReveal(key)}
                       >
                         <Eye className="size-3.5" />
-                        {revealingId === key.id ? "Revealing..." : "Reveal key"}
+                        {revealingId === key.id ? "Revealing..." : "Reveal"}
                       </Button>
                       <Button
                         type="button"
-                        variant="secondary"
+                        variant="outline"
                         size="sm"
                         disabled={rotatingId === key.id}
                         onClick={() => setKeyPendingRotate(key)}
@@ -332,8 +314,9 @@ export function ChildKeyManagementClient({
                       </Button>
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="ghost"
                         size="sm"
+                        className="text-error hover:bg-error-bg hover:text-error"
                         disabled={deletingId === key.id}
                         onClick={() => setKeyPendingDelete(key)}
                       >
@@ -342,12 +325,12 @@ export function ChildKeyManagementClient({
                       </Button>
                       <label
                         className={cn(
-                          "flex items-center gap-2 rounded-md border border-border bg-surface-1 px-3 py-2 text-sm",
+                          "flex items-center gap-2 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-[12px]",
                           togglingId === key.id && "opacity-60",
                         )}
                       >
                         <span className="text-text-secondary">
-                          {key.isActive ? "Active" : "Inactive"}
+                          {key.isActive ? "On" : "Off"}
                         </span>
                         <button
                           type="button"
@@ -476,26 +459,15 @@ export function ChildKeyManagementClient({
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="bg-surface-1 shadow-none">
-      <CardHeader className="gap-1 pb-2">
-        <CardDescription className="font-mono text-[11px] uppercase tracking-[0.08em]">
-          {label}
-        </CardDescription>
-        <CardTitle className="font-mono text-[1.5rem]">{value}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm leading-5 text-text-secondary">{detail}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-lg border border-border bg-card px-3.5 py-3 shadow-card">
+      <p className="text-[11px] font-medium tracking-[0.08em] text-text-tertiary uppercase">
+        {label}
+      </p>
+      <p className="mt-1 font-heading text-xl font-semibold tracking-[-0.03em] text-text-primary tabular-nums">
+        {value}
+      </p>
+    </div>
   );
 }

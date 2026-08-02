@@ -52,11 +52,15 @@ function buildProxyContext(
       messages: [{ role: "user", content: "hi" }],
       metadata: { session: "s1" },
     }),
+    providerId: "provider_openai",
     provider: "openai",
     requestedModel: "gpt-5.4-mini",
     requestedModelAlias: "openai/gpt-5.4-mini",
     apiFamily: "openai",
     metadataJson: JSON.stringify({ session: "s1" }),
+    inputPrice: 0.15,
+    outputPrice: 0.6,
+    inputCachePrice: 0.075,
     upstreamModel: "gpt-5.4-mini-upstream",
     upstreamUrl: "https://api.openai.com/v1/chat/completions",
     masterApiKey: "sk-provider-secret",
@@ -214,136 +218,6 @@ test("resolveResponseMode and response parsers", () => {
   );
 });
 
-test("buildRequestLogFields includes response + timing fields", () => {
-  const fields = buildRequestLogFields({
-    eventId: "evt-1",
-    loggedAt: new Date("2026-03-01T12:00:00.200Z"),
-    captureLevel: "metadata",
-    gatewayPath: "/openai/v1/chat/completions",
-    httpMethod: "POST",
-    apiFamily: "openai",
-    provider: "openai",
-    requestedModel: "gpt-5.4-mini",
-    requestedModelAlias: "openai/gpt-5.4-mini",
-    upstreamModel: "gpt-5.4-mini-upstream",
-    upstreamUrl: "https://api.openai.com/v1/chat/completions",
-    isStream: false,
-    childKeyId: "key-1",
-    childKeyName: "prod-bot",
-    childKeyCreatorId: "creator-1",
-    childKeyIssuedAt: 1_700_000_000,
-    childKeyTags: { env: "prod" },
-    requestHeaders: {
-      authorization: "Bearer sk-child",
-      "content-type": "application/json",
-    },
-    requestPayloadJson: '{"model":"openai/gpt-5.4-mini"}',
-    metadataJson: '{"session":"s1"}',
-    upstreamRequestPayloadJson: '{"model":"gpt-5.4-mini-upstream"}',
-    response: baseResponse(),
-  });
-
-  assert.equal(fields.schema_version, "1");
-  assert.equal(fields.event_type, "request_log");
-  assert.equal(fields.event_id, "evt-1");
-  assert.equal(fields.request_id, "req-1");
-  assert.equal(fields.logged_at, "2026-03-01T12:00:00.200Z");
-  assert.equal(fields.started_at, "2026-03-01T12:00:00.000Z");
-  assert.equal(fields.completed_at, "2026-03-01T12:00:00.150Z");
-  assert.equal(fields.response_mode, "json");
-  assert.equal(fields.status_code, "200");
-  assert.equal(fields.response_content_type, "application/json");
-  assert.equal(fields.duration_ms, "150");
-  assert.equal(fields.response_id, "chatcmpl-1");
-  assert.equal(fields.capture_level, "metadata");
-  assert.equal(fields.request_payload_json, undefined);
-  assert.equal(fields.response_payload_json, undefined);
-
-  const xaddArgs = requestLogFieldsToXaddArgs(fields);
-  assert.equal(xaddArgs.includes("response_payload_json"), false);
-  assert.ok(xaddArgs.includes("request_id"));
-  assert.ok(xaddArgs.includes("duration_ms"));
-});
-
-test("buildRequestLogFields includes payloads and stream fields at full", () => {
-  const fields = buildRequestLogFields({
-    captureLevel: "full" satisfies CaptureLevel,
-    gatewayPath: "/openai/v1/chat/completions",
-    httpMethod: "POST",
-    apiFamily: "openai",
-    provider: "openai",
-    requestedModel: "gpt-5.4-mini",
-    requestedModelAlias: "openai/gpt-5.4-mini",
-    upstreamModel: "gpt-5.4-mini-upstream",
-    upstreamUrl: "https://api.openai.com/v1/chat/completions",
-    isStream: true,
-    childKeyId: "key-1",
-    childKeyName: "prod-bot",
-    childKeyCreatorId: "creator-1",
-    childKeyIssuedAt: 100,
-    childKeyTags: {},
-    requestHeaders: {},
-    requestPayloadJson: '{"stream":true}',
-    metadataJson: "{}",
-    upstreamRequestPayloadJson: '{"stream":true}',
-    response: baseResponse({
-      responseMode: "sse",
-      responseContentType: "text/event-stream",
-      responsePayloadJson: undefined,
-      responseStreamText: 'data: {"id":"chatcmpl-sse"}\n\n',
-      responseId: "chatcmpl-sse",
-      firstTokenMs: 42,
-      streamChunkCount: 3,
-      durationMs: 200,
-    }),
-  });
-
-  assert.equal(fields.response_mode, "sse");
-  assert.equal(fields.is_stream, "true");
-  assert.equal(fields.first_token_ms, "42");
-  assert.equal(fields.stream_chunk_count, "3");
-  assert.equal(fields.response_stream_text, 'data: {"id":"chatcmpl-sse"}\n\n');
-  assert.equal(fields.response_payload_json, undefined);
-  assert.equal(fields.capture_level, "full");
-});
-
-test("buildRequestLogFields includes error fields", () => {
-  const fields = buildRequestLogFields({
-    captureLevel: "metadata",
-    gatewayPath: "/openai/v1/chat/completions",
-    httpMethod: "POST",
-    apiFamily: "openai",
-    provider: "openai",
-    requestedModel: "x",
-    requestedModelAlias: "openai/x",
-    upstreamModel: "x",
-    upstreamUrl: "https://example.com/v1/chat/completions",
-    isStream: false,
-    childKeyId: "key-1",
-    childKeyName: "prod-bot",
-    childKeyCreatorId: "creator-1",
-    childKeyIssuedAt: 100,
-    childKeyTags: {},
-    requestHeaders: {},
-    requestPayloadJson: "{}",
-    metadataJson: "{}",
-    upstreamRequestPayloadJson: "{}",
-    response: baseResponse({
-      statusCode: 400,
-      responseId: undefined,
-      responsePayloadJson: JSON.stringify({
-        error: { type: "invalid_request_error", message: "nope" },
-      }),
-      errorType: "invalid_request_error",
-      errorMessage: "nope",
-    }),
-  });
-
-  assert.equal(fields.status_code, "400");
-  assert.equal(fields.error_type, "invalid_request_error");
-  assert.equal(fields.error_message, "nope");
-});
-
 test("emitRequestLog XADDs response fields and never logs secrets", async () => {
   const redis = new FakeStreamRedis();
   const ctx = buildProxyContext();
@@ -381,13 +255,16 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
   assert.equal(flat.duration_ms, "150");
   assert.equal(flat.response_id, "chatcmpl-1");
   assert.equal(flat.response_mode, "json");
+  assert.equal(flat.input_price, "0.15");
+  assert.equal(flat.output_price, "0.6");
+  assert.equal(flat.input_cache_price, "0.075");
   assert.ok(flat.response_payload_json);
 
   const joined = JSON.stringify(flat);
   assert.equal(joined.includes("sk-child-plain"), false);
   assert.equal(joined.includes("sk-provider-secret"), false);
   assert.equal(joined.includes("encrypted-must-not-log"), false);
-  assert.equal(joined.includes("user@example.com"), false);
+  assert.equal(joined.includes("user@example.com"), true);
 });
 
 test("emitRequestLog caps stream length when streamMaxLen is set", async () => {

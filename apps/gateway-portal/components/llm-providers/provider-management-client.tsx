@@ -141,123 +141,105 @@ export function ProviderManagementClient({
 
   return (
     <>
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <MetricCard
-          label="Providers"
-          value={stats.total.toString()}
-          detail="All stored configurations"
-        />
-        <MetricCard
-          label="Active"
-          value={stats.active.toString()}
-          detail="Available for routing"
-        />
-        <MetricCard
-          label="Inactive"
-          value={stats.inactive.toString()}
-          detail="Disabled providers"
-        />
-        <MetricCard
-          label="OpenAI"
-          value={stats.openai.toString()}
-          detail="OpenAI-compatible endpoints"
-        />
-        <MetricCard
-          label="Anthropic"
-          value={stats.anthropic.toString()}
-          detail="Anthropic-compatible endpoints"
-        />
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+        <MetricCard label="Total" value={stats.total.toString()} />
+        <MetricCard label="Active" value={stats.active.toString()} />
+        <MetricCard label="Inactive" value={stats.inactive.toString()} />
+        <MetricCard label="OpenAI" value={stats.openai.toString()} />
+        <MetricCard label="Anthropic" value={stats.anthropic.toString()} />
       </section>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl space-y-2">
-            <CardTitle className="text-[1.45rem]">
-              Configured providers
-            </CardTitle>
-            <CardDescription className="leading-6">
-              Keep upstream credentials centralized, control which providers are
-              active, and manage pricing metadata without ever exposing stored
-              API keys.
+      <Card className="border-border bg-card shadow-card">
+        <CardHeader className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-base">Configured providers</CardTitle>
+            <CardDescription>
+              {stats.total === 0
+                ? "No providers yet — add an upstream endpoint to begin."
+                : `${stats.total} provider${stats.total === 1 ? "" : "s"} in this workspace.`}
             </CardDescription>
           </div>
-          <Button onClick={() => setModalState({ mode: "create" })}>
-            <Plus className="size-4" />
+          <Button size="sm" onClick={() => setModalState({ mode: "create" })}>
+            <Plus className="size-3.5" />
             Add provider
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {providers.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border-strong bg-background px-5 py-10 text-center">
-              <p className="text-base font-medium text-text-primary">
-                No providers configured yet.
+            <div className="px-5 py-12 text-center">
+              <p className="text-sm font-medium text-text-primary">
+                No providers configured
               </p>
-              <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-text-secondary">
-                Add your first provider to store the upstream URL, encrypted API
-                key, and pricing metadata.
+              <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-5 text-text-secondary">
+                Add an upstream URL and encrypted API key to enable routing and
+                model pricing for this workspace.
               </p>
+              <Button
+                size="sm"
+                className="mt-4"
+                onClick={() => setModalState({ mode: "create" })}
+              >
+                <Plus className="size-3.5" />
+                Add provider
+              </Button>
             </div>
           ) : (
-            <div className="overflow-hidden rounded-lg border border-[color-mix(in_srgb,var(--foreground)_8%,transparent)] bg-background">
-              {providers.map((provider, index) => (
+            <div className="divide-y divide-border">
+              {providers.map((provider) => (
                 <div
                   key={provider.id}
-                  className={[
-                    "flex flex-col gap-4 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between",
-                    index > 0
-                      ? "border-t border-[color-mix(in_srgb,var(--foreground)_8%,transparent)]"
-                      : "",
-                  ].join(" ")}
+                  className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
                 >
-                  <div className="min-w-0 space-y-2">
+                  <div className="min-w-0 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <CardTitle className="text-[1.05rem]">
+                      <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
                         {provider.name}
-                      </CardTitle>
+                      </p>
                       <Badge
                         variant={provider.isActive ? "success" : "warning"}
                       >
                         {provider.isActive ? "Active" : "Inactive"}
                       </Badge>
-                      <Badge variant="neutral" className="font-mono uppercase">
+                      <Badge variant="neutral" className="font-mono text-[11px] uppercase">
                         {provider.compatibilityType}
                       </Badge>
                     </div>
-                    <CardDescription className="break-all font-mono text-[12px] leading-5">
+                    <p className="truncate font-mono text-[12px] text-text-tertiary">
                       {provider.apiUrl}
-                    </CardDescription>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-text-tertiary">
-                      Last updated {formatDate(provider.updatedAt)}
+                    </p>
+                    <p className="text-[11px] text-text-muted">
+                      Updated {formatDate(provider.updatedAt)}
                     </p>
                   </div>
 
-                  <div className="flex shrink-0 flex-wrap items-center gap-2 self-start lg:self-center">
+                  <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">
                     <Link
                       href={`/workspace/${provider.id}/models`}
                       className={cn(
-                        buttonVariants({ variant: "secondary", size: "sm" }),
+                        buttonVariants({ variant: "outline", size: "sm" }),
                       )}
                     >
-                      <Boxes className="size-4" />
+                      <Boxes className="size-3.5" />
                       Models
                     </Link>
                     <Button
                       type="button"
-                      variant="secondary"
+                      variant="outline"
                       size="sm"
                       onClick={() => setModalState({ mode: "edit", provider })}
                     >
-                      <PencilLine className="size-4" />
+                      <PencilLine className="size-3.5" />
                       Edit
                     </Button>
                     <Button
                       type="button"
-                      variant="destructive"
+                      variant="ghost"
                       size="sm"
+                      className="text-error hover:bg-error-bg hover:text-error"
                       disabled={deletingId === provider.id}
                       onClick={() => setProviderPendingDelete(provider)}
                     >
-                      <Trash2 className="size-4" />
+                      <Trash2 className="size-3.5" />
                       {deletingId === provider.id ? "Deleting..." : "Delete"}
                     </Button>
                   </div>
@@ -334,26 +316,15 @@ export function ProviderManagementClient({
   );
 }
 
-function MetricCard({
-  label,
-  value,
-  detail,
-}: {
-  label: string;
-  value: string;
-  detail: string;
-}) {
+function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="bg-surface-1 shadow-none">
-      <CardHeader className="gap-1 pb-2">
-        <CardDescription className="font-mono text-[11px] uppercase tracking-[0.08em]">
-          {label}
-        </CardDescription>
-        <CardTitle className="text-[1.7rem]">{value}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm leading-5 text-text-secondary">{detail}</p>
-      </CardContent>
-    </Card>
+    <div className="rounded-lg border border-border bg-card px-3.5 py-3 shadow-card">
+      <p className="text-[11px] font-medium tracking-[0.08em] text-text-tertiary uppercase">
+        {label}
+      </p>
+      <p className="mt-1 font-heading text-xl font-semibold tracking-[-0.03em] text-text-primary tabular-nums">
+        {value}
+      </p>
+    </div>
   );
 }

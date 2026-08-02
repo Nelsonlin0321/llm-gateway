@@ -5,15 +5,12 @@ export {
   sanitizeHeaders,
   stringifyChildKeyTags,
 } from "./capture.js";
-export {
-  buildRequestLogFields,
-  requestLogFieldsToXaddArgs,
-} from "./build.js";
+export { buildRequestLogFields, requestLogFieldsToXaddArgs } from "./build.js";
 export { emitRequestLog } from "./emit.js";
 export type {
   EmitRequestLogInput,
   EmitRequestLogResult,
-  RequestLogProxySnapshot,
+  // RequestLogProxySnapshot,
 } from "./emit.js";
 export { instrumentUpstreamResponse } from "./instrument-response.js";
 export type {

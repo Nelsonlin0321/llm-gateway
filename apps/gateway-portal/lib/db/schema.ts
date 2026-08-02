@@ -1,6 +1,7 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  date,
   doublePrecision,
   index,
   integer,
@@ -149,6 +150,99 @@ export const childKeys = pgTable(
   ],
 );
 
+/**
+ * Request/response header + payload capture for gateway calls.
+ * Primary key `id` is the gateway `request_id`.
+ *
+ * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
+ *   PARTITION BY RANGE (log_date)
+ */
+export const requestLog = pgTable(
+  "request_log",
+  {
+    eventId: text().notNull(),
+    requestId: text().notNull(),
+    requestHeadersJson: text(),
+    requestPayloadJson: text(),
+    responseHeadersJson: text(),
+    responseText: text(),
+    statusCode: integer(),
+    isStream: boolean().notNull().default(false),
+    gatewayPath: text().notNull(),
+    loggedAt: timestamp().notNull(),
+    logDate: date().notNull(),
+    ...timestamps,
+  },
+  (table) => [
+    index("request_log_date_idx").on(table.logDate),
+    // primaryKey({ columns: [table.eventId, table.logDate] }),
+  ],
+);
+
+export const eventLog = pgTable(
+  "event_log",
+  {
+    eventId: text().notNull(),
+    requestId: text().notNull(),
+    schemaVersion: integer().notNull(),
+    eventType: text().notNull(),
+    startedAt: timestamp().notNull(),
+    completedAt: timestamp(),
+    gatewayPath: text().notNull(),
+    httpMethod: text().notNull(),
+    apiFamily: compatibilityTypeEnum().notNull(),
+    providerId: text().references(() => llmProviders.id, {
+      onDelete: "set null",
+    }),
+    provider: text().notNull(),
+    requestedModel: text().notNull(),
+    requestedModelAlias: text().notNull(),
+    upstreamModel: text().notNull(),
+    upstreamUrl: text().notNull(),
+    isStream: boolean().notNull().default(false),
+    responseMode: text().notNull(),
+    childKeyId: text().references(() => childKeys.id, {
+      onDelete: "set null",
+    }),
+    childKeyName: text().notNull(),
+    childKeyCreatorId: text().references(() => user.id, {
+      onDelete: "set null",
+    }),
+    childKeyIssuedAt: integer(),
+    childKeyTagsJson: jsonb().$type<Record<string, string>>(),
+    userEmail: text().notNull(),
+    metadataJson: jsonb().$type<Record<string, unknown>>(),
+    statusCode: integer(),
+    responseContentType: text(),
+    durationMs: integer(),
+    firstTokenMs: integer(),
+    responseId: text(),
+    inputToken: integer().default(0),
+    outputToken: integer().default(0),
+    cachedInputToken: integer().default(0),
+    totalToken: integer().default(0),
+    cost: doublePrecision().default(0),
+    loggedAt: timestamp().notNull(),
+    logDate: date().notNull(),
+    inputPrice: doublePrecision(),
+    outputPrice: doublePrecision(),
+    inputCachePrice: doublePrecision(),
+    ...timestamps,
+  },
+  (table) => [
+    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    index("event_log_date_idx").on(table.logDate),
+    index("tags_path_gin_idx").using(
+      "gin",
+      sql`${table.childKeyTagsJson} jsonb_path_ops`,
+    ),
+    index("metadata_path_gin_idx").using(
+      "gin",
+      sql`${table.metadataJson} jsonb_path_ops`,
+    ),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -193,6 +287,22 @@ export const childKeysRelations = relations(childKeys, ({ one }) => ({
   }),
 }));
 
+export const eventLogRelations = relations(eventLog, ({ one }) => ({
+  // Named llmProvider to avoid clashing with the denormalized `provider` text column.
+  llmProvider: one(llmProviders, {
+    fields: [eventLog.providerId],
+    references: [llmProviders.id],
+  }),
+  childKey: one(childKeys, {
+    fields: [eventLog.childKeyId],
+    references: [childKeys.id],
+  }),
+  childKeyCreator: one(user, {
+    fields: [eventLog.childKeyCreatorId],
+    references: [user.id],
+  }),
+}));
+
 export type User = typeof user.$inferSelect;
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
@@ -200,6 +310,10 @@ export type Verification = typeof verification.$inferSelect;
 export type LLMProvider = typeof llmProviders.$inferSelect;
 export type Model = typeof models.$inferSelect;
 export type ChildKey = typeof childKeys.$inferSelect;
+export type RequestLog = typeof requestLog.$inferSelect;
+export type EventLog = typeof eventLog.$inferSelect;
 export type NewLLMProvider = typeof llmProviders.$inferInsert;
 export type NewModel = typeof models.$inferInsert;
 export type NewChildKey = typeof childKeys.$inferInsert;
+export type NewRequestLog = typeof requestLog.$inferInsert;
+export type NewEventLog = typeof eventLog.$inferInsert;
