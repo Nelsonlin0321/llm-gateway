@@ -2,9 +2,9 @@
 
 Redis Stream consumer for Open LLM Gateway request logs.
 
-Reads events published by `gateway-api` (`XADD` → `llm-gateway-request-logs`) using a consumer group, extracts each entry into a structured record, and (later) will transform and ingest into PostgreSQL.
+Reads events published by `gateway-api` (`XADD` → `llm-gateway-request-logs`) using a consumer group, transforms each entry into Postgres rows (`request_log` + `event_log`), then `XACK`s on success.
 
-**Current scope (Phase A):** reclaim idle pending + read new messages, extract/log, then `XACK`. No transform. No Postgres writes.
+**Pipeline:** reclaim idle pending + read new → transform (tokens/cost) → transactional load → `XACK`.
 
 ## Architecture
 
@@ -14,13 +14,29 @@ gateway-api  ──XADD──►  Redis Stream (llm-gateway-request-logs)
               ┌─────────────────┴──────────────────┐
               │ 1) XAUTOCLAIM (idle pending)       │
               │ 2) XREADGROUP … > (new messages)   │
-              │ 3) extract + log → XACK            │
+              │ 3) transform → load PG → XACK      │
               └─────────────────┬──────────────────┘
                                 ▼
                         gateway-ingest
+                         /    |    \
+                  consumer transform load
                                 │
-                    (planned) transform → Postgres
+                                ▼
+                         Postgres (Drizzle)
+                         request_log + event_log
 ```
+
+### Module layout
+
+| Path | Role |
+| ---- | ---- |
+| `src/consumer/` | Redis group ensure, read (`XAUTOCLAIM` + `XREADGROUP`), extract, `XACK` |
+| `src/transform/` | Map stream fields → rows; path-based token usage + cost |
+| `src/load/` | Insert both tables in one transaction |
+| `src/process.ts` | Per-batch orchestrator (ACK only after successful load) |
+| `src/index.ts` | Main loop |
+
+Token lookup paths (extend for new providers) live in `src/transform/token-paths.ts`.
 
 ## Read path (Redis 8.2 compatible)
 
@@ -34,7 +50,7 @@ XAUTOCLAIM llm-gateway-request-logs gateway-ingest consumer-1 60000 <cursor> COU
 # 2) Fill remaining COUNT with never-delivered messages
 XREADGROUP GROUP gateway-ingest consumer-1 COUNT <remaining> BLOCK 2000 STREAMS llm-gateway-request-logs >
 
-# 3) After successful extract + log
+# 3) After successful transform + Postgres load
 XACK llm-gateway-request-logs gateway-ingest <id…>
 ```
 
@@ -57,12 +73,12 @@ When claim already returned some entries, the new-message `XREADGROUP` is **non-
 
 ```bash
 cd apps/gateway-ingest
-cp .env.example .env   # set REDIS_URL
+cp .env.example .env   # set REDIS_URL and DATABASE_URL
 bun install
 bun run dev
 ```
 
-With `REQUEST_LOG_DEBUG=1`, each entry’s full field map is printed.
+With `REQUEST_LOG_DEBUG=1`, loaded entries log token/cost summaries.
 
 ## Scripts
 

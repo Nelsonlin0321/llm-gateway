@@ -9,14 +9,18 @@
 - Consume Redis Stream request-log events via consumer groups:
   - `XAUTOCLAIM` for idle pending (Redis 6.2+; works on 8.2)
   - `XREADGROUP … >` for new messages
-  - `XACK` after successful extract + log (Phase A)
+  - Transform → load Postgres → `XACK` on success
 - Do **not** use `XREADGROUP … CLAIM` (Redis 8.4+ only).
-- Postgres: Drizzle client is set up (`src/lib/db.ts`, `src/db/schema.ts`).
-  Transform + write path remain **out of scope until explicitly requested**.
+- Pipeline modules:
+  - `src/consumer/` — Redis read / extract / ack / ensure-group
+  - `src/transform/` — stream fields → `request_log` + `event_log` rows (token paths + cost)
+  - `src/load/` — transactional inserts
+  - `src/process.ts` — batch orchestrator (only successful entries are ACKed)
+- Token field paths live in `src/transform/token-paths.ts` (extend arrays for new providers).
 - Prefer matching `gateway-api` Drizzle patterns (Neon serverless, `casing: "snake_case"`, lazy `db` proxy).
 
 ## Testing Expectations
 
-- Add or update automated tests for any behavior change, especially stream parsing and consumer helpers.
-- Prefer small focused unit tests with a fake Redis client.
+- Add or update automated tests for any behavior change, especially stream parsing, token extraction, and consumer helpers.
+- Prefer small focused unit tests with a fake Redis / DB client.
 - Before handing work off, run `bun test` and `bun run build` in this app.
