@@ -213,6 +213,10 @@ Authorization: Bearer sk_…
 
 The portal analytics surface is built for real operations teams:
 
+<p align="center">
+  <img src="./analytics-view.png" alt="Open LLM Gateway analytics page — request count stacked by environment over time" width="900" />
+</p>
+
 | Control | What it does |
 | ------- | ------------ |
 | **Metric** | Y-axis: request count · total tokens · cost |
