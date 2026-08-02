@@ -162,9 +162,9 @@ export const requestLog = pgTable(
   {
     eventId: text().notNull(),
     requestId: text().notNull(),
-    requestHeadersJson: jsonb(),
-    requestPayloadJson: jsonb(),
-    responseHeadersJson: jsonb(),
+    requestHeadersJson: text(),
+    requestPayloadJson: text(),
+    responseHeadersJson: text(),
     responseText: text(),
     statusCode: integer(),
     isStream: boolean().notNull().default(false),
