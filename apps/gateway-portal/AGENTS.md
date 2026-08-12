@@ -20,7 +20,7 @@ This application is the management and analytics layer between upstream AI provi
 
 The portal should eventually include these main areas:
 
-1. Authentication with Better Auth using username and password
+1. Authentication with Better Auth (email/password and Google social login)
 2. Provider management for master API URL, provider metadata, and master API key
 3. Model pricing management for input and output token costs
 4. Child API key creation and lifecycle management
@@ -66,6 +66,18 @@ When working in this app, optimize for:
 - extensible support for multiple providers
 - dashboards that make usage and spend easy to understand
 
+## Implementation Practices
+
+Do not over-complicate or over-engineer. Prefer the simplest code that correctly solves the request.
+
+- Keep auth and feature config direct. If the UI always shows an option (e.g. Google login), wire the backend for it unconditionally — do not add enable/disable flags, env trimming, or conditional provider registration.
+- Avoid speculative helpers, large error-code maps, and defensive branches “just in case” unless the product currently needs them.
+- Prefer small, readable changes that match existing patterns over generalized abstractions.
+- Do not invent optional feature gates, feature flags, or progressive-enhancement paths unless explicitly requested.
+- Env vars for required integrations may be assumed set in real deployments; fail naturally if missing rather than building soft-disable paths.
+
+Example (auth): Google is always available on sign-in/sign-up, so `socialProviders.google` is always configured from `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` with no `googleEnabled` checks.
+
 ## Recommended Tech Stack
 
 When adding features to this app, prefer this stack by default:
@@ -99,7 +111,7 @@ When you complete any meaningful change (feature, fix, refactor, test, documenta
 
 ## Requirements
 
-- Location: under the most relevant `tasks/**` folder in `apps/gateway-portal/`.
+- Location: under the most relevant `tasks/**` folder at the project root (e.g. `tasks/auth/`).
 - Filename prefix: a three-digit, zero-padded sequence number that increases over time within that folder.
   - Examples: `001-auth-flow.md`, `002-provider-loading-states.md`
 - Content: include at minimum:

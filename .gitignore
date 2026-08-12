@@ -32,3 +32,4 @@ apps/gateway-api/dist
 apps/gateway-api/src/generated
 tmp.txt
 apps/gateway-portal/drizzle/migrations/meta/0001_snapshot.json
+apps/gateway-portal/scripts/seed/snapshot.json

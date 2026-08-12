@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, type ComponentProps } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, type ComponentProps } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
+import { AuthDivider } from "@/components/auth/auth-divider";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { oauthErrorMessage } from "@/components/auth/oauth-error";
 import { Button } from "@/components/ui/button";
 import { signUp } from "@/lib/auth-client";
 
@@ -16,8 +19,23 @@ type FormSubmitEvent = Parameters<
 
 export function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Surface OAuth callback failures (e.g. account_not_linked) returned as ?error=
+  useEffect(() => {
+    const message = oauthErrorMessage(searchParams.get("error"));
+    if (!message) return;
+
+    setError(message);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("error");
+    params.delete("error_description");
+    const query = params.toString();
+    router.replace(query ? `/sign-up?${query}` : "/sign-up", { scroll: false });
+  }, [searchParams, router]);
 
   const handleSubmit = async (e: FormSubmitEvent) => {
     e.preventDefault();
@@ -49,77 +67,90 @@ export function SignUpForm() {
       footerHref="/sign-in"
       footerLinkText="Sign in"
     >
-      <form onSubmit={handleSubmit} className="space-y-3.5">
-        <div className="space-y-2">
-          <label
-            htmlFor="name"
-            className="text-sm font-medium text-text-primary"
+      <div className="space-y-4">
+        <GoogleSignInButton
+          callbackURL="/workspace"
+          errorCallbackURL="/sign-up"
+          label="Sign up with Google"
+        />
+
+        <AuthDivider />
+
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <div className="space-y-2">
+            <label
+              htmlFor="name"
+              className="text-sm font-medium text-text-primary"
+            >
+              Full name
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="Jane Doe"
+              required
+              className={inputClassName}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="email"
+              className="text-sm font-medium text-text-primary"
+            >
+              Email
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@company.com"
+              required
+              className={inputClassName}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-text-primary"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Use at least 8 characters"
+              required
+              minLength={8}
+              className={inputClassName}
+            />
+          </div>
+
+          {error ? (
+            <p
+              role="alert"
+              className="rounded-md border border-error/20 bg-error-bg px-3 py-2.5 text-sm text-error"
+            >
+              {error}
+            </p>
+          ) : null}
+
+          <Button
+            type="submit"
+            size="default"
+            className="w-full"
+            disabled={isSubmitting}
           >
-            Full name
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            placeholder="Jane Doe"
-            required
-            className={inputClassName}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="text-sm font-medium text-text-primary"
-          >
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@company.com"
-            required
-            className={inputClassName}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="text-sm font-medium text-text-primary"
-          >
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            placeholder="Use at least 8 characters"
-            required
-            minLength={8}
-            className={inputClassName}
-          />
-        </div>
-
-        {error ? (
-          <p className="rounded-md border border-error/20 bg-error-bg px-3 py-2.5 text-sm text-error">
-            {error}
-          </p>
-        ) : null}
-
-        <Button
-          type="submit"
-          size="default"
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Creating account..." : "Create account"}
-        </Button>
-      </form>
+            {isSubmitting ? "Creating account..." : "Create account"}
+          </Button>
+        </form>
+      </div>
     </AuthShell>
   );
 }

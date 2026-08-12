@@ -84,14 +84,26 @@ npm install
 #   API_ENCRYPT_KEY=
 #   BETTER_AUTH_SECRET=
 #   BETTER_AUTH_URL=http://localhost:3000
+#   GOOGLE_CLIENT_ID=          # optional, for Google social login
+#   GOOGLE_CLIENT_SECRET=
 
 npm run db:migrate   # apply Drizzle migrations
 npm run dev          # http://localhost:3000
 ```
 
+### Google social login (optional)
+
+1. Create an OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID** → **Web application**.
+2. Add authorized redirect URI:
+   - Local: `http://localhost:3000/api/auth/callback/google`
+   - Production: `https://<your-domain>/api/auth/callback/google`
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`.
+4. Ensure `BETTER_AUTH_URL` matches the public origin of the portal (used to build the OAuth callback URL).
+5. Restart `npm run dev`, then use **Continue with Google** on `/sign-in` or `/sign-up`.
+
 ### First-run checklist
 
-1. Sign up and verify email (if SES is configured).  
+1. Sign up with email/password, or **Continue with Google**.  
 2. **Providers** → add upstream URL + master key.  
 3. **Models** → register alias + pricing.  
 4. **Child keys** → mint a key; copy the `sk_…` secret (shown once).  
@@ -115,7 +127,9 @@ npm run db:seed       # re-seed from snapshot
 | `JWT_SIGNING_SECRET` | yes | Child key JWT (must match gateway-api) |
 | `API_ENCRYPT_KEY` | yes | AES key for provider/child secrets (must match gateway-api) |
 | `BETTER_AUTH_SECRET` | yes | Better Auth session secret |
-| `BETTER_AUTH_URL` | yes | Public portal URL |
+| `BETTER_AUTH_URL` | yes | Public portal URL (OAuth callback base) |
+| `GOOGLE_CLIENT_ID` | no* | Google OAuth client ID (*required for Google login) |
+| `GOOGLE_CLIENT_SECRET` | no* | Google OAuth client secret (*required for Google login) |
 | `EMAIL_FROM` / AWS SES vars | no | Verification email via SES |
 | `REDIS_URL` | no | Cache invalidation helpers |
 
