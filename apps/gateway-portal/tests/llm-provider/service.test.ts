@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   buildProviderCreateData,
+  buildProviderNameTsQuery,
   buildProviderUpdateData,
   buildProvidersWhereClause,
 } from "@/lib/llm-provider/service";
@@ -20,9 +21,11 @@ test("buildProviderCreateData encrypts the API key before persistence", () => {
       isActive: true,
     },
     "user-1",
+    "org-1",
   );
 
   assert.equal(data.creatorId, "user-1");
+  assert.equal(data.organizationId, "org-1");
   assert.equal(data.name, "openai");
   assert.notEqual(data.encryptedApiKey, "provider-secret");
   assert.equal(decryptApiKeyForProxy(data.encryptedApiKey), "provider-secret");
@@ -40,6 +43,7 @@ test("buildProviderUpdateData preserves the encrypted API key when no new key is
       isActive: true,
     },
     "user-1",
+    "org-1",
   ).encryptedApiKey;
 
   const data = buildProviderUpdateData(existingEncryptedKey, {
@@ -56,15 +60,33 @@ test("buildProviderUpdateData preserves the encrypted API key when no new key is
 });
 
 test("buildProvidersWhereClause defaults to active providers only", () => {
-  assert.deepEqual(buildProvidersWhereClause("user-1"), {
-    creatorId: "user-1",
+  assert.deepEqual(buildProvidersWhereClause("org-1"), {
+    organizationId: "org-1",
     isActive: true,
   });
 
   assert.deepEqual(
-    buildProvidersWhereClause("user-1", { includeInactive: true }),
+    buildProvidersWhereClause("org-1", { includeInactive: true }),
     {
-      creatorId: "user-1",
+      organizationId: "org-1",
     },
   );
+
+  assert.deepEqual(
+    buildProvidersWhereClause("org-1", {
+      includeInactive: true,
+      compatibilityType: "anthropic",
+      q: "deep seek",
+    }),
+    {
+      organizationId: "org-1",
+      compatibilityType: "anthropic",
+      nameSearch: "deep:* & seek:*",
+    },
+  );
+});
+
+test("buildProviderNameTsQuery tokenizes names for prefix full-text search", () => {
+  assert.equal(buildProviderNameTsQuery("  Alibaba-CN "), "alibaba:* & cn:*");
+  assert.equal(buildProviderNameTsQuery("!!!"), null);
 });

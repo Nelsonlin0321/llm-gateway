@@ -120,6 +120,7 @@ export function toChildKeyListItem(record: ChildKeyRecord): ChildKeyListItem {
 export async function buildChildKeyCreateData(
   input: CreateChildKeyInput,
   creator: { id: string },
+  organizationId: string,
 ) {
   const id = randomUUID();
   const tags = input.tags ?? {};
@@ -150,6 +151,7 @@ export async function buildChildKeyCreateData(
     expiresAt: expiresAtDate,
     issuedAt,
     creatorId: creator.id,
+    organizationId,
   };
 
   return { data, apiKey, id };

@@ -1,6 +1,16 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { SignUpForm } from "@/components/auth/sign-up-form";
+
+export const metadata: Metadata = {
+  title: "Create an account",
+  description:
+    "Create a Gateway account to connect LLM providers, register model prices, and issue scoped child API keys.",
+  alternates: {
+    canonical: "/sign-up",
+  },
+};
 
 function SignUpFallback() {
   return (

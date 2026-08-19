@@ -47,8 +47,23 @@ export const updateProviderInputSchema = baseProviderSchema.extend({
   }, z.string().min(1, "API key cannot be empty.").optional()),
 });
 
-export const getProvidersOptionsSchema = z
-  .object({
+export const providerListQuerySchema = z.object({
+  compatibilityType: z.enum(compatibilityTypes).optional(),
+  q: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return undefined;
+      }
+      const clipped = value.slice(0, 64);
+      return clipped.length > 0 ? clipped : undefined;
+    }),
+});
+
+export const getProvidersOptionsSchema = providerListQuerySchema
+  .extend({
     includeInactive: z.coerce.boolean().optional(),
   })
   .optional();
@@ -56,7 +71,53 @@ export const getProvidersOptionsSchema = z
 export type CompatibilityType = (typeof compatibilityTypes)[number];
 export type CreateProviderInput = z.infer<typeof createProviderInputSchema>;
 export type UpdateProviderInput = z.infer<typeof updateProviderInputSchema>;
-export type GetProvidersOptions = z.infer<typeof getProvidersOptionsSchema>;
+export type ProviderListQuery = {
+  compatibilityType?: CompatibilityType;
+  q?: string;
+};
+export type GetProvidersOptions =
+  | (ProviderListQuery & {
+      includeInactive?: boolean;
+    })
+  | undefined;
+
+function firstSearchParam(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+export function parseProviderListSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+): ProviderListQuery {
+  const compatibility = firstSearchParam(searchParams.compatibility);
+  const parsed = providerListQuerySchema.safeParse({
+    compatibilityType:
+      compatibility === "openai" || compatibility === "anthropic"
+        ? compatibility
+        : undefined,
+    q: firstSearchParam(searchParams.q),
+  });
+
+  if (!parsed.success) {
+    return {};
+  }
+
+  return {
+    ...(parsed.data.compatibilityType
+      ? { compatibilityType: parsed.data.compatibilityType }
+      : {}),
+    ...(parsed.data.q ? { q: parsed.data.q } : {}),
+  };
+}
+
+export function hasProviderListFilters(query: ProviderListQuery): boolean {
+  return Boolean(query.compatibilityType || query.q);
+}
 
 export type ProviderListItem = {
   id: string;

@@ -1,21 +1,29 @@
-import { Suspense } from "react";
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { WorkspaceOverviewSection } from "@/components/workspace/workspace-overview-section";
-import { WorkspaceOverviewSkeleton } from "@/components/workspace/workspace-overview-skeleton";
-import { PageHeader } from "@/components/ui/page-header";
+import { requireSession } from "@/lib/auth-server";
+import {
+  ensureDefaultOrganizationForUser,
+  selectWorkspaceOrganizationId,
+} from "@/lib/organization/service";
+import { privatePageMetadata } from "@/lib/site";
 
-export default function WorkspacePage() {
-  return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Workspace"
-        title="Overview"
-        description="Monitor usage, manage providers, and govern access from a single control plane."
-      />
+export const metadata: Metadata = privatePageMetadata(
+  "Workspace",
+  "Open your organization console to manage providers, models, keys, and analytics.",
+);
 
-      <Suspense fallback={<WorkspaceOverviewSkeleton />}>
-        <WorkspaceOverviewSection />
-      </Suspense>
-    </div>
+export default async function WorkspaceIndexPage() {
+  const session = await requireSession("/workspace");
+  const organizations = await ensureDefaultOrganizationForUser(session.user);
+  const organizationId = selectWorkspaceOrganizationId(
+    organizations,
+    session.session.activeOrganizationId,
   );
+
+  if (!organizationId) {
+    redirect("/organization");
+  }
+
+  redirect(`/org/${organizationId}`);
 }

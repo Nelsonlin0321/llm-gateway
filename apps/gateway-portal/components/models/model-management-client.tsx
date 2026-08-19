@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { FlaskConical, PencilLine, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -11,6 +12,7 @@ import { deleteModel } from "@/app/server-actions/model/delete-model";
 import { testModel } from "@/app/server-actions/model/test-model";
 import { updateModel } from "@/app/server-actions/model/update-model";
 import { ModelFormModal } from "@/components/models/model-form-modal";
+import { ModelListFilters } from "@/components/models/model-list-filters";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -21,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -31,14 +33,19 @@ import {
 } from "@/components/ui/card";
 import {
   createModelInputSchema,
+  hasModelListFilters,
   updateModelInputSchema,
   type ModelListItem,
+  type ModelListQuery,
   type ProviderSummary,
 } from "@/lib/model/schema";
+import { cn } from "@/lib/utils";
 
 type ModelManagementClientProps = {
-  provider: ProviderSummary;
+  organizationId: string;
+  providers: ProviderSummary[];
   models: ModelListItem[];
+  query?: ModelListQuery;
 };
 
 type ModalState =
@@ -66,8 +73,10 @@ function formatPrice(value: number) {
 }
 
 export function ModelManagementClient({
-  provider,
+  organizationId,
+  providers,
   models,
+  query = {},
 }: ModelManagementClientProps) {
   const router = useRouter();
   const [modalState, setModalState] = useState<ModalState>(null);
@@ -78,11 +87,6 @@ export function ModelManagementClient({
   const [testingId, setTestingId] = useState<string | null>(null);
 
   const stats = useMemo(() => {
-    const avgInput =
-      models.length === 0
-        ? 0
-        : models.reduce((sum, model) => sum + model.inputPrice, 0) /
-          models.length;
     const avgOutput =
       models.length === 0
         ? 0
@@ -91,10 +95,10 @@ export function ModelManagementClient({
 
     return {
       total: models.length,
-      avgInput,
+      providers: providers.length,
       avgOutput,
     };
-  }, [models]);
+  }, [models, providers.length]);
 
   const handleCreate = async (
     values: z.infer<typeof createModelInputSchema>,
@@ -173,10 +177,7 @@ export function ModelManagementClient({
     <>
       <section className="grid grid-cols-3 gap-3">
         <MetricCard label="Models" value={stats.total.toString()} />
-        <MetricCard
-          label="Avg input / 1M"
-          value={models.length ? formatPrice(stats.avgInput) : "—"}
-        />
+        <MetricCard label="Providers" value={stats.providers.toString()} />
         <MetricCard
           label="Avg output / 1M"
           value={models.length ? formatPrice(stats.avgOutput) : "—"}
@@ -186,39 +187,60 @@ export function ModelManagementClient({
       <Card className="border-border bg-card shadow-card">
         <CardHeader className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <CardTitle className="text-base">
-              {provider.name}
-              <span className="ml-2 font-normal text-text-secondary">
-                models
-              </span>
-            </CardTitle>
+            <CardTitle className="text-base">Registered models</CardTitle>
             <CardDescription>
-              Upstream model IDs, aliases, and USD pricing per 1M tokens.
+              {models.length === 0
+                ? hasModelListFilters(query)
+                  ? "No models match these filters."
+                  : "All models for this organization, across every connected provider."
+                : `${models.length} model${models.length === 1 ? "" : "s"} in this organization.`}
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setModalState({ mode: "create" })}>
+          <Button
+            size="sm"
+            disabled={providers.length === 0}
+            onClick={() => setModalState({ mode: "create" })}
+          >
             <Plus className="size-3.5" />
             Add model
           </Button>
         </CardHeader>
+        <div className="border-b border-border px-4 py-3 sm:px-5">
+          <ModelListFilters query={query} providers={providers} />
+        </div>
         <CardContent className="p-0">
           {models.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm font-medium text-text-primary">
-                No models registered
+                {hasModelListFilters(query)
+                  ? "No matching models"
+                  : "No models registered"}
               </p>
               <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-5 text-text-secondary">
-                Add a model with input, output, and cache prices so routing and
-                cost attribution can use this provider.
+                {hasModelListFilters(query)
+                  ? "Try a different name, provider, or compatibility type, or clear the filters."
+                  : providers.length === 0
+                    ? "Connect a provider first, then register models with input, output, and cache prices."
+                    : "Add a model with input, output, and cache prices so routing and cost attribution can use this organization."}
               </p>
-              <Button
-                size="sm"
-                className="mt-4"
-                onClick={() => setModalState({ mode: "create" })}
-              >
-                <Plus className="size-3.5" />
-                Add model
-              </Button>
+              {hasModelListFilters(query) ? null : providers.length === 0 ? (
+                <Link
+                  href={`/org/${organizationId}/providers`}
+                  className={cn(buttonVariants({ size: "sm" }), "mt-4")}
+                >
+                  <Plus className="size-3.5" />
+                  Add provider
+                </Link>
+              ) : (
+                <Button
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setModalState({ mode: "create" })}
+                >
+                  <Plus className="size-3.5" />
+                  Add model
+                </Button>
+              )}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -234,6 +256,9 @@ export function ModelManagementClient({
                       </p>
                       <Badge variant="neutral" className="font-mono text-[11px]">
                         {model.alias}
+                      </Badge>
+                      <Badge variant="neutral">
+                        {model.providerName || "Provider"}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-1.5 text-[11px] text-text-secondary">
@@ -303,8 +328,7 @@ export function ModelManagementClient({
         }
         open={modalState !== null}
         mode={modalState?.mode ?? "create"}
-        providerId={provider.id}
-        providerName={provider.name}
+        providers={providers}
         model={modalState?.mode === "edit" ? modalState.model : undefined}
         isSubmitting={isSubmitting}
         onClose={() => {

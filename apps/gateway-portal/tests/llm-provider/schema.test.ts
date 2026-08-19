@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   createProviderInputSchema,
+  parseProviderListSearchParams,
   providerNamePattern,
   updateProviderInputSchema,
 } from "@/lib/llm-provider/schema";
@@ -47,4 +48,25 @@ test("allows provider edits to keep the stored API key", () => {
 
   assert.equal(parsed.apiKey, undefined);
   assert.equal(parsed.isActive, false);
+});
+
+test("parseProviderListSearchParams reads compatibility and name query", () => {
+  assert.deepEqual(
+    parseProviderListSearchParams({
+      compatibility: "openai",
+      q: "  moonshot  ",
+    }),
+    {
+      compatibilityType: "openai",
+      q: "moonshot",
+    },
+  );
+
+  assert.deepEqual(
+    parseProviderListSearchParams({
+      compatibility: "unknown",
+      q: "   ",
+    }),
+    {},
+  );
 });

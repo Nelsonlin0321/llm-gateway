@@ -9,6 +9,7 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { oauthErrorMessage } from "@/components/auth/oauth-error";
 import { Button } from "@/components/ui/button";
 import { signUp } from "@/lib/auth-client";
+import { safeReturnPath } from "@/lib/auth-redirect";
 
 const inputClassName =
   "h-10 w-full rounded-md border border-border-visible bg-transparent px-3 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
@@ -22,6 +23,8 @@ export function SignUpForm() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const nextPath = safeReturnPath(searchParams.get("next"), "/");
 
   // Surface OAuth callback failures (e.g. account_not_linked) returned as ?error=
   useEffect(() => {
@@ -43,11 +46,23 @@ export function SignUpForm() {
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setIsSubmitting(false);
+      return;
+    }
 
     const res = await signUp.email({
-      name: formData.get("name") as string,
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
+      name,
+      email,
+      password,
+      // After the user verifies via email link, Better Auth redirects here.
+      callbackURL: nextPath,
     });
 
     if (res.error) {
@@ -56,20 +71,70 @@ export function SignUpForm() {
       return;
     }
 
-    router.push("/workspace");
+    // Account is created but pending email verification (no session yet).
+    setPendingEmail(email);
+    setIsSubmitting(false);
   };
+
+  if (pendingEmail) {
+    return (
+      <AuthShell
+        title="Check your email"
+        heading="Verify your Gateway account"
+        subheading="Open the verification link we sent so you can start connecting providers and issuing child keys."
+        description="We created your account. Verify your email to finish signing up."
+        footerLabel="Already verified?"
+        footerHref={
+          nextPath === "/"
+            ? "/sign-in"
+            : `/sign-in?next=${encodeURIComponent(nextPath)}`
+        }
+        footerLinkText="Sign in"
+      >
+        <div className="space-y-4">
+          <div className="rounded-md border border-border bg-surface-2 px-3.5 py-3 text-sm leading-6 text-text-secondary">
+            We sent a verification link to{" "}
+            <span className="font-medium text-text-primary">{pendingEmail}</span>
+            . Open the link within 15 minutes to activate your account. You will
+            be redirected to the home page after verification.
+          </div>
+          <p className="text-sm text-text-tertiary">
+            Did not get the email? Check spam, or try signing in later to
+            request a new verification link.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              setPendingEmail(null);
+              setError(null);
+            }}
+          >
+            Use a different email
+          </Button>
+        </div>
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
       title="Create account"
+      heading="Create your Gateway account"
+      subheading="Connect upstream providers, register model prices, and issue scoped child API keys from one console."
       description="Create a workspace account to configure providers and issue API keys."
       footerLabel="Already have an account?"
-      footerHref="/sign-in"
+      footerHref={
+        nextPath === "/"
+          ? "/sign-in"
+          : `/sign-in?next=${encodeURIComponent(nextPath)}`
+      }
       footerLinkText="Sign in"
     >
       <div className="space-y-4">
         <GoogleSignInButton
-          callbackURL="/workspace"
+          callbackURL={nextPath === "/" ? "/workspace" : nextPath}
           errorCallbackURL="/sign-up"
           label="Sign up with Google"
         />
@@ -126,6 +191,25 @@ export function SignUpForm() {
               type="password"
               autoComplete="new-password"
               placeholder="Use at least 8 characters"
+              required
+              minLength={8}
+              className={inputClassName}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium text-text-primary"
+            >
+              Confirm password
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Re-enter your password"
               required
               minLength={8}
               className={inputClassName}

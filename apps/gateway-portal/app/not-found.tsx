@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -19,6 +20,16 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+export const metadata: Metadata = {
+  title: "Page not found",
+  description:
+    "This Gateway page does not exist. Return home or open the console.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
+
 const destinations = [
   {
     href: "/",
@@ -27,9 +38,9 @@ const destinations = [
     icon: LayoutDashboard,
   },
   {
-    href: "/workspace/providers",
-    label: "Providers",
-    detail: "Connect upstream APIs and master credentials",
+    href: "/workspace",
+    label: "Console",
+    detail: "Open the organization workspace after sign-in",
     icon: Server,
   },
   {
@@ -86,7 +97,7 @@ export default function NotFound() {
                 Back to home
               </Link>
               <Link
-                href="/workspace/overview"
+                href="/workspace"
                 className={cn(
                   buttonVariants({ variant: "secondary", size: "default" }),
                   "px-4",

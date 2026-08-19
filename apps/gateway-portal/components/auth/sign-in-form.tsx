@@ -9,6 +9,7 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { oauthErrorMessage } from "@/components/auth/oauth-error";
 import { Button } from "@/components/ui/button";
 import { signIn } from "@/lib/auth-client";
+import { safeReturnPath } from "@/lib/auth-redirect";
 
 const inputClassName =
   "h-10 w-full rounded-md border border-border-visible bg-transparent px-3 text-sm text-foreground transition-[border-color,box-shadow] placeholder:text-text-tertiary focus:border-accent focus:outline-none focus:ring-3 focus:ring-ring/40";
@@ -16,13 +17,6 @@ const inputClassName =
 type FormSubmitEvent = Parameters<
   NonNullable<ComponentProps<"form">["onSubmit"]>
 >[0];
-
-function safeReturnPath(next: string | null): string {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/workspace";
-  }
-  return next;
-}
 
 export function SignInForm() {
   const router = useRouter();
@@ -70,9 +64,15 @@ export function SignInForm() {
   return (
     <AuthShell
       title="Sign in"
+      heading="Sign in to Gateway"
+      subheading="Access providers, child API keys, policies, and usage analytics for your organization."
       description="Sign in to manage providers, child keys, and workspace settings."
       footerLabel="Need an account?"
-      footerHref="/sign-up"
+      footerHref={
+        nextPath === "/workspace"
+          ? "/sign-up"
+          : `/sign-up?next=${encodeURIComponent(nextPath)}`
+      }
       footerLinkText="Create one"
     >
       <div className="space-y-4">

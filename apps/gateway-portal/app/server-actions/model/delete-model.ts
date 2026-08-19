@@ -1,15 +1,16 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
 import { db, llmProviders, models } from "@/lib/db";
 import { toModelListItem } from "@/lib/model/service";
+import { getOrganizationMembership } from "@/lib/organization/service";
 
 import {
   modelReturning,
   modelValidationError,
+  revalidateOrganizationModelPaths,
   type ModelActionResult,
 } from "./shared";
 
@@ -23,16 +24,24 @@ export async function deleteModel(id: string): Promise<ModelActionResult> {
   const [existing] = await db
     .select({
       id: models.id,
-      providerId: models.providerId,
+      organizationId: models.organizationId,
+      providerName: llmProviders.name,
     })
     .from(models)
     .innerJoin(llmProviders, eq(models.providerId, llmProviders.id))
-    .where(
-      and(eq(models.id, id), eq(llmProviders.creatorId, session.user.id)),
-    )
+    .where(eq(models.id, id))
     .limit(1);
 
   if (!existing) {
+    return modelValidationError("Model not found.");
+  }
+
+  const membership = await getOrganizationMembership(
+    session.user.id,
+    existing.organizationId,
+  );
+
+  if (!membership) {
     return modelValidationError("Model not found.");
   }
 
@@ -42,12 +51,11 @@ export async function deleteModel(id: string): Promise<ModelActionResult> {
       .where(eq(models.id, existing.id))
       .returning(modelReturning);
 
-    revalidatePath(`/workspace/${existing.providerId}/models`);
-    revalidatePath("/workspace/providers");
+    revalidateOrganizationModelPaths(existing.organizationId);
 
     return {
       ok: true,
-      model: toModelListItem(model),
+      model: toModelListItem(model, existing.providerName),
       message: "Model deregistered successfully.",
     };
   } catch (error) {

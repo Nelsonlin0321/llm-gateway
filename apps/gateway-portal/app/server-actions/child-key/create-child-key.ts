@@ -9,6 +9,7 @@ import {
   validateCreateChildKeyInput,
 } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import {
   childKeyReturning,
@@ -21,6 +22,14 @@ export async function createChildKey(
   input: unknown,
 ): Promise<ChildKeyActionResult> {
   const session = await requireSession();
+  const organizationId = await resolveActiveOrganizationId(session);
+
+  if (!organizationId) {
+    return childKeyValidationError(
+      "Select an organization before creating a child API key.",
+    );
+  }
+
   const parsed = validateCreateChildKeyInput(input);
 
   if (!parsed.success) {
@@ -31,9 +40,13 @@ export async function createChildKey(
   }
 
   try {
-    const { data, apiKey } = await buildChildKeyCreateData(parsed.data, {
-      id: session.user.id,
-    });
+    const { data, apiKey } = await buildChildKeyCreateData(
+      parsed.data,
+      {
+        id: session.user.id,
+      },
+      organizationId,
+    );
 
     const [childKey] = await db
       .insert(childKeys)

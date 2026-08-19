@@ -18,6 +18,7 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
         <div className="flex min-w-0 items-center gap-6">
           <Link
             href="/"
+            aria-label="Gateway home"
             className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
           >
             <span className="flex size-7 items-center justify-center rounded-md bg-accent text-[10px] font-bold tracking-tight text-accent-foreground">
@@ -28,7 +29,7 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-0.5 md:flex">
+          <nav aria-label="Primary" className="hidden items-center gap-0.5 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.label}

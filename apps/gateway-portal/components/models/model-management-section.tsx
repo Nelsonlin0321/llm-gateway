@@ -1,16 +1,22 @@
 import { notFound } from "next/navigation";
 
-import { getModelsForProvider } from "@/app/server-actions/model/get-models";
+import { getModelsForOrganization } from "@/app/server-actions/model/get-models";
 import { ModelManagementClient } from "@/components/models/model-management-client";
+import type { ModelListQuery } from "@/lib/model/schema";
 
 type ModelManagementSectionProps = {
-  providerId: string;
+  organizationId: string;
+  query?: ModelListQuery;
 };
 
 export async function ModelManagementSection({
-  providerId,
+  organizationId,
+  query = {},
 }: ModelManagementSectionProps) {
-  const result = await getModelsForProvider({ providerId });
+  const result = await getModelsForOrganization({
+    organizationId,
+    ...query,
+  });
 
   if (!result.ok) {
     if (result.code === "not_found" || result.code === "forbidden") {
@@ -25,6 +31,11 @@ export async function ModelManagementSection({
   }
 
   return (
-    <ModelManagementClient provider={result.provider} models={result.models} />
+    <ModelManagementClient
+      organizationId={organizationId}
+      providers={result.providers}
+      models={result.models}
+      query={query}
+    />
   );
 }

@@ -3,13 +3,14 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Boxes, PencilLine, Plus, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import { createProvider } from "@/app/server-actions/llm-provider/create-provider";
 import { deleteProvider } from "@/app/server-actions/llm-provider/delete-provider";
 import { updateProvider } from "@/app/server-actions/llm-provider/update-provider";
 import { ProviderFormModal } from "@/components/llm-providers/provider-form-modal";
+import { ProviderListFilters } from "@/components/llm-providers/provider-list-filters";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -30,13 +31,16 @@ import {
 } from "@/components/ui/card";
 import {
   createProviderInputSchema,
+  hasProviderListFilters,
   type ProviderListItem,
+  type ProviderListQuery,
   updateProviderInputSchema,
 } from "@/lib/llm-provider/schema";
 import { cn } from "@/lib/utils";
 
 type ProviderManagementClientProps = {
   providers: ProviderListItem[];
+  query?: ProviderListQuery;
 };
 
 type ModalState =
@@ -54,8 +58,14 @@ function formatDate(value: string) {
 
 export function ProviderManagementClient({
   providers,
+  query = {},
 }: ProviderManagementClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const organizationId = pathname.match(/^\/org\/([^/]+)/)?.[1];
+  const modelsHref = organizationId
+    ? `/org/${organizationId}/models`
+    : "/workspace";
   const [modalState, setModalState] = useState<ModalState>(null);
   const [providerPendingDelete, setProviderPendingDelete] =
     useState<ProviderListItem | null>(null);
@@ -155,7 +165,9 @@ export function ProviderManagementClient({
             <CardTitle className="text-base">Configured providers</CardTitle>
             <CardDescription>
               {stats.total === 0
-                ? "No providers yet — add an upstream endpoint to begin."
+                ? hasProviderListFilters(query)
+                  ? "No providers match these filters."
+                  : "No providers yet — add an upstream endpoint to begin."
                 : `${stats.total} provider${stats.total === 1 ? "" : "s"} in this workspace.`}
             </CardDescription>
           </div>
@@ -164,15 +176,21 @@ export function ProviderManagementClient({
             Add provider
           </Button>
         </CardHeader>
+        <div className="border-b border-border px-4 py-3 sm:px-5">
+          <ProviderListFilters query={query} />
+        </div>
         <CardContent className="p-0">
           {providers.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p className="text-sm font-medium text-text-primary">
-                No providers configured
+                {hasProviderListFilters(query)
+                  ? "No matching providers"
+                  : "No providers configured"}
               </p>
               <p className="mx-auto mt-1.5 max-w-md text-[13px] leading-5 text-text-secondary">
-                Add an upstream URL and encrypted API key to enable routing and
-                model pricing for this workspace.
+                {hasProviderListFilters(query)
+                  ? "Try a different name or compatibility type, or clear the filters."
+                  : "Add an upstream URL and encrypted API key to enable routing and model pricing for this workspace."}
               </p>
               <Button
                 size="sm"
@@ -200,7 +218,10 @@ export function ProviderManagementClient({
                       >
                         {provider.isActive ? "Active" : "Inactive"}
                       </Badge>
-                      <Badge variant="neutral" className="font-mono text-[11px] uppercase">
+                      <Badge
+                        variant="neutral"
+                        className="font-mono text-[11px] uppercase"
+                      >
                         {provider.compatibilityType}
                       </Badge>
                     </div>
@@ -214,7 +235,7 @@ export function ProviderManagementClient({
 
                   <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">
                     <Link
-                      href={`/workspace/${provider.id}/models`}
+                      href={modelsHref}
                       className={cn(
                         buttonVariants({ variant: "outline", size: "sm" }),
                       )}

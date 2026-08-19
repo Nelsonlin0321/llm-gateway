@@ -12,6 +12,8 @@ import {
 type AuthShellProps = {
   title: string;
   description: string;
+  heading?: string;
+  subheading?: string;
   footerLabel: string;
   footerHref: string;
   footerLinkText: string;
@@ -21,6 +23,8 @@ type AuthShellProps = {
 export function AuthShell({
   title,
   description,
+  heading = "Manage gateway access, spend, and policies from one place.",
+  subheading = "Configure provider credentials, issue child API keys, and track usage across teams, users, and projects.",
   footerLabel,
   footerHref,
   footerLinkText,
@@ -35,11 +39,10 @@ export function AuthShell({
           </div>
           <div className="space-y-3">
             <h1 className="max-w-2xl font-heading text-[2.25rem] leading-[1.1] font-bold tracking-[-0.02em] text-text-primary sm:text-[2.75rem]">
-              Manage gateway access, spend, and policies from one place.
+              {heading}
             </h1>
             <p className="max-w-lg text-sm leading-6 text-text-secondary sm:text-base">
-              Configure provider credentials, issue child API keys, and track
-              usage across teams, users, and projects.
+              {subheading}
             </p>
           </div>
         </section>

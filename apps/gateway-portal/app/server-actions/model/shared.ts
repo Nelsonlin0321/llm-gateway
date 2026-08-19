@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { models, type Model } from "@/lib/db";
 import { toModelListItem } from "@/lib/model/service";
 
@@ -47,4 +49,10 @@ export function modelValidationError(
     error,
     fieldErrors,
   };
+}
+
+export function revalidateOrganizationModelPaths(organizationId: string) {
+  revalidatePath(`/org/${organizationId}/models`);
+  revalidatePath(`/org/${organizationId}/providers`);
+  revalidatePath(`/org/${organizationId}`);
 }

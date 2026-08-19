@@ -5,6 +5,7 @@ import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { requireSession } from "@/lib/auth-server";
 import { decryptChildKey } from "@/lib/child-key/service";
 import { db, childKeys, llmProviders, models } from "@/lib/db";
+import { getOrganizationMembership } from "@/lib/organization/service";
 
 const DEFAULT_PROXY_API_URL = "http://localhost:8080";
 const STREAM = false;
@@ -141,7 +142,7 @@ export async function testModel(modelId: string): Promise<TestModelResult> {
       modelAlias: models.alias,
       providerId: llmProviders.id,
       compatibilityType: llmProviders.compatibilityType,
-      creatorId: llmProviders.creatorId,
+      organizationId: models.organizationId,
     })
     .from(models)
     .innerJoin(llmProviders, eq(models.providerId, llmProviders.id))
@@ -152,7 +153,12 @@ export async function testModel(modelId: string): Promise<TestModelResult> {
     return { ok: false, error: "Model not found." };
   }
 
-  if (row.creatorId !== session.user.id) {
+  const membership = await getOrganizationMembership(
+    session.user.id,
+    row.organizationId,
+  );
+
+  if (!membership) {
     return {
       ok: false,
       error: "You do not have permission to test this model.",

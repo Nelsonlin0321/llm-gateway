@@ -1,8 +1,21 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { nextCookies } from "better-auth/next-js";
-
+import { organization } from "better-auth/plugins";
 import { db } from "@/lib/db";
+import { sendInvitationEmail, sendVerificationEmail } from "@/lib/email";
+import {
+  ac,
+  ORGANIZATION_CREATOR_ROLE,
+  ORGANIZATION_ROLE_LABELS,
+  organizationRoles,
+  normalizeOrganizationRole,
+} from "@/lib/organization/permissions";
+
+function invitationUrl(invitationId: string) {
+  const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  return `${base.replace(/\/$/, "")}/accept-invitation?id=${encodeURIComponent(invitationId)}`;
+}
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
@@ -11,6 +24,20 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    // Block sign-in until email is verified; also skips auto sign-in on sign-up.
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    // Matches the 15-minute copy in the verification email template.
+    expiresIn: 60 * 15,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendVerificationEmail({
+        email: user.email,
+        verificationUrl: url,
+      });
+    },
   },
   socialProviders: {
     google: {
@@ -27,11 +54,77 @@ export const auth = betterAuth({
       requireLocalEmailVerified: false,
     },
   },
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          const { createDefaultOrganizationForUser } = await import(
+            "@/lib/organization/service"
+          );
+          try {
+            await createDefaultOrganizationForUser(user);
+          } catch (error) {
+            console.error("Failed to create default organization", error);
+          }
+        },
+      },
+    },
+    session: {
+      create: {
+        before: async (session) => {
+          if (session.activeOrganizationId) {
+            return;
+          }
+
+          const { listOrganizationsForUser } = await import(
+            "@/lib/organization/service"
+          );
+          const organizations = await listOrganizationsForUser(session.userId);
+          const firstOrganization = organizations[0];
+          if (!firstOrganization) {
+            return;
+          }
+
+          return {
+            data: {
+              ...session,
+              activeOrganizationId: firstOrganization.id,
+            },
+          };
+        },
+      },
+    },
+  },
   // OAuth callback failures redirect here when no per-flow errorCallbackURL is set.
   onAPIError: {
     errorURL: "/sign-in",
   },
   trustedOrigins: ["http://localhost:3000"],
   experimental: { joins: true },
-  plugins: [nextCookies()],
+  plugins: [
+    nextCookies(),
+    organization({
+      ac,
+      roles: organizationRoles,
+      creatorRole: ORGANIZATION_CREATOR_ROLE,
+      allowUserToCreateOrganization: true,
+      invitationExpiresIn: 60 * 60 * 24 * 7,
+      cancelPendingInvitationsOnReInvite: true,
+      sendInvitationEmail: async ({
+        email,
+        organization: invitedOrganization,
+        inviter,
+        invitation,
+      }) => {
+        await sendInvitationEmail({
+          email,
+          inviterName: inviter.user.name || inviter.user.email,
+          organizationName: invitedOrganization.name,
+          roleLabel:
+            ORGANIZATION_ROLE_LABELS[normalizeOrganizationRole(invitation.role ?? "viewer")],
+          invitationUrl: invitationUrl(invitation.id),
+        });
+      },
+    }),
+  ],
 });

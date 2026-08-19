@@ -36,6 +36,13 @@ export function ModelManagementSkeleton() {
           </div>
           <Skeleton className="h-9 w-28 rounded-md" />
         </CardHeader>
+        <div className="border-b border-border px-4 py-3 sm:px-5">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Skeleton className="h-10 w-full sm:w-48" />
+            <Skeleton className="h-10 w-full sm:w-48" />
+            <Skeleton className="h-10 min-w-0 flex-1" />
+          </div>
+        </div>
         <CardContent className="space-y-3">
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-20 w-full rounded-lg" />

@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
   Boxes,
+  Building2,
   CreditCard,
   KeyRound,
   LayoutGrid,
@@ -14,60 +16,91 @@ import {
   Waypoints,
 } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { organization } from "@/lib/auth-client";
+import {
+  normalizeOrganizationRole,
+  ORGANIZATION_ROLE_LABELS,
+} from "@/lib/organization/permissions";
+import type { OrganizationListItem } from "@/lib/organization/service";
 import { cn } from "@/lib/utils";
 
-const workspaceNavigation = [
-  {
-    label: "Overview",
-    href: "/workspace",
-    icon: LayoutGrid,
-    match: (pathname: string) => pathname === "/workspace",
-  },
-  {
-    label: "Providers",
-    href: "/workspace/providers",
-    icon: PlugZap,
-    match: (pathname: string) => pathname.startsWith("/workspace/providers"),
-  },
-  {
-    label: "Models",
-    href: "/workspace/providers",
-    icon: Boxes,
-    match: (pathname: string) =>
-      /^\/workspace\/[^/]+\/models(?:\/|$)/.test(pathname),
-  },
-  {
-    label: "Child Keys",
-    href: "/workspace/child-keys",
-    icon: KeyRound,
-    match: (pathname: string) => pathname.startsWith("/workspace/child-keys"),
-  },
-  {
-    label: "Guardrails",
-    href: "/workspace#guardrails",
-    icon: ShieldCheck,
-    match: () => false,
-    disabled: true,
-  },
-  {
-    label: "Analytics",
-    href: "/workspace/analytics",
-    icon: BarChart3,
-    match: (pathname: string) => pathname.startsWith("/workspace/analytics"),
-  },
-  {
-    label: "Routing",
-    href: "/workspace#routing",
-    icon: Waypoints,
-    match: () => false,
-    disabled: true,
-  },
-] as const;
+function organizationHref(organizationId: string | null, suffix = "") {
+  const base = organizationId ? `/org/${organizationId}` : "/workspace";
+  return `${base}${suffix}`;
+}
+
+function matchesOrganizationPath(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function buildConsoleNavigation(organizationId: string | null) {
+  const overviewHref = organizationHref(organizationId);
+  const providersHref = organizationHref(organizationId, "/providers");
+  const modelsHref = organizationHref(organizationId, "/models");
+  const childKeysHref = organizationHref(organizationId, "/child-keys");
+  const analyticsHref = organizationHref(organizationId, "/analytics");
+
+  return [
+    {
+      label: "Overview",
+      href: overviewHref,
+      icon: LayoutGrid,
+      match: (pathname: string) =>
+        pathname === "/workspace" || pathname === overviewHref,
+    },
+    {
+      label: "Providers",
+      href: providersHref,
+      icon: PlugZap,
+      match: (pathname: string) => matchesOrganizationPath(pathname, providersHref),
+    },
+    {
+      label: "Models",
+      href: modelsHref,
+      icon: Boxes,
+      match: (pathname: string) => matchesOrganizationPath(pathname, modelsHref),
+    },
+    {
+      label: "Child Keys",
+      href: childKeysHref,
+      icon: KeyRound,
+      match: (pathname: string) => matchesOrganizationPath(pathname, childKeysHref),
+    },
+    {
+      label: "Guardrails",
+      href: `${overviewHref}#guardrails`,
+      icon: ShieldCheck,
+      match: () => false,
+      disabled: true,
+    },
+    {
+      label: "Analytics",
+      href: analyticsHref,
+      icon: BarChart3,
+      match: (pathname: string) => matchesOrganizationPath(pathname, analyticsHref),
+    },
+    {
+      label: "Routing",
+      href: `${overviewHref}#routing`,
+      icon: Waypoints,
+      match: () => false,
+      disabled: true,
+    },
+  ];
+}
 
 const accountNavigation = [
   {
+    label: "Organization",
+    href: "/organization",
+    icon: Building2,
+    match: (pathname: string) =>
+      pathname === "/organization" || pathname.startsWith("/organization/"),
+  },
+  {
     label: "Profile",
-    href: "/workspace",
+    href: "/profile/settting",
     icon: UserRound,
     match: () => false,
     disabled: true,
@@ -84,13 +117,59 @@ const accountNavigation = [
 type WorkspaceSidebarProps = {
   userName?: string | null;
   userEmail: string;
+  organizations: OrganizationListItem[];
+  activeOrganizationId: string | null;
 };
 
 export function WorkspaceSidebar({
   userName,
   userEmail,
+  organizations,
+  activeOrganizationId,
 }: WorkspaceSidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const activeOrganization =
+    organizations.find((item) => item.id === activeOrganizationId) ??
+    organizations[0];
+  const consoleNavigation = buildConsoleNavigation(
+    activeOrganization?.id ?? null,
+  );
+
+  useEffect(() => {
+    if (activeOrganizationId || !activeOrganization) {
+      return;
+    }
+
+    void organization
+      .setActive({ organizationId: activeOrganization.id })
+      .then(({ error }) => {
+        if (!error) {
+          router.refresh();
+        }
+      });
+  }, [activeOrganization, activeOrganizationId, router]);
+
+  const handleSwitch = async (organizationId: string) => {
+    if (organizationId === activeOrganizationId) {
+      return;
+    }
+
+    const { error } = await organization.setActive({ organizationId });
+    if (!error) {
+      if (pathname === "/workspace") {
+        router.push(`/org/${organizationId}`);
+        return;
+      }
+
+      if (pathname.startsWith("/org/")) {
+        router.push(pathname.replace(/^\/org\/[^/]+/, `/org/${organizationId}`));
+        return;
+      }
+
+      router.refresh();
+    }
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -99,17 +178,41 @@ export function WorkspaceSidebar({
           Organization
         </p>
         <p className="mt-1.5 truncate text-sm font-semibold tracking-[-0.01em] text-sidebar-foreground">
-          Default Workspace
+          {activeOrganization?.name ?? "No organization"}
         </p>
         <p className="mt-0.5 truncate text-[12px] text-text-tertiary">
           {userName || userEmail}
         </p>
+        {activeOrganization ? (
+          <Badge
+            variant="neutral"
+            className="mt-2"
+          >
+            {ORGANIZATION_ROLE_LABELS[normalizeOrganizationRole(activeOrganization.role)]}
+          </Badge>
+        ) : null}
+        {organizations.length > 1 ? (
+          <select
+            aria-label="Switch organization"
+            value={activeOrganization?.id ?? ""}
+            onChange={(event) => {
+              void handleSwitch(event.target.value);
+            }}
+            className="mt-3 h-8 w-full rounded-md border border-border-visible bg-transparent px-2 text-[12px] text-text-primary"
+          >
+            {organizations.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-4">
         <NavSection
           title="Console"
-          items={workspaceNavigation}
+          items={consoleNavigation}
           pathname={pathname}
         />
         <NavSection

@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 
 import { SignInForm } from "@/components/auth/sign-in-form";
+import { noIndexRobots } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  description:
+    "Sign in to Gateway to manage LLM providers, child API keys, and usage analytics.",
+  robots: noIndexRobots,
+};
 
 function SignInFallback() {
   return (

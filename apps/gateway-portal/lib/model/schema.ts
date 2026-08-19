@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { compatibilityTypes } from "@/lib/llm-provider/schema";
+
 const positivePriceSchema = z.coerce
   .number({ error: "Enter a valid number." })
   .positive("Price must be a positive number.");
@@ -55,13 +57,81 @@ export function parseModelAliasSuffix(
   return fullAlias;
 }
 
-export const getModelsInputSchema = z.object({
-  providerId: z.string().trim().min(1, "Provider is required."),
+export const modelListQuerySchema = z.object({
+  providerId: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => (value && value.length > 0 ? value : undefined)),
+  compatibilityType: z.enum(compatibilityTypes).optional(),
+  q: z
+    .string()
+    .trim()
+    .optional()
+    .transform((value) => {
+      if (!value) {
+        return undefined;
+      }
+
+      const clipped = value.slice(0, 64);
+      return clipped.length > 0 ? clipped : undefined;
+    }),
+});
+
+export const getModelsInputSchema = modelListQuerySchema.extend({
+  organizationId: z.string().trim().min(1, "Organization is required."),
 });
 
 export type CreateModelInput = z.infer<typeof createModelInputSchema>;
 export type UpdateModelInput = z.infer<typeof updateModelInputSchema>;
-export type GetModelsInput = z.infer<typeof getModelsInputSchema>;
+export type ModelListQuery = {
+  providerId?: string;
+  compatibilityType?: (typeof compatibilityTypes)[number];
+  q?: string;
+};
+export type GetModelsInput = ModelListQuery & {
+  organizationId: string;
+};
+
+function firstSearchParam(
+  value: string | string[] | undefined,
+): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+export function parseModelListSearchParams(
+  searchParams: Record<string, string | string[] | undefined>,
+): ModelListQuery {
+  const compatibility = firstSearchParam(searchParams.compatibility);
+  const parsed = modelListQuerySchema.safeParse({
+    providerId: firstSearchParam(searchParams.provider),
+    compatibilityType:
+      compatibility === "openai" || compatibility === "anthropic"
+        ? compatibility
+        : undefined,
+    q: firstSearchParam(searchParams.q),
+  });
+
+  if (!parsed.success) {
+    return {};
+  }
+
+  return {
+    ...(parsed.data.providerId ? { providerId: parsed.data.providerId } : {}),
+    ...(parsed.data.compatibilityType
+      ? { compatibilityType: parsed.data.compatibilityType }
+      : {}),
+    ...(parsed.data.q ? { q: parsed.data.q } : {}),
+  };
+}
+
+export function hasModelListFilters(query: ModelListQuery): boolean {
+  return Boolean(query.providerId || query.compatibilityType || query.q);
+}
 
 export type ModelListItem = {
   id: string;
@@ -71,6 +141,7 @@ export type ModelListItem = {
   outputPrice: number;
   inputCachePrice: number;
   providerId: string;
+  providerName: string;
   createdAt: string;
   updatedAt: string;
 };

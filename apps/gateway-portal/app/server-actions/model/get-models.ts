@@ -1,21 +1,23 @@
 "use server";
 
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
 import { db, llmProviders, models } from "@/lib/db";
+import type { ModelListItem, ProviderSummary } from "@/lib/model/schema";
 import {
+  buildModelsWhereClause,
   toModelListItem,
   validateGetModelsInput,
 } from "@/lib/model/service";
-import type { ModelListItem, ProviderSummary } from "@/lib/model/schema";
+import { getOrganizationMembership } from "@/lib/organization/service";
 
 import { modelReturning } from "./shared";
 
 export type GetModelsResult =
   | {
       ok: true;
-      provider: ProviderSummary;
+      providers: ProviderSummary[];
       models: ModelListItem[];
     }
   | {
@@ -24,7 +26,7 @@ export type GetModelsResult =
       code: "not_found" | "forbidden" | "validation";
     };
 
-export async function getModelsForProvider(
+export async function getModelsForOrganization(
   input: unknown,
 ): Promise<GetModelsResult> {
   const session = await requireSession();
@@ -33,55 +35,69 @@ export async function getModelsForProvider(
   if (!parsed.success) {
     return {
       ok: false,
-      error: "Provider id is required.",
+      error: "Organization id is required.",
       code: "validation",
     };
   }
 
-  const [provider] = await db
-    .select({
-      id: llmProviders.id,
-      name: llmProviders.name,
-      apiUrl: llmProviders.apiUrl,
-      compatibilityType: llmProviders.compatibilityType,
-      isActive: llmProviders.isActive,
-      creatorId: llmProviders.creatorId,
-    })
-    .from(llmProviders)
-    .where(eq(llmProviders.id, parsed.data.providerId))
-    .limit(1);
+  const { organizationId } = parsed.data;
+  const membership = await getOrganizationMembership(
+    session.user.id,
+    organizationId,
+  );
 
-  if (!provider) {
+  if (!membership) {
     return {
       ok: false,
-      error: "Provider not found.",
-      code: "not_found",
-    };
-  }
-
-  if (provider.creatorId !== session.user.id) {
-    return {
-      ok: false,
-      error: "You do not have access to models for this provider.",
+      error: "You do not have access to models for this organization.",
       code: "forbidden",
     };
   }
 
-  const modelRows = await db
-    .select(modelReturning)
-    .from(models)
-    .where(eq(models.providerId, provider.id))
-    .orderBy(desc(models.updatedAt));
+  const filters = buildModelsWhereClause(organizationId, parsed.data);
+  const modelConditions = [eq(models.organizationId, filters.organizationId)];
+  if (filters.providerId) {
+    modelConditions.push(eq(models.providerId, filters.providerId));
+  }
+  if (filters.compatibilityType) {
+    modelConditions.push(
+      eq(llmProviders.compatibilityType, filters.compatibilityType),
+    );
+  }
+  if (filters.nameSearch) {
+    modelConditions.push(
+      sql`to_tsvector('simple', ${models.name}) @@ to_tsquery('simple', ${filters.nameSearch})`,
+    );
+  }
+
+  const [providerRows, modelRows] = await Promise.all([
+    db
+      .select({
+        id: llmProviders.id,
+        name: llmProviders.name,
+        apiUrl: llmProviders.apiUrl,
+        compatibilityType: llmProviders.compatibilityType,
+        isActive: llmProviders.isActive,
+      })
+      .from(llmProviders)
+      .where(eq(llmProviders.organizationId, organizationId))
+      .orderBy(desc(llmProviders.isActive), desc(llmProviders.updatedAt)),
+    db
+      .select({
+        ...modelReturning,
+        providerName: llmProviders.name,
+      })
+      .from(models)
+      .innerJoin(llmProviders, eq(models.providerId, llmProviders.id))
+      .where(and(...modelConditions))
+      .orderBy(desc(models.updatedAt)),
+  ]);
 
   return {
     ok: true,
-    provider: {
-      id: provider.id,
-      name: provider.name,
-      apiUrl: provider.apiUrl,
-      compatibilityType: provider.compatibilityType,
-      isActive: provider.isActive,
-    },
-    models: modelRows.map(toModelListItem),
+    providers: providerRows,
+    models: modelRows.map((row) =>
+      toModelListItem(row, row.providerName),
+    ),
   };
 }

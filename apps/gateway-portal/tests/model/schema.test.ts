@@ -6,6 +6,7 @@ import {
   createModelInputSchema,
   getModelsInputSchema,
   parseModelAliasSuffix,
+  parseModelListSearchParams,
   updateModelInputSchema,
 } from "@/lib/model/schema";
 import {
@@ -107,11 +108,13 @@ test("buildModelCreateData prefixes alias with provider name", () => {
       inputCachePrice: 1.25,
     },
     "minimax",
+    "org-1",
   );
 
   assert.equal(typeof data.id, "string");
   assert.ok(data.id.length > 0);
   assert.equal(data.providerId, "provider-1");
+  assert.equal(data.organizationId, "org-1");
   assert.equal(data.name, "gpt-4.1");
   assert.equal(data.alias, "minimax/gpt-4.1");
   assert.equal(buildModelAlias("minimax", "gpt-4.1"), "minimax/gpt-4.1");
@@ -120,11 +123,44 @@ test("buildModelCreateData prefixes alias with provider name", () => {
   assert.equal(data.inputCachePrice, 1.25);
 });
 
-test("getModelsInputSchema requires providerId", () => {
+test("getModelsInputSchema requires organizationId", () => {
   assert.equal(getModelsInputSchema.safeParse({}).success, false);
   assert.equal(
-    validateGetModelsInput({ providerId: "provider-1" }).success,
+    validateGetModelsInput({ organizationId: "org-1" }).success,
     true,
+  );
+  assert.equal(
+    validateGetModelsInput({
+      organizationId: "org-1",
+      providerId: "provider-1",
+      compatibilityType: "openai",
+      q: "gpt",
+    }).success,
+    true,
+  );
+});
+
+test("parseModelListSearchParams reads provider, compatibility, and name query", () => {
+  assert.deepEqual(
+    parseModelListSearchParams({
+      provider: "provider-1",
+      compatibility: "anthropic",
+      q: "  gpt-4  ",
+    }),
+    {
+      providerId: "provider-1",
+      compatibilityType: "anthropic",
+      q: "gpt-4",
+    },
+  );
+
+  assert.deepEqual(
+    parseModelListSearchParams({
+      provider: "  ",
+      compatibility: "unknown",
+      q: "   ",
+    }),
+    {},
   );
 });
 

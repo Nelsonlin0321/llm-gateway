@@ -136,7 +136,11 @@ async function exportSnapshot(outPath: string): Promise<void> {
   };
 
   await mkdir(path.dirname(outPath), { recursive: true });
-  await writeFile(outPath, JSON.stringify(snapshot, jsonReplacer, 2) + "\n", "utf8");
+  await writeFile(
+    outPath,
+    JSON.stringify(snapshot, jsonReplacer, 2) + "\n",
+    "utf8",
+  );
 
   const total = Object.values(counts).reduce((a, b) => a + (b ?? 0), 0);
   console.log(`\nWrote ${total} row(s) → ${outPath}`);

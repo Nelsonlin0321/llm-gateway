@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import Link from "next/link";
 import {
   BarChart3,
+  Building2,
   ChevronRight,
   KeyRound,
   PlugZap,
@@ -36,6 +37,15 @@ const workspaceCards = [
     description: "Issue and rotate scoped keys for teams and applications.",
     href: "/workspace/child-keys",
     icon: KeyRound,
+    badge: "Live",
+    badgeVariant: "success" as const,
+  },
+  {
+    title: "Organization",
+    description:
+      "Create orgs, invite members, and assign root, admin, or viewer.",
+    href: "/workspace/organization",
+    icon: Building2,
     badge: "Live",
     badgeVariant: "success" as const,
   },
@@ -126,11 +136,8 @@ export async function WorkspaceOverviewSection() {
               Usage this week
             </h2>
             <p className="mt-0.5 text-sm text-text-secondary">
-              Live from{" "}
-              <span className="font-mono text-[12px]">event_log</span>
-              {usage.from && usage.to
-                ? ` · ${usage.from} → ${usage.to}`
-                : null}
+              Live from <span className="font-mono text-[12px]">event_log</span>
+              {usage.from && usage.to ? ` · ${usage.from} → ${usage.to}` : null}
               . Explore deeper in{" "}
               <Link
                 href="/workspace/analytics"

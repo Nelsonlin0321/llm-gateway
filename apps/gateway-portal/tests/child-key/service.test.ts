@@ -33,6 +33,7 @@ test("buildChildKeyRotateData issues a new sk_ secret and advances issuedAt", as
       expiresAt: undefined,
     },
     { id: "user-1" },
+    "org-1",
   );
 
   assert.ok(created.apiKey.startsWith(CHILD_KEY_PREFIX));
@@ -83,6 +84,7 @@ test("buildChildKeyRotateData preserves expiresAt as JWT exp and keeps id stable
       expiresAt: expiresAt.toISOString(),
     },
     { id: "user-2" },
+    "org-1",
   );
 
   const rotated = await buildChildKeyRotateData({
@@ -114,6 +116,7 @@ test("encryptChildKey / decryptChildKey round-trip for rotated secret", async ()
       expiresAt: undefined,
     },
     { id: "user-3" },
+    "org-1",
   );
 
   const cipher = encryptChildKey(created.apiKey);

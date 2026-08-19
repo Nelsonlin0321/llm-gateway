@@ -35,6 +35,7 @@ export async function updateProvider(
     .select({
       id: llmProviders.id,
       encryptedApiKey: llmProviders.encryptedApiKey,
+      organizationId: llmProviders.organizationId,
     })
     .from(llmProviders)
     .where(
@@ -54,6 +55,7 @@ export async function updateProvider(
     .from(llmProviders)
     .where(
       and(
+        eq(llmProviders.organizationId, existing.organizationId),
         eq(llmProviders.name, parsed.data.name),
         eq(llmProviders.compatibilityType, parsed.data.compatibilityType),
         ne(llmProviders.id, parsed.data.id),
@@ -75,8 +77,8 @@ export async function updateProvider(
       .where(eq(llmProviders.id, parsed.data.id))
       .returning(providerReturning);
 
-    revalidatePath("/providers");
-    revalidatePath("/dashboard");
+    revalidatePath(`/${existing.organizationId}/providers`);
+    revalidatePath(`/${existing.organizationId}`);
 
     return {
       ok: true,

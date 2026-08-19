@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,10 +10,12 @@ import {
   toModelListItem,
   validateCreateModelInput,
 } from "@/lib/model/service";
+import { getOrganizationMembership } from "@/lib/organization/service";
 
 import {
   modelReturning,
   modelValidationError,
+  revalidateOrganizationModelPaths,
   type ModelActionResult,
 } from "./shared";
 
@@ -33,7 +34,7 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
     .select({
       id: llmProviders.id,
       name: llmProviders.name,
-      creatorId: llmProviders.creatorId,
+      organizationId: llmProviders.organizationId,
     })
     .from(llmProviders)
     .where(eq(llmProviders.id, parsed.data.providerId))
@@ -43,7 +44,12 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
     return modelValidationError("Provider not found.");
   }
 
-  if (provider.creatorId !== session.user.id) {
+  const membership = await getOrganizationMembership(
+    session.user.id,
+    provider.organizationId,
+  );
+
+  if (!membership) {
     return modelValidationError(
       "You do not have permission to register models for this provider.",
     );
@@ -52,15 +58,20 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
   try {
     const [model] = await db
       .insert(models)
-      .values(buildModelCreateData(parsed.data, provider.name))
+      .values(
+        buildModelCreateData(
+          parsed.data,
+          provider.name,
+          provider.organizationId,
+        ),
+      )
       .returning(modelReturning);
 
-    revalidatePath(`/workspace/${provider.id}/models`);
-    revalidatePath("/workspace/providers");
+    revalidateOrganizationModelPaths(provider.organizationId);
 
     return {
       ok: true,
-      model: toModelListItem(model),
+      model: toModelListItem(model, provider.name),
       message: "Model registered successfully.",
     };
   } catch (error) {

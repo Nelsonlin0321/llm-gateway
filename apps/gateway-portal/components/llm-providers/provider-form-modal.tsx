@@ -4,7 +4,13 @@ import { useMemo, useState, type ComponentProps } from "react";
 import { X } from "lucide-react";
 import { z } from "zod";
 
+import { BuiltInProviderSelect } from "@/components/llm-providers/built-in-provider-select";
 import { Button } from "@/components/ui/button";
+import {
+  findBuiltInProvider,
+  getBuiltInProvidersByFormat,
+  type BuiltInProvider,
+} from "@/lib/llm-provider/built-in";
 import {
   createProviderInputSchema,
   type ProviderListItem,
@@ -99,6 +105,15 @@ function ProviderFormModalInner({
     [mode, provider?.name],
   );
 
+  const builtInOptions = useMemo(
+    () => getBuiltInProvidersByFormat(values.compatibilityType),
+    [values.compatibilityType],
+  );
+  const selectedBuiltIn = useMemo(
+    () => findBuiltInProvider(values.name, values.compatibilityType),
+    [values.compatibilityType, values.name],
+  );
+
   const updateValue = <T extends keyof ProviderFormValues>(
     key: T,
     value: ProviderFormValues[T],
@@ -106,6 +121,26 @@ function ProviderFormModalInner({
     setValues((current) => ({
       ...current,
       [key]: value,
+    }));
+  };
+
+  const handleCompatibilityChange = (
+    compatibilityType: ProviderFormValues["compatibilityType"],
+  ) => {
+    const matching = findBuiltInProvider(values.name, compatibilityType);
+
+    setValues((current) => ({
+      ...current,
+      compatibilityType,
+      ...(matching ? { apiUrl: matching.apiUrl } : {}),
+    }));
+  };
+
+  const handleBuiltInSelect = (provider: BuiltInProvider) => {
+    setValues((current) => ({
+      ...current,
+      name: provider.name,
+      apiUrl: provider.apiUrl,
     }));
   };
 
@@ -166,6 +201,42 @@ function ProviderFormModalInner({
 
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5">
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label
+                htmlFor="provider-compatibility"
+                className={fieldLabelClassName}
+              >
+                Compatibility type
+              </label>
+              <select
+                id="provider-compatibility"
+                value={values.compatibilityType}
+                onChange={(event) =>
+                  handleCompatibilityChange(
+                    event.target.value as ProviderListItem["compatibilityType"],
+                  )
+                }
+                className={inputClassName}
+              >
+                <option value="openai">openai</option>
+                <option value="anthropic">anthropic</option>
+              </select>
+              <FieldError errors={fieldErrors.compatibilityType} />
+            </div>
+
+            <div className="space-y-2">
+              <p className={fieldLabelClassName} id="built-in-provider-label">
+                Built-in provider
+              </p>
+              <BuiltInProviderSelect
+                providers={builtInOptions}
+                selected={selectedBuiltIn}
+                disabled={isSubmitting}
+                labelledBy="built-in-provider-label"
+                onSelect={handleBuiltInSelect}
+              />
+            </div>
+
             <div className="space-y-2 sm:col-span-2">
               <label htmlFor="provider-name" className={fieldLabelClassName}>
                 Provider name
@@ -224,32 +295,8 @@ function ProviderFormModalInner({
               />
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="provider-compatibility"
-                className={fieldLabelClassName}
-              >
-                Compatibility type
-              </label>
-              <select
-                id="provider-compatibility"
-                value={values.compatibilityType}
-                onChange={(event) =>
-                  updateValue(
-                    "compatibilityType",
-                    event.target.value as ProviderListItem["compatibilityType"],
-                  )
-                }
-                className={inputClassName}
-              >
-                <option value="openai">openai</option>
-                <option value="anthropic">anthropic</option>
-              </select>
-              <FieldError errors={fieldErrors.compatibilityType} />
-            </div>
-
-            <div className="flex items-end">
-              <label className="flex h-10 w-full items-center gap-3 rounded-lg border border-border bg-background px-3 text-sm text-text-primary">
+            <div className="flex items-end sm:col-span-2">
+              <label className="flex h-10 w-full items-center gap-3 rounded-lg border border-border bg-background px-3 text-sm text-text-primary sm:max-w-xs">
                 <input
                   type="checkbox"
                   checked={values.isActive}

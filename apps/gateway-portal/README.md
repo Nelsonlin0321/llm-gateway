@@ -84,14 +84,26 @@ npm install
 #   API_ENCRYPT_KEY=
 #   BETTER_AUTH_SECRET=
 #   BETTER_AUTH_URL=http://localhost:3000
-#   GOOGLE_CLIENT_ID=          # optional, for Google social login
+#   GOOGLE_CLIENT_ID=
 #   GOOGLE_CLIENT_SECRET=
+#   EMAIL_FROM=                # verified SES sender for verification emails
+#   AWS_REGION=us-east-1       # SES region (credentials via default AWS chain)
 
 npm run db:migrate   # apply Drizzle migrations
 npm run dev          # http://localhost:3000
 ```
 
-### Google social login (optional)
+### Email/password sign-up and verification
+
+1. Set `EMAIL_FROM` to a verified SES identity and ensure AWS credentials can call SES.
+2. Open `/sign-up`, enter name, email, password, and confirm password.
+3. After **Create account**, the UI shows a pending-verification state (no session yet).
+4. Open the verification link from the email (valid for 15 minutes).
+5. Better Auth verifies the address, signs you in, and redirects to `/` (home).
+
+Unverified users cannot sign in with email/password until they complete verification. A failed sign-in attempt re-sends the verification email when `requireEmailVerification` is enabled.
+
+### Google social login
 
 1. Create an OAuth client in [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → **APIs & Services** → **Credentials** → **Create credentials** → **OAuth client ID** → **Web application**.
 2. Add authorized redirect URI:
@@ -130,7 +142,8 @@ npm run db:seed       # re-seed from snapshot
 | `BETTER_AUTH_URL` | yes | Public portal URL (OAuth callback base) |
 | `GOOGLE_CLIENT_ID` | no* | Google OAuth client ID (*required for Google login) |
 | `GOOGLE_CLIENT_SECRET` | no* | Google OAuth client secret (*required for Google login) |
-| `EMAIL_FROM` / AWS SES vars | no | Verification email via SES |
+| `EMAIL_FROM` | yes* | Verified SES From address (*required for email verification) |
+| `AWS_REGION` / AWS credentials | yes* | SES send permissions for verification emails |
 | `REDIS_URL` | no | Cache invalidation helpers |
 
 > **Security:** Never commit `.env`. Master keys and child-key ciphertext never leave the server in plain form after create/reveal flows.

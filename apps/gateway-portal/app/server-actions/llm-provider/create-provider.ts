@@ -11,6 +11,7 @@ import {
   toProviderListItem,
   validateCreateProviderInput,
 } from "@/lib/llm-provider/service";
+import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import {
   providerReturning,
@@ -22,6 +23,14 @@ export async function createProvider(
   input: unknown,
 ): Promise<ProviderActionResult> {
   const session = await requireSession();
+  const organizationId = await resolveActiveOrganizationId(session);
+
+  if (!organizationId) {
+    return validationErrorResult(
+      "Select an organization before creating a provider.",
+    );
+  }
+
   const parsed = validateCreateProviderInput(input);
 
   if (!parsed.success) {
@@ -36,6 +45,7 @@ export async function createProvider(
     .from(llmProviders)
     .where(
       and(
+        eq(llmProviders.organizationId, organizationId),
         eq(llmProviders.name, parsed.data.name),
         eq(llmProviders.compatibilityType, parsed.data.compatibilityType),
       ),
@@ -52,11 +62,13 @@ export async function createProvider(
   try {
     const [provider] = await db
       .insert(llmProviders)
-      .values(buildProviderCreateData(parsed.data, session.user.id))
+      .values(
+        buildProviderCreateData(parsed.data, session.user.id, organizationId),
+      )
       .returning(providerReturning);
 
-    revalidatePath("/providers");
-    revalidatePath("/dashboard");
+    revalidatePath(`/${organizationId}/providers`);
+    revalidatePath(`/${organizationId}`);
 
     return {
       ok: true,

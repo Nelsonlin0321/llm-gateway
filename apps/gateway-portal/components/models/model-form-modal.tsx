@@ -10,6 +10,7 @@ import {
   parseModelAliasSuffix,
   updateModelInputSchema,
   type ModelListItem,
+  type ProviderSummary,
 } from "@/lib/model/schema";
 
 type ModelFormMode = "create" | "edit";
@@ -29,8 +30,7 @@ type FormSubmitEvent = Parameters<
 type ModelFormModalProps = {
   mode: ModelFormMode;
   open: boolean;
-  providerId: string;
-  providerName: string;
+  providers: ProviderSummary[];
   model?: ModelListItem;
   isSubmitting: boolean;
   onClose: () => void;
@@ -73,13 +73,19 @@ function getInitialValues(
 export function ModelFormModal({
   mode,
   open,
-  providerId,
-  providerName,
+  providers,
   model,
   isSubmitting,
   onClose,
   onSubmit,
 }: ModelFormModalProps) {
+  const initialProvider =
+    providers.find((item) => item.id === model?.providerId) ?? providers[0];
+  const [providerId, setProviderId] = useState(initialProvider?.id ?? "");
+  const providerName =
+    providers.find((item) => item.id === providerId)?.name ??
+    model?.providerName ??
+    "provider";
   const [values, setValues] = useState<ModelFormValues>(() =>
     getInitialValues(providerName, model),
   );
@@ -90,9 +96,9 @@ export function ModelFormModal({
   const title = useMemo(
     () =>
       mode === "create"
-        ? `Register model · ${providerName}`
-        : `Edit ${model?.name ?? "model"} · ${providerName}`,
-    [mode, model?.name, providerName],
+        ? "Register model"
+        : `Edit ${model?.name ?? "model"}`,
+    [mode, model?.name],
   );
 
   if (!open) {
@@ -183,6 +189,27 @@ export function ModelFormModal({
 
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-5">
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2 sm:col-span-2">
+              <label htmlFor="model-provider" className={fieldLabelClassName}>
+                Provider
+              </label>
+              <select
+                id="model-provider"
+                value={providerId}
+                disabled={mode === "edit" || isSubmitting}
+                onChange={(event) => setProviderId(event.target.value)}
+                className={inputClassName}
+              >
+                {providers.map((provider) => (
+                  <option key={provider.id} value={provider.id}>
+                    {provider.name}
+                    {provider.isActive ? "" : " (inactive)"}
+                  </option>
+                ))}
+              </select>
+              <FieldError errors={fieldErrors.providerId} />
+            </div>
+
             <div className="space-y-2 sm:col-span-2">
               <label htmlFor="model-name" className={fieldLabelClassName}>
                 Model name

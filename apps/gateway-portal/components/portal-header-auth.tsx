@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import { Building2, LogOut, UserCog } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -46,9 +46,7 @@ function UserAvatar({
   if (image) {
     // User image URLs may be external (OAuth/provider hosts).
     // eslint-disable-next-line @next/next/no-img-element
-    return (
-      <img src={image} alt={label} className="size-full object-cover" />
-    );
+    return <img src={image} alt={label} className="size-full object-cover" />;
   }
 
   return (
@@ -102,10 +100,10 @@ export function PortalHeaderAuth() {
     return (
       <div className="flex items-center gap-3">
         <div className="hidden text-right sm:block">
-          <p className="max-w-[10rem] truncate text-[13px] font-medium text-text-primary">
+          <p className="max-w-40 truncate text-[13px] font-medium text-text-primary">
             {user.name || "Account"}
           </p>
-          <p className="max-w-[10rem] truncate text-[11px] text-text-tertiary">
+          <p className="max-w-40 truncate text-[11px] text-text-tertiary">
             {user.email}
           </p>
         </div>
@@ -146,11 +144,20 @@ export function PortalHeaderAuth() {
               <DropdownMenuItem
                 className="cursor-pointer gap-2"
                 onClick={() => {
-                  router.push("/workspace");
+                  router.push("/profile/settting");
                 }}
               >
-                <LayoutDashboard className="size-4" />
-                Workspace
+                <UserCog className="size-4" />
+                Profile Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer gap-2"
+                onClick={() => {
+                  router.push("/workspace/organization");
+                }}
+              >
+                <Building2 className="size-4" />
+                Organization
               </DropdownMenuItem>
             </DropdownMenuGroup>
 

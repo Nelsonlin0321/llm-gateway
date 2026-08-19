@@ -2,6 +2,9 @@ import { SendEmailCommand } from "@aws-sdk/client-ses";
 import { createElement } from "react";
 import { render, toPlainText } from "react-email";
 
+import InvitationEmail, {
+  invitationEmailSubject,
+} from "@/emails/invitation-email";
 import VerificationEmail, {
   verificationEmailSubject,
 } from "@/emails/verification-email";
@@ -12,39 +15,31 @@ export interface SendVerificationEmailOptions {
   verificationUrl: string;
 }
 
-const EMAIL_FROM = process.env.EMAIL_FROM!;
-
-async function renderVerificationEmail({
-  email,
-  verificationUrl,
-}: SendVerificationEmailOptions) {
-  const html = await render(
-    createElement(VerificationEmail, {
-      email,
-      verificationUrl,
-    }),
-  );
-
-  return {
-    subject: verificationEmailSubject,
-    html,
-    text: toPlainText(html),
-  };
+export interface SendInvitationEmailOptions {
+  email: string;
+  inviterName: string;
+  organizationName: string;
+  roleLabel: string;
+  invitationUrl: string;
 }
 
-export async function sendVerificationEmail({
-  email,
-  verificationUrl,
-}: SendVerificationEmailOptions) {
-  const { html, subject, text } = await renderVerificationEmail({
-    email,
-    verificationUrl,
-  });
+const EMAIL_FROM = process.env.EMAIL_FROM!;
 
+async function sendHtmlEmail({
+  to,
+  subject,
+  html,
+  text,
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}) {
   return sesClient.send(
     new SendEmailCommand({
       Destination: {
-        ToAddresses: [email],
+        ToAddresses: [to],
       },
       Message: {
         Body: {
@@ -65,4 +60,48 @@ export async function sendVerificationEmail({
       Source: EMAIL_FROM,
     }),
   );
+}
+
+export async function sendVerificationEmail({
+  email,
+  verificationUrl,
+}: SendVerificationEmailOptions) {
+  const html = await render(
+    createElement(VerificationEmail, {
+      email,
+      verificationUrl,
+    }),
+  );
+
+  return sendHtmlEmail({
+    to: email,
+    subject: verificationEmailSubject,
+    html,
+    text: toPlainText(html),
+  });
+}
+
+export async function sendInvitationEmail({
+  email,
+  inviterName,
+  organizationName,
+  roleLabel,
+  invitationUrl,
+}: SendInvitationEmailOptions) {
+  const html = await render(
+    createElement(InvitationEmail, {
+      email,
+      inviterName,
+      organizationName,
+      roleLabel,
+      invitationUrl,
+    }),
+  );
+
+  return sendHtmlEmail({
+    to: email,
+    subject: invitationEmailSubject(organizationName),
+    html,
+    text: toPlainText(html),
+  });
 }

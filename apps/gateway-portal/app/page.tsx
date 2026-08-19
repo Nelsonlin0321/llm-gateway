@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,6 +17,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  getSiteUrl,
+  serializeJsonLd,
+  siteDescription,
+  siteName,
+  siteTagline,
+  siteTitle,
+} from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const capabilities = [
@@ -52,9 +61,54 @@ const trustPoints = [
   "Multi-provider routing",
 ] as const;
 
+export const metadata: Metadata = {
+  title: {
+    absolute: siteTitle,
+  },
+  description: siteDescription,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    url: "/",
+    title: siteTitle,
+    description: siteDescription,
+  },
+};
+
 export default function Home() {
+  const siteUrl = getSiteUrl();
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        name: siteName,
+        url: siteUrl,
+        description: siteDescription,
+      },
+      {
+        "@type": "SoftwareApplication",
+        name: siteName,
+        applicationCategory: "BusinessApplication",
+        operatingSystem: "Web",
+        description: siteDescription,
+        url: siteUrl,
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+      },
+    ],
+  };
+
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         {/* Hero */}
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
@@ -179,7 +233,7 @@ export default function Home() {
                 >
                   <CardHeader className="gap-3">
                     <div className="flex size-9 items-center justify-center rounded-md border border-border bg-surface-2 text-text-secondary">
-                      <Icon className="size-4" />
+                      <Icon className="size-4" aria-hidden />
                     </div>
                     <div className="space-y-1">
                       <CardTitle className="text-sm">{item.title}</CardTitle>
@@ -219,6 +273,24 @@ export default function Home() {
           </div>
         </section>
       </main>
+      <footer className="border-t border-border">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-6 text-[13px] text-text-tertiary sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <p>
+            {siteName} — {siteTagline}
+          </p>
+          <nav aria-label="Footer" className="flex flex-wrap gap-4">
+            <Link href="/" className="hover:text-text-secondary">
+              Product
+            </Link>
+            <Link href="/sign-up" className="hover:text-text-secondary">
+              Create account
+            </Link>
+            <Link href="/workspace" className="hover:text-text-secondary">
+              Console
+            </Link>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 }

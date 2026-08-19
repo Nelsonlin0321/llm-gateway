@@ -39,6 +39,7 @@ export function validateGetProvidersOptions(input: unknown) {
 export function buildProviderCreateData(
   input: CreateProviderInput,
   creatorId: string,
+  organizationId: string,
 ) {
   return {
     id: randomUUID(),
@@ -48,6 +49,7 @@ export function buildProviderCreateData(
     compatibilityType: input.compatibilityType,
     isActive: input.isActive,
     creatorId,
+    organizationId,
   };
 }
 
@@ -66,15 +68,37 @@ export function buildProviderUpdateData(
   };
 }
 
+export function buildProviderNameTsQuery(raw: string): string | null {
+  const tokens = raw
+    .trim()
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((token) => token.length > 0)
+    .slice(0, 8);
+
+  if (tokens.length === 0) {
+    return null;
+  }
+
+  return tokens.map((token) => `${token}:*`).join(" & ");
+}
+
 export function buildProvidersWhereClause(
-  creatorId: string,
+  organizationId: string,
   options?: GetProvidersOptions,
 ) {
   const parsed = getProvidersOptionsSchema.parse(options);
+  const nameSearch = parsed?.q
+    ? buildProviderNameTsQuery(parsed.q)
+    : null;
 
   return {
-    creatorId,
+    organizationId,
     ...(parsed?.includeInactive ? {} : { isActive: true as const }),
+    ...(parsed?.compatibilityType
+      ? { compatibilityType: parsed.compatibilityType }
+      : {}),
+    ...(nameSearch ? { nameSearch } : {}),
   };
 }
 
