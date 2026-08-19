@@ -9,6 +9,7 @@ import VerificationEmail, {
   verificationEmailSubject,
 } from "@/emails/verification-email";
 import { sesClient } from "@/lib/ses";
+import { Role } from "./organization/permissions";
 
 export interface SendVerificationEmailOptions {
   email: string;
@@ -19,7 +20,7 @@ export interface SendInvitationEmailOptions {
   email: string;
   inviterName: string;
   organizationName: string;
-  roleLabel: string;
+  roleLabel: Role;
   invitationUrl: string;
 }
 

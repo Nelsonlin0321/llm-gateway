@@ -5,12 +5,11 @@ import { organization } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import { sendInvitationEmail, sendVerificationEmail } from "@/lib/email";
 import {
-  ac,
+  defaultRole,
   ORGANIZATION_CREATOR_ROLE,
-  ORGANIZATION_ROLE_LABELS,
-  organizationRoles,
-  normalizeOrganizationRole,
-} from "@/lib/organization/permissions";
+  Role,
+  roles,
+} from "./organization/permissions";
 
 function invitationUrl(invitationId: string) {
   const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
@@ -58,9 +57,8 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          const { createDefaultOrganizationForUser } = await import(
-            "@/lib/organization/service"
-          );
+          const { createDefaultOrganizationForUser } =
+            await import("@/lib/organization/service");
           try {
             await createDefaultOrganizationForUser(user);
           } catch (error) {
@@ -76,9 +74,8 @@ export const auth = betterAuth({
             return;
           }
 
-          const { listOrganizationsForUser } = await import(
-            "@/lib/organization/service"
-          );
+          const { listOrganizationsForUser } =
+            await import("@/lib/organization/service");
           const organizations = await listOrganizationsForUser(session.userId);
           const firstOrganization = organizations[0];
           if (!firstOrganization) {
@@ -104,8 +101,6 @@ export const auth = betterAuth({
   plugins: [
     nextCookies(),
     organization({
-      ac,
-      roles: organizationRoles,
       creatorRole: ORGANIZATION_CREATOR_ROLE,
       allowUserToCreateOrganization: true,
       invitationExpiresIn: 60 * 60 * 24 * 7,
@@ -120,8 +115,9 @@ export const auth = betterAuth({
           email,
           inviterName: inviter.user.name || inviter.user.email,
           organizationName: invitedOrganization.name,
-          roleLabel:
-            ORGANIZATION_ROLE_LABELS[normalizeOrganizationRole(invitation.role ?? "viewer")],
+          roleLabel: (roles.includes(invitation.role as Role)
+            ? invitation.role
+            : defaultRole) as Role,
           invitationUrl: invitationUrl(invitation.id),
         });
       },
