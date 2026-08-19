@@ -1,7 +1,7 @@
 import { authorizeChildKey } from "./authorize.js";
 import { decryptApiKeyForProxy } from "./crypto.js";
 import { CHILD_KEY_PREFIX, verifyChildKeyToken } from "./jwt.js";
-import type { ChildKeyAuthResult } from "./types.js";
+import type { ChildKeyAuthResult, ChildKeyJwtPayload } from "./types.js";
 
 export { decryptApiKeyForProxy } from "./crypto.js";
 export { encryptApiKey } from "./crypto.js";
@@ -122,7 +122,7 @@ export async function authenticateChildApiKey(
     };
   }
 
-  let payload;
+  let payload: ChildKeyJwtPayload;
   try {
     // Verify JWT and decode claims (key_id, name, creator_id, issued_at, exp).
     payload = await verifyChildKeyToken(plainApiKey);
@@ -142,7 +142,6 @@ export async function authenticateChildApiKey(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid API key.";
-
     const expired =
       /expir/i.test(message) ||
       (error &&

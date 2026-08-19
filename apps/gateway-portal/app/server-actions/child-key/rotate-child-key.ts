@@ -34,18 +34,11 @@ export async function rotateChildKey(
   const [existing] = await db
     .select({
       id: childKeys.id,
-      name: childKeys.name,
-      creatorId: childKeys.creatorId,
-      userEmail: childKeys.userEmail,
-      tags: childKeys.tags,
       expiresAt: childKeys.expiresAt,
       issuedAt: childKeys.issuedAt,
-      key: childKeys.key,
     })
     .from(childKeys)
-    .where(
-      and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)),
-    )
+    .where(and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)))
     .limit(1);
 
   if (!existing) {

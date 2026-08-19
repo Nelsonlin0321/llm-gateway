@@ -59,8 +59,6 @@ export function parseChildKeyJwtPayload(
 
   return {
     key_id: payload.key_id,
-    name: payload.name,
-    creator_id: payload.creator_id,
     issued_at: parseIssuedAt(payload),
     exp:
       typeof payload.exp === "number" && Number.isFinite(payload.exp)

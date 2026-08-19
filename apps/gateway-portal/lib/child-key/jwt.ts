@@ -51,21 +51,9 @@ export function parseChildKeyJwtPayload(
   if (typeof payload.key_id !== "string" || payload.key_id.length === 0) {
     throw new Error("Child key token payload is missing key_id.");
   }
-  if (typeof payload.name !== "string" || payload.name.length === 0) {
-    throw new Error("Child key token payload is missing name.");
-  }
-
-  if (
-    typeof payload.creator_id !== "string" ||
-    payload.creator_id.length === 0
-  ) {
-    throw new Error("Child key token payload is missing creator_id.");
-  }
 
   return {
     key_id: payload.key_id,
-    name: payload.name,
-    creator_id: payload.creator_id,
     issued_at: parseIssuedAt(payload),
     exp:
       typeof payload.exp === "number" && Number.isFinite(payload.exp)
@@ -78,13 +66,8 @@ export function parseChildKeyJwtPayload(
 export async function signChildKeyToken(
   payload: ChildKeyJwtPayload,
 ): Promise<string> {
-  const issuedAt = Math.trunc(payload.issued_at);
-
   const claims: JWTClaim = {
     key_id: payload.key_id,
-    name: payload.name,
-    creator_id: payload.creator_id,
-    issued_at: issuedAt,
   };
 
   let signer = new SignJWT(claims).setProtectedHeader({
@@ -92,11 +75,7 @@ export async function signChildKeyToken(
     typ: "JWT",
   });
 
-  if (
-    typeof payload.exp === "number" &&
-    Number.isFinite(payload.exp) &&
-    payload.exp > issuedAt
-  ) {
+  if (typeof payload.exp === "number" && Number.isFinite(payload.exp)) {
     signer = signer.setExpirationTime(Math.trunc(payload.exp));
   }
 

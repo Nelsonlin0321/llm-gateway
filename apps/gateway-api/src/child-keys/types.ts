@@ -4,10 +4,7 @@ export type ChildKeyDbRecord = ChildKey;
 
 /** Claims embedded in a signed child API key JWT (`sk_<jwt>`). */
 export type ChildKeyJwtPayload = {
-  name: string;
   key_id: string;
-  creator_id: string;
-  /** Unix timestamp (seconds). Changes on each key rotation. */
   issued_at: number;
   exp?: number;
 };

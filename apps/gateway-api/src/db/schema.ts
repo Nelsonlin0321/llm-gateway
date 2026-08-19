@@ -45,6 +45,7 @@ export const session = pgTable(
     userId: text()
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    activeOrganizationId: text(),
     ...timestamps,
   },
   (table) => [index("session_userId_idx").on(table.userId)],
@@ -83,6 +84,56 @@ export const verification = pgTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
+export const organization = pgTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logo: text("logo"),
+  createdAt: timestamp("created_at").notNull(),
+  metadata: text("metadata"),
+});
+
+export const member = pgTable(
+  "member",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").default("member").notNull(),
+    createdAt: timestamp("created_at").notNull(),
+  },
+  (table) => [
+    index("member_organizationId_idx").on(table.organizationId),
+    index("member_userId_idx").on(table.userId),
+  ],
+);
+
+export const invitation = pgTable(
+  "invitation",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    email: text("email").notNull(),
+    role: text("role"),
+    status: text("status").default("pending").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    inviterId: text("inviter_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    index("invitation_organizationId_idx").on(table.organizationId),
+    index("invitation_email_idx").on(table.email),
+  ],
+);
+
 export const compatibilityTypeEnum = pgEnum("compatibility_type", [
   "openai",
   "anthropic",
@@ -100,14 +151,23 @@ export const llmProviders = pgTable(
     creatorId: text()
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
     ...timestamps,
   },
   (table) => [
     uniqueIndex("llm_provider_name_compatibility_type_key").on(
+      table.organizationId,
       table.name,
       table.compatibilityType,
     ),
     index("llm_provider_creator_id_idx").on(table.creatorId),
+    index("llm_provider_organization_id_idx").on(table.organizationId),
+    index("llm_provider_name_fts_idx").using(
+      "gin",
+      sql`to_tsvector('simple'::regconfig, ${table.name})`,
+    ),
   ],
 );
 
@@ -123,9 +183,18 @@ export const models = pgTable(
     providerId: text()
       .notNull()
       .references(() => llmProviders.id, { onDelete: "cascade" }),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
     ...timestamps,
   },
-  (table) => [index("model_provider_id_idx").on(table.providerId)],
+  (table) => [
+    index("model_provider_id_idx").on(table.providerId),
+    index("model_name_fts_idx").using(
+      "gin",
+      sql`to_tsvector('simple'::regconfig, ${table.name})`,
+    ),
+  ],
 );
 
 export const childKeys = pgTable(
@@ -140,6 +209,9 @@ export const childKeys = pgTable(
     userEmail: text().notNull(),
     isActive: boolean().notNull().default(true),
     tags: jsonb().$type<Record<string, string>>().notNull().default({}),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
     expiresAt: timestamp({ mode: "date" }),
     issuedAt: integer().notNull(),
     ...timestamps,
@@ -171,6 +243,9 @@ export const requestLog = pgTable(
     gatewayPath: text().notNull(),
     loggedAt: timestamp().notNull(),
     logDate: date().notNull(),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
     ...timestamps,
   },
   (table) => [
@@ -227,6 +302,9 @@ export const eventLog = pgTable(
     inputPrice: doublePrecision(),
     outputPrice: doublePrecision(),
     inputCachePrice: doublePrecision(),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
     ...timestamps,
   },
   (table) => [
@@ -246,6 +324,8 @@ export const eventLog = pgTable(
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
+  members: many(member),
+  invitations: many(invitation),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -303,6 +383,33 @@ export const eventLogRelations = relations(eventLog, ({ one }) => ({
   }),
 }));
 
+export const organizationRelations = relations(organization, ({ many }) => ({
+  members: many(member),
+  invitations: many(invitation),
+}));
+
+export const memberRelations = relations(member, ({ one }) => ({
+  organization: one(organization, {
+    fields: [member.organizationId],
+    references: [organization.id],
+  }),
+  user: one(user, {
+    fields: [member.userId],
+    references: [user.id],
+  }),
+}));
+
+export const invitationRelations = relations(invitation, ({ one }) => ({
+  organization: one(organization, {
+    fields: [invitation.organizationId],
+    references: [organization.id],
+  }),
+  user: one(user, {
+    fields: [invitation.inviterId],
+    references: [user.id],
+  }),
+}));
+
 export type User = typeof user.$inferSelect;
 export type Session = typeof session.$inferSelect;
 export type Account = typeof account.$inferSelect;
@@ -312,8 +419,14 @@ export type Model = typeof models.$inferSelect;
 export type ChildKey = typeof childKeys.$inferSelect;
 export type RequestLog = typeof requestLog.$inferSelect;
 export type EventLog = typeof eventLog.$inferSelect;
+export type Organization = typeof organization.$inferSelect;
+export type Member = typeof member.$inferSelect;
+export type Invitation = typeof invitation.$inferSelect;
 export type NewLLMProvider = typeof llmProviders.$inferInsert;
 export type NewModel = typeof models.$inferInsert;
 export type NewChildKey = typeof childKeys.$inferInsert;
 export type NewRequestLog = typeof requestLog.$inferInsert;
 export type NewEventLog = typeof eventLog.$inferInsert;
+export type NewOrganization = typeof organization.$inferInsert;
+export type NewMember = typeof member.$inferInsert;
+export type NewInvitation = typeof invitation.$inferInsert;
