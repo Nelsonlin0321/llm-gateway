@@ -22,6 +22,20 @@
       "when": 1787067000000,
       "tag": "0002_model_name_fts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787236331220,
+      "tag": "0003_outstanding_clint_barton",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787236366455,
+      "tag": "0004_large_moonstone",
+      "breakpoints": true
     }
   ]
 }
