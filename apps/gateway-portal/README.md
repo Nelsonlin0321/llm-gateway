@@ -17,14 +17,14 @@
 
 ## What you can do
 
-| Area | Capabilities |
-| ---- | ------------ |
-| **Providers** | Master API URL, encrypted API key, OpenAI or Anthropic compatibility |
-| **Models** | Upstream name, gateway alias, input/output/cache pricing |
-| **Child keys** | Create, rotate, reveal, tag, enable/disable, expire |
-| **Analytics** | Stacked bar charts: metric × dimension × filters × date range |
-| **Overview** | Real KPIs + spend / requests / tokens by provider, env, and model |
-| **Auth** | Better Auth username/password with optional SES verification email |
+| Area           | Capabilities                                                         |
+| -------------- | -------------------------------------------------------------------- |
+| **Providers**  | Master API URL, encrypted API key, OpenAI or Anthropic compatibility |
+| **Models**     | Upstream name, gateway alias, input/output/cache pricing             |
+| **Child keys** | Create, rotate, reveal, tag, enable/disable, expire                  |
+| **Analytics**  | Stacked bar charts: metric × dimension × filters × date range        |
+| **Overview**   | Real KPIs + spend / requests / tokens by provider, env, and model    |
+| **Auth**       | Better Auth username/password with optional SES verification email   |
 
 ---
 
@@ -45,10 +45,10 @@
 
 Three controls define the chart:
 
-1. **Metric** (Y-axis) — request count · total tokens · cost  
-2. **Dimension** (stack segments) — provider · model · `metadata_json` / tag fields (`env`, `team`, …)  
-3. **Filters** — multi-select dropdowns + **user email** autocomplete over `event_log.user_email`  
-4. **Date range** (X-axis) — last 7 days · last 30 days · custom  
+1. **Metric** (Y-axis) — request count · total tokens · cost
+2. **Dimension** (stack segments) — provider · model · `metadata_json` / tag fields (`env`, `team`, …)
+3. **Filters** — multi-select dropdowns + **user email** autocomplete over `event_log.user_email`
+4. **Date range** (X-axis) — last 7 days · last 30 days · custom
 
 Data is aggregated from Postgres `event_log` (populated by **gateway-ingest**).
 
@@ -56,12 +56,12 @@ Data is aggregated from Postgres `event_log` (populated by **gateway-ingest**).
 
 ## Stack
 
-- **Next.js** App Router + Server Actions  
-- **Better Auth** + Drizzle adapter  
-- **Drizzle ORM** + Neon serverless Postgres  
-- **shadcn/ui** · Tailwind CSS · Lucide  
-- **jose** / AES for child-key and provider-key crypto (shared with gateway-api)  
-- **React Hot Toast** for feedback  
+- **Next.js** App Router + Server Actions
+- **Better Auth** + Drizzle adapter
+- **Drizzle ORM** + Neon serverless Postgres
+- **shadcn/ui** · Tailwind CSS · Lucide
+- **jose** / AES for child-key and provider-key crypto (shared with gateway-api)
+- **React Hot Toast** for feedback
 
 ---
 
@@ -115,11 +115,11 @@ Unverified users cannot sign in with email/password until they complete verifica
 
 ### First-run checklist
 
-1. Sign up with email/password, or **Continue with Google**.  
-2. **Providers** → add upstream URL + master key.  
-3. **Models** → register alias + pricing.  
-4. **Child keys** → mint a key; copy the `sk_…` secret (shown once).  
-5. Point clients at **gateway-api** with that key.  
+1. Sign up with email/password, or **Continue with Google**.
+2. **Providers** → add upstream URL + master key.
+3. **Models** → register alias + pricing.
+4. **Child keys** → mint a key; copy the `sk_…` secret (shown once).
+5. Point clients at **gateway-api** with that key.
 6. Run **gateway-ingest** (or `seed:event-log` there) → open **Analytics**.
 
 ### Seed / snapshot helpers
@@ -133,18 +133,18 @@ npm run db:seed       # re-seed from snapshot
 
 ## Environment
 
-| Variable | Required | Purpose |
-| -------- | -------- | ------- |
-| `DATABASE_URL` | yes | Postgres connection string |
-| `JWT_SIGNING_SECRET` | yes | Child key JWT (must match gateway-api) |
-| `API_ENCRYPT_KEY` | yes | AES key for provider/child secrets (must match gateway-api) |
-| `BETTER_AUTH_SECRET` | yes | Better Auth session secret |
-| `BETTER_AUTH_URL` | yes | Public portal URL (OAuth callback base) |
-| `GOOGLE_CLIENT_ID` | no* | Google OAuth client ID (*required for Google login) |
-| `GOOGLE_CLIENT_SECRET` | no* | Google OAuth client secret (*required for Google login) |
-| `EMAIL_FROM` | yes* | Verified SES From address (*required for email verification) |
-| `AWS_REGION` / AWS credentials | yes* | SES send permissions for verification emails |
-| `REDIS_URL` | no | Cache invalidation helpers |
+| Variable                       | Required | Purpose                                                      |
+| ------------------------------ | -------- | ------------------------------------------------------------ |
+| `DATABASE_URL`                 | yes      | Postgres connection string                                   |
+| `JWT_SIGNING_SECRET`           | yes      | Child key JWT (must match gateway-api)                       |
+| `API_ENCRYPT_KEY`              | yes      | AES key for provider/child secrets (must match gateway-api)  |
+| `BETTER_AUTH_SECRET`           | yes      | Better Auth session secret                                   |
+| `BETTER_AUTH_URL`              | yes      | Public portal URL (OAuth callback base)                      |
+| `GOOGLE_CLIENT_ID`             | no*      | Google OAuth client ID (*required for Google login)          |
+| `GOOGLE_CLIENT_SECRET`         | no*      | Google OAuth client secret (*required for Google login)      |
+| `EMAIL_FROM`                   | yes*     | Verified SES From address (*required for email verification) |
+| `AWS_REGION` / AWS credentials | yes*     | SES send permissions for verification emails                 |
+| `REDIS_URL`                    | no       | Cache invalidation helpers                                   |
 
 > **Security:** Never commit `.env`. Master keys and child-key ciphertext never leave the server in plain form after create/reveal flows.
 
@@ -152,16 +152,16 @@ npm run db:seed       # re-seed from snapshot
 
 ## Scripts
 
-| Command | Description |
-| ------- | ----------- |
-| `npm run dev` | Next.js dev server |
-| `npm run build` / `start` | Production build & serve |
-| `npm run lint` | ESLint |
-| `npm test` | Node test runner (`tests/**/*.test.ts`) |
-| `npm run db:generate` | Generate Drizzle migrations |
-| `npm run db:migrate` | Apply migrations (**this app owns schema**) |
-| `npm run db:studio` | Drizzle Studio |
-| `npm run email` | React Email preview |
+| Command                   | Description                                 |
+| ------------------------- | ------------------------------------------- |
+| `npm run dev`             | Next.js dev server                          |
+| `npm run build` / `start` | Production build & serve                    |
+| `npm run lint`            | ESLint                                      |
+| `npm test`                | Node test runner (`tests/**/*.test.ts`)     |
+| `npm run db:generate`     | Generate Drizzle migrations                 |
+| `npm run db:migrate`      | Apply migrations (**this app owns schema**) |
+| `npm run db:studio`       | Drizzle Studio                              |
+| `npm run email`           | React Email preview                         |
 
 ---
 
@@ -191,9 +191,9 @@ apps/gateway-portal/
 
 ## Development notes
 
-- Prefer **Server Actions** for portal workflows that fit Next.js well.  
-- Schema changes: edit `lib/db/schema.ts` → `npm run db:generate` → `npm run db:migrate`.  
-- Meaningful changes should get a short work log under `tasks/ai/` or `tasks/human/` (see `AGENTS.md`).  
+- Prefer **Server Actions** for portal workflows that fit Next.js well.
+- Schema changes: edit `lib/db/schema.ts` → `npm run db:generate` → `npm run db:migrate`.
+- Meaningful changes should get a short work log under `tasks/ai/` or `tasks/human/` (see `AGENTS.md`).
 - UI follows the portal design tokens in `app/globals.css` (enterprise dark console).
 
 ```bash
@@ -207,11 +207,11 @@ npm run build
 
 ## Related packages
 
-| Package | Role |
-| ------- | ---- |
-| [`gateway-api`](../gateway-api) | Hono proxy that validates child keys and routes upstream |
-| [`gateway-ingest`](../gateway-ingest) | Fills `event_log` for analytics |
-| [Root README](../../README.MD) | Monorepo overview & quick start |
+| Package                               | Role                                                     |
+| ------------------------------------- | -------------------------------------------------------- |
+| [`gateway-api`](../gateway-api)       | Hono proxy that validates child keys and routes upstream |
+| [`gateway-ingest`](../gateway-ingest) | Fills `event_log` for analytics                          |
+| [Root README](../../README.MD)        | Monorepo overview & quick start                          |
 
 ---
 
@@ -219,8 +219,8 @@ npm run build
 
 PRs that improve UX clarity, analytics performance, or provider onboarding are especially welcome.
 
-1. Keep changes focused and tested.  
-2. Do not invent production metrics — empty states should be honest.  
+1. Keep changes focused and tested.
+2. Do not invent production metrics — empty states should be honest.
 3. Match existing OpenRouter-inspired console density (compact, mono metrics, quiet borders).
 
 ---
