@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { Hono } from "hono";
 import type { ChildKeyDbRecord } from "../src/child-keys/types.js";
-import { createAnthropicProxyHandler } from "../src/proxy/proxy-anthropic.js";
+import { injectAnthropicProxyContext } from "../src/proxy/proxy-anthropic.js";
 import {
   createUpstreamProxyHandler,
   type UpstreamProxyContext,
@@ -39,7 +39,7 @@ test("proxyToAnthropic returns resolver failures without forwarding", async () =
 
   app.post(
     "/anthropic/v1/messages",
-    createAnthropicProxyHandler({
+    injectAnthropicProxyContext({
       resolveProviderModel: async (_providerId, _modelAlias, creatorId) => {
         assert.equal(creatorId, "creator_1");
         return {
@@ -109,7 +109,7 @@ test("proxyToAnthropic builds proxy context and emits response log", async () =>
 
   app.post(
     "/anthropic/v1/messages",
-    createAnthropicProxyHandler({
+    injectAnthropicProxyContext({
       resolveProviderModel: async (providerId, modelAlias, creatorId) => {
         assert.equal(providerId, "minimax");
         assert.equal(modelAlias, "MiniMax-M3");

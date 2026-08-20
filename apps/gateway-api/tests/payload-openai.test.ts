@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   ensureStreamUsageOptions,
-  prepareOpenaiPayload,
+  parseOpenaiPayload,
 } from "../src/payload/payload-openai.js";
 
 test("ensureStreamUsageOptions adds usage for /chat/completions streams", () => {
@@ -47,8 +47,8 @@ test("ensureStreamUsageOptions leaves non-chat endpoints unchanged", () => {
   assert.equal(result, body);
 });
 
-test("prepareOpenaiPayload preserves the client model and adds usage for streamed chat completions", () => {
-  const result = prepareOpenaiPayload(
+test("parseOpenaiPayload preserves the client model and adds usage for streamed chat completions", () => {
+  const result = parseOpenaiPayload(
     {
       model: "openai/gpt-5.4-mini",
       stream: true,
@@ -69,8 +69,8 @@ test("prepareOpenaiPayload preserves the client model and adds usage for streame
   });
 });
 
-test("prepareOpenaiPayload does not add usage for streamed non-chat endpoints", () => {
-  const result = prepareOpenaiPayload(
+test("parseOpenaiPayload does not add usage for streamed non-chat endpoints", () => {
+  const result = parseOpenaiPayload(
     {
       model: "openai/gpt-5.4-mini",
       stream: true,
@@ -87,8 +87,8 @@ test("prepareOpenaiPayload does not add usage for streamed non-chat endpoints", 
   assert.equal("stream_options" in result.value.downstreamBody, false);
 });
 
-test("prepareOpenaiPayload accepts provider prefixes that will resolve later", () => {
-  const result = prepareOpenaiPayload(
+test("parseOpenaiPayload accepts provider prefixes that will resolve later", () => {
+  const result = parseOpenaiPayload(
     {
       model: "db-openai/gpt-5.4-mini",
     },
@@ -105,8 +105,8 @@ test("prepareOpenaiPayload accepts provider prefixes that will resolve later", (
   assert.equal(result.value.downstreamBody.model, "db-openai/gpt-5.4-mini");
 });
 
-test("prepareOpenaiPayload captures metadata but does not forward it upstream", () => {
-  const result = prepareOpenaiPayload(
+test("parseOpenaiPayload captures metadata but does not forward it upstream", () => {
+  const result = parseOpenaiPayload(
     {
       model: "openai/gpt-5.4-mini",
       metadata: { user_email: "user@example.com" },
@@ -123,8 +123,8 @@ test("prepareOpenaiPayload captures metadata but does not forward it upstream", 
   assert.equal("metadata" in result.value.downstreamBody, false);
 });
 
-test("prepareOpenaiPayload rejects non-object metadata", () => {
-  const result = prepareOpenaiPayload(
+test("parseOpenaiPayload rejects non-object metadata", () => {
+  const result = parseOpenaiPayload(
     {
       model: "openai/gpt-5.4-mini",
       metadata: "user@example.com",

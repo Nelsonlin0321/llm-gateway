@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { prepareAnthropicPayload } from "../src/payload/payload-anthropic.js";
+import { parseAnthropicPayload } from "../src/payload/payload-anthropic.js";
 
-test("prepareAnthropicPayload strips provider prefix from the upstream model", () => {
-  const result = prepareAnthropicPayload({
+test("parseAnthropicPayload strips provider prefix from the upstream model", () => {
+  const result = parseAnthropicPayload({
     model: "minimax/MiniMax-M3",
     max_tokens: 500,
     messages: [
@@ -24,8 +24,8 @@ test("prepareAnthropicPayload strips provider prefix from the upstream model", (
   assert.equal(result.value.downstreamBody.max_tokens, 500);
 });
 
-test("prepareAnthropicPayload accepts provider prefixes that will resolve later", () => {
-  const result = prepareAnthropicPayload({
+test("parseAnthropicPayload accepts provider prefixes that will resolve later", () => {
+  const result = parseAnthropicPayload({
     model: "db-provider/MiniMax-M3",
   });
 
@@ -38,8 +38,8 @@ test("prepareAnthropicPayload accepts provider prefixes that will resolve later"
   assert.equal(result.value.downstreamBody.model, "MiniMax-M3");
 });
 
-test("prepareAnthropicPayload captures metadata but does not forward it upstream", () => {
-  const result = prepareAnthropicPayload({
+test("parseAnthropicPayload captures metadata but does not forward it upstream", () => {
+  const result = parseAnthropicPayload({
     model: "minimax/MiniMax-M3",
     metadata: { user_email: "user@example.com" },
   });
@@ -53,8 +53,8 @@ test("prepareAnthropicPayload captures metadata but does not forward it upstream
   assert.equal("metadata" in result.value.downstreamBody, false);
 });
 
-test("prepareAnthropicPayload rejects non-object metadata", () => {
-  const result = prepareAnthropicPayload({
+test("parseAnthropicPayload rejects non-object metadata", () => {
+  const result = parseAnthropicPayload({
     model: "minimax/MiniMax-M3",
     metadata: "user@example.com",
   });

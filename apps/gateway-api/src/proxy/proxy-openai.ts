@@ -1,13 +1,9 @@
 import type { Context, MiddlewareHandler } from "hono";
-import { prepareOpenaiPayload } from "../payload/payload-openai";
-import { resolveProviderModel } from "../providers/resolve.js";
-import {
-  buildUpstreamBody,
-  buildUpstreamHeaders,
-  buildUpstreamUrl,
-} from "../shared/upstream.js";
+import { parseOpenaiPayload } from "../payload/payload-openai";
+import { resolveProviderModel } from "../providers/resolve";
+import { buildUpstreamBody, buildUpstreamUrl } from "../shared/upstream.js";
 import { isRecord } from "../utils.js";
-import type { UpstreamProxyContext } from "./upstream-proxy.js";
+import type { UpstreamProxyContext } from "./upstream-proxy";
 import type { proxyDependencies } from "./dependencies";
 
 async function injectContext(
@@ -31,7 +27,7 @@ async function injectContext(
 
   const childKeyRecord = c.get("childKeyRecord");
   const requestPath = new URL(c.req.url).pathname;
-  const prepared = prepareOpenaiPayload(body, requestPath);
+  const prepared = parseOpenaiPayload(body, requestPath);
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
@@ -72,7 +68,6 @@ async function injectContext(
     upstreamModel: resolved.value.model,
     upstreamUrl: upstreamUrl,
     masterApiKey: resolved.value.apiKey,
-    upstreamHeaders: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
     upstreamBody: upstreamBody,
 
     // child key context

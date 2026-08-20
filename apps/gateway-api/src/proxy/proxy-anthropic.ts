@@ -1,11 +1,7 @@
 import type { MiddlewareHandler } from "hono";
 import { parseAnthropicPayload } from "../payload/payload-anthropic";
 import { resolveProviderModel } from "../providers/resolve.js";
-import {
-  buildUpstreamBody,
-  buildUpstreamHeaders,
-  buildUpstreamUrl,
-} from "../shared/upstream";
+import { buildUpstreamBody, buildUpstreamUrl } from "../shared/upstream";
 import type { ChildKeyAuthVariables } from "../child-keys/index";
 import { isRecord } from "../utils.js";
 import type {

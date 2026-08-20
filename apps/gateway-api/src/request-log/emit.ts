@@ -1,9 +1,7 @@
 import { getRedisClient, type RedisCacheClient } from "../lib/redis-client.js";
 import { REQUEST_LOG_STREAM } from "../lib/redis-keys.js";
-import { getCaptureLevel } from "./capture.js";
 import { buildRequestLogFields, requestLogFieldsToXaddArgs } from "./build.js";
 import type {
-  CaptureLevel,
   RequestLogResponseCapture,
   RequestLogV1Fields,
 } from "./schema.js";
@@ -38,9 +36,8 @@ import type { UpstreamProxyContext } from "../proxy/upstream-proxy.js";
 
 export type EmitRequestLogInput = {
   proxyContext: UpstreamProxyContext;
-  requestHeaders: Headers | Record<string, string>;
+  // requestHeaders: Headers | Record<string, string>;
   response: RequestLogResponseCapture;
-  captureLevel?: CaptureLevel;
   streamKey?: string;
   streamMaxLen?: number;
   client?: RedisCacheClient | null;
@@ -74,9 +71,7 @@ export async function emitRequestLog(
   }
 
   const ctx = input.proxyContext;
-  const captureLevel = input.captureLevel ?? getCaptureLevel();
   const fields = buildRequestLogFields({
-    captureLevel,
     gatewayPath: ctx.gatewayPath,
     httpMethod: ctx.httpMethod,
     apiFamily: ctx.apiFamily,
@@ -96,7 +91,7 @@ export async function emitRequestLog(
     childKeyIssuedAt: ctx.childKeyRecord.issuedAt,
     childKeyTags: ctx.childKeyRecord.tags,
     userEmail: ctx.childKeyRecord.userEmail,
-    requestHeaders: input.requestHeaders,
+    // requestHeaders: input.requestHeaders,
     requestPayloadJson: ctx.requestPayloadJson,
     metadataJson: ctx.metadataJson,
     upstreamRequestPayloadJson: ctx.upstreamBody,

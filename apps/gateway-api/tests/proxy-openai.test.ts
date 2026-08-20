@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { Hono } from "hono";
 import type { ChildKeyDbRecord } from "../src/child-keys/types.js";
-import { createOpenaiProxyHandler } from "../src/proxy/proxy-openai.js";
+import { injectOpenAIProxyContext } from "../src/proxy/proxy-openai.js";
 import {
   createUpstreamProxyHandler,
   type UpstreamProxyContext,
@@ -46,7 +46,7 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
 
   app.post(
     "/openai/v1/chat/completions",
-    createOpenaiProxyHandler({
+    injectOpenAIProxyContext({
       resolveProviderModel: async (_providerId, _modelAlias, creatorId) => {
         assert.equal(creatorId, "creator_1");
         return {
@@ -122,7 +122,6 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
             user_email: input.proxyContext.childKeyRecord.userEmail,
             request_headers_json: "{}",
             metadata_json: input.proxyContext.metadataJson,
-            capture_level: "metadata",
             status_code: String(input.response.statusCode),
             response_content_type: input.response.responseContentType,
             response_headers_json: "{}",
@@ -207,7 +206,7 @@ test("proxyToOpenai instruments SSE and emits first_token_ms", async () => {
 
   app.post(
     "/openai/v1/chat/completions",
-    createOpenaiProxyHandler({
+    injectOpenAIProxyContext({
       resolveProviderModel: async () => ({
         ok: true,
         value: {
@@ -290,7 +289,7 @@ test("proxyToOpenai emits error log when upstream is unreachable", async () => {
 
   app.post(
     "/openai/v1/chat/completions",
-    createOpenaiProxyHandler({
+    injectOpenAIProxyContext({
       resolveProviderModel: async () => ({
         ok: true,
         value: {

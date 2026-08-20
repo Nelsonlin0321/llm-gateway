@@ -218,5 +218,5 @@ test("requirePlainChildApiKey and verifyChildKeyToken round-trip", async () => {
   assert.throws(() => requirePlainChildApiKey(encryptApiKey(apiKey)), /plain/i);
 
   const payload = await verifyChildKeyToken(apiKey);
-  assert.equal(payload.name, "test-key");
+  assert.equal(payload.key_id, "key-test-1");
 });
