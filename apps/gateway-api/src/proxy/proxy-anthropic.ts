@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from "hono";
-import { prepareAnthropicPayload } from "../payload/payload-anthropic";
+import { parseAnthropicPayload } from "../payload/payload-anthropic";
 import { resolveProviderModel } from "../providers/resolve.js";
 import {
   buildUpstreamBody,
@@ -39,7 +39,7 @@ async function injectContext(
 
   const childKeyRecord = c.get("childKeyRecord");
   const requestPath = new URL(c.req.url).pathname;
-  const prepared = prepareAnthropicPayload(body);
+  const prepared = parseAnthropicPayload(body);
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
@@ -81,7 +81,6 @@ async function injectContext(
     upstreamModel: resolved.value.model,
     upstreamUrl: upstreamUrl,
     masterApiKey: resolved.value.apiKey,
-    upstreamHeaders: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
     upstreamBody: upstreamBody,
 
     // child key context

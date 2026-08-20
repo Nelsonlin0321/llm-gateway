@@ -12,7 +12,7 @@ function isRecord(value: unknown): value is JsonBody {
  * - strip the provider prefix from `model`
  * - force stream usage options when streaming
  */
-export function prepareAnthropicPayload(body: unknown): PrepareResult {
+export function parseAnthropicPayload(body: unknown): PrepareResult {
   if (!isRecord(body) || typeof body.model !== "string" || !body.model) {
     return {
       ok: false,
