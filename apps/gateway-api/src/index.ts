@@ -2,9 +2,9 @@ import { and, asc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import {
-  requireChildKeyAuth,
+  requireInjectChildKeyAuth,
   type ChildKeyAuthVariables,
-} from "./child-keys/index";
+} from "./child-keys";
 import { createOpenaiProxyHandler } from "./proxy/proxy-openai";
 import { createAnthropicProxyHandler } from "./proxy/proxy-anthropic";
 import {
@@ -104,8 +104,8 @@ app.get("/", async (c) => {
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 // Proxy routes require a valid child API key.
-app.use("/openai/*", requireChildKeyAuth);
-app.use("/anthropic/*", requireChildKeyAuth);
+app.use("/openai/*", requireInjectChildKeyAuth);
+app.use("/anthropic/*", requireInjectChildKeyAuth);
 
 app.post("/openai/*", createOpenaiProxyHandler(), createUpstreamProxyHandler());
 app.post(
