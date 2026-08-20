@@ -11,6 +11,7 @@ import {
   toProviderListItem,
   validateCreateProviderInput,
 } from "@/lib/llm-provider/service";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import {
@@ -24,10 +25,18 @@ export async function createProvider(
 ): Promise<ProviderActionResult> {
   const session = await requireSession();
   const organizationId = await resolveActiveOrganizationId(session);
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    organizationId,
+    "llmProvider",
+    "create",
+  );
 
-  if (!organizationId) {
+  if (!access.ok) {
     return validationErrorResult(
-      "Select an organization before creating a provider.",
+      access.code === "no_organization"
+        ? "Select an organization before creating a provider."
+        : access.error,
     );
   }
 
@@ -45,7 +54,7 @@ export async function createProvider(
     .from(llmProviders)
     .where(
       and(
-        eq(llmProviders.organizationId, organizationId),
+        eq(llmProviders.organizationId, access.organizationId),
         eq(llmProviders.name, parsed.data.name),
         eq(llmProviders.compatibilityType, parsed.data.compatibilityType),
       ),
@@ -63,12 +72,12 @@ export async function createProvider(
     const [provider] = await db
       .insert(llmProviders)
       .values(
-        buildProviderCreateData(parsed.data, session.user.id, organizationId),
+        buildProviderCreateData(parsed.data, session.user.id, access.organizationId),
       )
       .returning(providerReturning);
 
-    revalidatePath(`/${organizationId}/providers`);
-    revalidatePath(`/${organizationId}`);
+    revalidatePath(`/${access.organizationId}/providers`);
+    revalidatePath(`/${access.organizationId}`);
 
     return {
       ok: true,

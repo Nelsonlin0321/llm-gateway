@@ -39,6 +39,7 @@ import {
   type ModelListQuery,
   type ProviderSummary,
 } from "@/lib/model/schema";
+import { hasPermission, type Role } from "@/lib/organization/permissions";
 import { cn } from "@/lib/utils";
 
 type ModelManagementClientProps = {
@@ -46,6 +47,7 @@ type ModelManagementClientProps = {
   providers: ProviderSummary[];
   models: ModelListItem[];
   query?: ModelListQuery;
+  role?: Role | null;
 };
 
 type ModalState =
@@ -77,6 +79,7 @@ export function ModelManagementClient({
   providers,
   models,
   query = {},
+  role = null,
 }: ModelManagementClientProps) {
   const router = useRouter();
   const [modalState, setModalState] = useState<ModalState>(null);
@@ -85,6 +88,9 @@ export function ModelManagementClient({
   const [isSubmitting, startSubmitting] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const canCreate = hasPermission(role, "model", "create");
+  const canUpdate = hasPermission(role, "model", "update");
+  const canDelete = hasPermission(role, "model", "delete");
 
   const stats = useMemo(() => {
     const avgOutput =
@@ -196,14 +202,16 @@ export function ModelManagementClient({
                 : `${models.length} model${models.length === 1 ? "" : "s"} in this organization.`}
             </CardDescription>
           </div>
-          <Button
-            size="sm"
-            disabled={providers.length === 0}
-            onClick={() => setModalState({ mode: "create" })}
-          >
-            <Plus className="size-3.5" />
-            Add model
-          </Button>
+          {canCreate ? (
+            <Button
+              size="sm"
+              disabled={providers.length === 0}
+              onClick={() => setModalState({ mode: "create" })}
+            >
+              <Plus className="size-3.5" />
+              Add model
+            </Button>
+          ) : null}
         </CardHeader>
         <div className="border-b border-border px-4 py-3 sm:px-5">
           <ModelListFilters query={query} providers={providers} />
@@ -224,14 +232,16 @@ export function ModelManagementClient({
                     : "Add a model with input, output, and cache prices so routing and cost attribution can use this organization."}
               </p>
               {hasModelListFilters(query) ? null : providers.length === 0 ? (
-                <Link
-                  href={`/org/${organizationId}/providers`}
-                  className={cn(buttonVariants({ size: "sm" }), "mt-4")}
-                >
-                  <Plus className="size-3.5" />
-                  Add provider
-                </Link>
-              ) : (
+                hasPermission(role, "llmProvider", "create") ? (
+                  <Link
+                    href={`/org/${organizationId}/providers`}
+                    className={cn(buttonVariants({ size: "sm" }), "mt-4")}
+                  >
+                    <Plus className="size-3.5" />
+                    Add provider
+                  </Link>
+                ) : null
+              ) : canCreate ? (
                 <Button
                   size="sm"
                   className="mt-4"
@@ -240,7 +250,7 @@ export function ModelManagementClient({
                   <Plus className="size-3.5" />
                   Add model
                 </Button>
-              )}
+              ) : null}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -288,28 +298,32 @@ export function ModelManagementClient({
                       <FlaskConical className="size-3.5" />
                       {testingId === model.id ? "Testing..." : "Test"}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setModalState({ mode: "edit", model })}
-                    >
-                      <PencilLine className="size-3.5" />
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-error hover:bg-error-bg hover:text-error"
-                      disabled={deletingId === model.id}
-                      onClick={() => setModelPendingDelete(model)}
-                    >
-                      <Trash2 className="size-3.5" />
-                      {deletingId === model.id
-                        ? "Deregistering..."
-                        : "Deregister"}
-                    </Button>
+                    {canUpdate ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setModalState({ mode: "edit", model })}
+                      >
+                        <PencilLine className="size-3.5" />
+                        Edit
+                      </Button>
+                    ) : null}
+                    {canDelete ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-error hover:bg-error-bg hover:text-error"
+                        disabled={deletingId === model.id}
+                        onClick={() => setModelPendingDelete(model)}
+                      >
+                        <Trash2 className="size-3.5" />
+                        {deletingId === model.id
+                          ? "Deregistering..."
+                          : "Deregister"}
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}

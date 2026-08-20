@@ -7,8 +7,11 @@ import { sendInvitationEmail, sendVerificationEmail } from "@/lib/email";
 import {
   defaultRole,
   ORGANIZATION_CREATOR_ROLE,
+  ORGANIZATION_ROLE_LABELS,
+  organizationPluginRoles,
   Role,
   roles,
+  normalizeRole,
 } from "./organization/permissions";
 
 function invitationUrl(invitationId: string) {
@@ -102,6 +105,7 @@ export const auth = betterAuth({
     nextCookies(),
     organization({
       creatorRole: ORGANIZATION_CREATOR_ROLE,
+      roles: organizationPluginRoles,
       allowUserToCreateOrganization: true,
       invitationExpiresIn: 60 * 60 * 24 * 7,
       cancelPendingInvitationsOnReInvite: true,
@@ -115,9 +119,12 @@ export const auth = betterAuth({
           email,
           inviterName: inviter.user.name || inviter.user.email,
           organizationName: invitedOrganization.name,
-          roleLabel: (roles.includes(invitation.role as Role)
-            ? invitation.role
-            : defaultRole) as Role,
+          roleLabel:
+            ORGANIZATION_ROLE_LABELS[
+              roles.includes(invitation.role as Role)
+                ? (invitation.role as Role)
+                : normalizeRole(invitation.role ?? defaultRole)
+            ],
           invitationUrl: invitationUrl(invitation.id),
         });
       },

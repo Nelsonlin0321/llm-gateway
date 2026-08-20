@@ -36,11 +36,13 @@ import {
   type ProviderListQuery,
   updateProviderInputSchema,
 } from "@/lib/llm-provider/schema";
+import { hasPermission, type Role } from "@/lib/organization/permissions";
 import { cn } from "@/lib/utils";
 
 type ProviderManagementClientProps = {
   providers: ProviderListItem[];
   query?: ProviderListQuery;
+  role?: Role | null;
 };
 
 type ModalState =
@@ -59,6 +61,7 @@ function formatDate(value: string) {
 export function ProviderManagementClient({
   providers,
   query = {},
+  role = null,
 }: ProviderManagementClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -71,6 +74,9 @@ export function ProviderManagementClient({
     useState<ProviderListItem | null>(null);
   const [isSubmitting, startSubmitting] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const canCreate = hasPermission(role, "llmProvider", "create");
+  const canUpdate = hasPermission(role, "llmProvider", "update");
+  const canDelete = hasPermission(role, "llmProvider", "delete");
 
   const stats = useMemo(() => {
     const activeCount = providers.filter(
@@ -171,10 +177,12 @@ export function ProviderManagementClient({
                 : `${stats.total} provider${stats.total === 1 ? "" : "s"} in this workspace.`}
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setModalState({ mode: "create" })}>
-            <Plus className="size-3.5" />
-            Add provider
-          </Button>
+          {canCreate ? (
+            <Button size="sm" onClick={() => setModalState({ mode: "create" })}>
+              <Plus className="size-3.5" />
+              Add provider
+            </Button>
+          ) : null}
         </CardHeader>
         <div className="border-b border-border px-4 py-3 sm:px-5">
           <ProviderListFilters query={query} />
@@ -192,14 +200,16 @@ export function ProviderManagementClient({
                   ? "Try a different name or compatibility type, or clear the filters."
                   : "Add an upstream URL and encrypted API key to enable routing and model pricing for this workspace."}
               </p>
-              <Button
-                size="sm"
-                className="mt-4"
-                onClick={() => setModalState({ mode: "create" })}
-              >
-                <Plus className="size-3.5" />
-                Add provider
-              </Button>
+              {canCreate ? (
+                <Button
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setModalState({ mode: "create" })}
+                >
+                  <Plus className="size-3.5" />
+                  Add provider
+                </Button>
+              ) : null}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -243,26 +253,30 @@ export function ProviderManagementClient({
                       <Boxes className="size-3.5" />
                       Models
                     </Link>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setModalState({ mode: "edit", provider })}
-                    >
-                      <PencilLine className="size-3.5" />
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-error hover:bg-error-bg hover:text-error"
-                      disabled={deletingId === provider.id}
-                      onClick={() => setProviderPendingDelete(provider)}
-                    >
-                      <Trash2 className="size-3.5" />
-                      {deletingId === provider.id ? "Deleting..." : "Delete"}
-                    </Button>
+                    {canUpdate ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setModalState({ mode: "edit", provider })}
+                      >
+                        <PencilLine className="size-3.5" />
+                        Edit
+                      </Button>
+                    ) : null}
+                    {canDelete ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-error hover:bg-error-bg hover:text-error"
+                        disabled={deletingId === provider.id}
+                        onClick={() => setProviderPendingDelete(provider)}
+                      >
+                        <Trash2 className="size-3.5" />
+                        {deletingId === provider.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}

@@ -28,9 +28,9 @@ import {
 import { organization } from "@/lib/auth-client";
 import {
   assignableRolesFor,
+  hasPermission,
   normalizeOrganizationRole,
   ORGANIZATION_ROLE_LABELS,
-  roleHasPermission,
   type OrganizationRoleName,
 } from "@/lib/organization/permissions";
 import type { OrganizationWorkspaceState } from "@/lib/organization/types";
@@ -76,12 +76,13 @@ export function OrganizationManagementClient({
   );
   const currentRole = currentMember?.role ?? "viewer";
   const assignableRoles = assignableRolesFor(currentRole);
-  const canInvite = roleHasPermission(currentRole, { invitation: ["create"] });
-  const canUpdateOrg = roleHasPermission(currentRole, { organization: ["update"] });
-  const canDeleteOrg = roleHasPermission(currentRole, { organization: ["delete"] });
-  const canUpdateMember = roleHasPermission(currentRole, { member: ["update"] });
-  const canDeleteMember = roleHasPermission(currentRole, { member: ["delete"] });
-  const canCancelInvite = roleHasPermission(currentRole, { invitation: ["cancel"] });
+  const canCreateOrg = hasPermission(currentRole, "organization", "create");
+  const canInvite = hasPermission(currentRole, "member", "create");
+  const canUpdateOrg = hasPermission(currentRole, "organization", "update");
+  const canDeleteOrg = hasPermission(currentRole, "organization", "delete");
+  const canUpdateMember = hasPermission(currentRole, "member", "update");
+  const canDeleteMember = hasPermission(currentRole, "member", "delete");
+  const canCancelInvite = hasPermission(currentRole, "member", "delete");
 
   const pendingInvitations = useMemo(
     () =>
@@ -316,10 +317,12 @@ export function OrganizationManagementClient({
               Switch the active organization used across the workspace.
             </CardDescription>
           </div>
-          <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="size-3.5" />
-            New organization
-          </Button>
+          {canCreateOrg ? (
+            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="size-3.5" />
+              New organization
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-2">
           {organizations.map((item) => {

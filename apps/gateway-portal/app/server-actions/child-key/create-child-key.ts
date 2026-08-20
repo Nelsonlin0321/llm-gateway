@@ -9,6 +9,7 @@ import {
   validateCreateChildKeyInput,
 } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import {
@@ -23,10 +24,18 @@ export async function createChildKey(
 ): Promise<ChildKeyActionResult> {
   const session = await requireSession();
   const organizationId = await resolveActiveOrganizationId(session);
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    organizationId,
+    "childKey",
+    "create",
+  );
 
-  if (!organizationId) {
+  if (!access.ok) {
     return childKeyValidationError(
-      "Select an organization before creating a child API key.",
+      access.code === "no_organization"
+        ? "Select an organization before creating a child API key."
+        : access.error,
     );
   }
 
@@ -45,7 +54,7 @@ export async function createChildKey(
       {
         id: session.user.id,
       },
-      organizationId,
+      access.organizationId,
     );
 
     const [childKey] = await db

@@ -19,8 +19,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { organization } from "@/lib/auth-client";
 import {
+  hasPermission,
   normalizeOrganizationRole,
   ORGANIZATION_ROLE_LABELS,
+  type Entity,
 } from "@/lib/organization/permissions";
 import type { OrganizationListItem } from "@/lib/organization/service";
 import { cn } from "@/lib/utils";
@@ -34,14 +36,24 @@ function matchesOrganizationPath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function buildConsoleNavigation(organizationId: string | null) {
+function buildConsoleNavigation(
+  organizationId: string | null,
+  role: string | null,
+) {
   const overviewHref = organizationHref(organizationId);
   const providersHref = organizationHref(organizationId, "/providers");
   const modelsHref = organizationHref(organizationId, "/models");
   const childKeysHref = organizationHref(organizationId, "/child-keys");
   const analyticsHref = organizationHref(organizationId, "/analytics");
 
-  return [
+  const items: Array<{
+    label: string;
+    href: string;
+    icon: typeof LayoutGrid;
+    match: (pathname: string) => boolean;
+    disabled?: boolean;
+    entity?: Entity;
+  }> = [
     {
       label: "Overview",
       href: overviewHref,
@@ -54,18 +66,21 @@ function buildConsoleNavigation(organizationId: string | null) {
       href: providersHref,
       icon: PlugZap,
       match: (pathname: string) => matchesOrganizationPath(pathname, providersHref),
+      entity: "llmProvider",
     },
     {
       label: "Models",
       href: modelsHref,
       icon: Boxes,
       match: (pathname: string) => matchesOrganizationPath(pathname, modelsHref),
+      entity: "model",
     },
     {
       label: "Child Keys",
       href: childKeysHref,
       icon: KeyRound,
       match: (pathname: string) => matchesOrganizationPath(pathname, childKeysHref),
+      entity: "childKey",
     },
     {
       label: "Guardrails",
@@ -88,6 +103,10 @@ function buildConsoleNavigation(organizationId: string | null) {
       disabled: true,
     },
   ];
+
+  return items.filter(
+    (item) => !item.entity || hasPermission(role, item.entity, "view"),
+  );
 }
 
 const accountNavigation = [
@@ -134,6 +153,7 @@ export function WorkspaceSidebar({
     organizations[0];
   const consoleNavigation = buildConsoleNavigation(
     activeOrganization?.id ?? null,
+    activeOrganization?.role ?? null,
   );
 
   useEffect(() => {

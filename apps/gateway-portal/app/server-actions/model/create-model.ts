@@ -10,7 +10,7 @@ import {
   toModelListItem,
   validateCreateModelInput,
 } from "@/lib/model/service";
-import { getOrganizationMembership } from "@/lib/organization/service";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 
 import {
   modelReturning,
@@ -44,12 +44,14 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
     return modelValidationError("Provider not found.");
   }
 
-  const membership = await getOrganizationMembership(
+  const access = await requireOrganizationPermission(
     session.user.id,
     provider.organizationId,
+    "model",
+    "create",
   );
 
-  if (!membership) {
+  if (!access.ok) {
     return modelValidationError(
       "You do not have permission to register models for this provider.",
     );

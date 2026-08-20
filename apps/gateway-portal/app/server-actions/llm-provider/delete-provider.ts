@@ -1,11 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { db, llmProviders } from "@/lib/db";
 import { requireSession } from "@/lib/auth-server";
 import { toProviderListItem } from "@/lib/llm-provider/service";
+import {
+  mutationDeniedMessage,
+  requireOrganizationPermission,
+} from "@/lib/organization/access";
 
 import {
   providerReturning,
@@ -23,15 +27,27 @@ export async function deleteProvider(
   }
 
   const [existing] = await db
-    .select({ id: llmProviders.id })
+    .select({
+      id: llmProviders.id,
+      organizationId: llmProviders.organizationId,
+    })
     .from(llmProviders)
-    .where(
-      and(eq(llmProviders.id, id), eq(llmProviders.creatorId, session.user.id)),
-    )
+    .where(eq(llmProviders.id, id))
     .limit(1);
 
   if (!existing) {
     return validationErrorResult("Provider not found.");
+  }
+
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    existing.organizationId,
+    "llmProvider",
+    "delete",
+  );
+
+  if (!access.ok) {
+    return validationErrorResult(mutationDeniedMessage(access));
   }
 
   try {

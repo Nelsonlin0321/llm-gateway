@@ -1,10 +1,14 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
 import { decryptChildKey } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import {
+  mutationDeniedMessage,
+  requireOrganizationPermission,
+} from "@/lib/organization/access";
 
 export type RevealChildKeyResult =
   | {
@@ -32,15 +36,25 @@ export async function revealChildKey(
       id: childKeys.id,
       name: childKeys.name,
       key: childKeys.key,
+      organizationId: childKeys.organizationId,
     })
     .from(childKeys)
-    .where(
-      and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)),
-    )
+    .where(eq(childKeys.id, id))
     .limit(1);
 
   if (!childKey) {
     return { ok: false, error: "Child key not found." };
+  }
+
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    childKey.organizationId,
+    "childKey",
+    "view",
+  );
+
+  if (!access.ok) {
+    return { ok: false, error: mutationDeniedMessage(access) };
   }
 
   try {

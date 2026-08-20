@@ -36,11 +36,13 @@ import {
   type ChildKeyListItem,
   type ChildKeyTags,
 } from "@/lib/child-key/schema";
+import { hasPermission, type Role } from "@/lib/organization/permissions";
 import { cn } from "@/lib/utils";
 
 type ChildKeyManagementClientProps = {
   keys: ChildKeyListItem[];
   defaultUserEmail: string;
+  role?: Role | null;
 };
 
 function formatDate(value: string) {
@@ -64,6 +66,7 @@ function tagEntries(tags: ChildKeyTags) {
 export function ChildKeyManagementClient({
   keys,
   defaultUserEmail,
+  role = null,
 }: ChildKeyManagementClientProps) {
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
@@ -81,6 +84,10 @@ export function ChildKeyManagementClient({
     name: string;
     mode: "created" | "rotated" | "reveal";
   } | null>(null);
+  const canCreate = hasPermission(role, "childKey", "create");
+  const canView = hasPermission(role, "childKey", "view");
+  const canUpdate = hasPermission(role, "childKey", "update");
+  const canDelete = hasPermission(role, "childKey", "delete");
 
   const stats = useMemo(() => {
     const active = keys.filter((key) => key.isActive).length;
@@ -215,10 +222,12 @@ export function ChildKeyManagementClient({
               tags. Secrets are revealed on demand.
             </CardDescription>
           </div>
-          <Button size="sm" onClick={() => setFormOpen(true)}>
-            <Plus className="size-3.5" />
-            Create key
-          </Button>
+          {canCreate ? (
+            <Button size="sm" onClick={() => setFormOpen(true)}>
+              <Plus className="size-3.5" />
+              Create key
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent className="p-0">
           {keys.length === 0 ? (
@@ -233,10 +242,12 @@ export function ChildKeyManagementClient({
                 Create a scoped key for a team, project, or application without
                 sharing master provider credentials.
               </p>
-              <Button size="sm" className="mt-4" onClick={() => setFormOpen(true)}>
-                <Plus className="size-3.5" />
-                Create key
-              </Button>
+              {canCreate ? (
+                <Button size="sm" className="mt-4" onClick={() => setFormOpen(true)}>
+                  <Plus className="size-3.5" />
+                  Create key
+                </Button>
+              ) : null}
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -292,65 +303,73 @@ export function ChildKeyManagementClient({
                     </div>
 
                     <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={revealingId === key.id}
-                        onClick={() => void handleReveal(key)}
-                      >
-                        <Eye className="size-3.5" />
-                        {revealingId === key.id ? "Revealing..." : "Reveal"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={rotatingId === key.id}
-                        onClick={() => setKeyPendingRotate(key)}
-                      >
-                        <RefreshCw className="size-3.5" />
-                        {rotatingId === key.id ? "Rotating..." : "Rotate"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-error hover:bg-error-bg hover:text-error"
-                        disabled={deletingId === key.id}
-                        onClick={() => setKeyPendingDelete(key)}
-                      >
-                        <Trash2 className="size-3.5" />
-                        {deletingId === key.id ? "Deleting..." : "Delete"}
-                      </Button>
-                      <label
-                        className={cn(
-                          "flex items-center gap-2 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-[12px]",
-                          togglingId === key.id && "opacity-60",
-                        )}
-                      >
-                        <span className="text-text-secondary">
-                          {key.isActive ? "On" : "Off"}
-                        </span>
-                        <button
+                      {canView ? (
+                        <Button
                           type="button"
-                          role="switch"
-                          aria-checked={key.isActive}
-                          disabled={togglingId === key.id}
-                          onClick={() => void handleToggle(key)}
+                          variant="outline"
+                          size="sm"
+                          disabled={revealingId === key.id}
+                          onClick={() => void handleReveal(key)}
+                        >
+                          <Eye className="size-3.5" />
+                          {revealingId === key.id ? "Revealing..." : "Reveal"}
+                        </Button>
+                      ) : null}
+                      {canUpdate ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={rotatingId === key.id}
+                          onClick={() => setKeyPendingRotate(key)}
+                        >
+                          <RefreshCw className="size-3.5" />
+                          {rotatingId === key.id ? "Rotating..." : "Rotate"}
+                        </Button>
+                      ) : null}
+                      {canDelete ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-error hover:bg-error-bg hover:text-error"
+                          disabled={deletingId === key.id}
+                          onClick={() => setKeyPendingDelete(key)}
+                        >
+                          <Trash2 className="size-3.5" />
+                          {deletingId === key.id ? "Deleting..." : "Delete"}
+                        </Button>
+                      ) : null}
+                      {canUpdate ? (
+                        <label
                           className={cn(
-                            "relative h-5 w-9 rounded-full transition-colors",
-                            key.isActive ? "bg-accent" : "bg-surface-3",
+                            "flex items-center gap-2 rounded-md border border-border bg-surface-2 px-2.5 py-1.5 text-[12px]",
+                            togglingId === key.id && "opacity-60",
                           )}
                         >
-                          <span
+                          <span className="text-text-secondary">
+                            {key.isActive ? "On" : "Off"}
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={key.isActive}
+                            disabled={togglingId === key.id}
+                            onClick={() => void handleToggle(key)}
                             className={cn(
-                              "absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform",
-                              key.isActive && "translate-x-4",
+                              "relative h-5 w-9 rounded-full transition-colors",
+                              key.isActive ? "bg-accent" : "bg-surface-3",
                             )}
-                          />
-                        </button>
-                      </label>
+                          >
+                            <span
+                              className={cn(
+                                "absolute top-0.5 left-0.5 size-4 rounded-full bg-white transition-transform",
+                                key.isActive && "translate-x-4",
+                              )}
+                            />
+                          </button>
+                        </label>
+                      ) : null}
                     </div>
                   </div>
                 );

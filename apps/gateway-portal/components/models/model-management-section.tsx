@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 
 import { getModelsForOrganization } from "@/app/server-actions/model/get-models";
 import { ModelManagementClient } from "@/components/models/model-management-client";
+import { requireSession } from "@/lib/auth-server";
 import type { ModelListQuery } from "@/lib/model/schema";
+import { getOrganizationRole } from "@/lib/organization/access";
 
 type ModelManagementSectionProps = {
   organizationId: string;
@@ -13,6 +15,8 @@ export async function ModelManagementSection({
   organizationId,
   query = {},
 }: ModelManagementSectionProps) {
+  const session = await requireSession();
+  const role = await getOrganizationRole(session.user.id, organizationId);
   const result = await getModelsForOrganization({
     organizationId,
     ...query,
@@ -36,6 +40,7 @@ export async function ModelManagementSection({
       providers={result.providers}
       models={result.models}
       query={query}
+      role={role}
     />
   );
 }

@@ -5,7 +5,7 @@ import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { requireSession } from "@/lib/auth-server";
 import { decryptChildKey } from "@/lib/child-key/service";
 import { db, childKeys, llmProviders, models } from "@/lib/db";
-import { getOrganizationMembership } from "@/lib/organization/service";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 
 const DEFAULT_PROXY_API_URL = "http://localhost:8080";
 const STREAM = false;
@@ -153,12 +153,14 @@ export async function testModel(modelId: string): Promise<TestModelResult> {
     return { ok: false, error: "Model not found." };
   }
 
-  const membership = await getOrganizationMembership(
+  const access = await requireOrganizationPermission(
     session.user.id,
     row.organizationId,
+    "model",
+    "view",
   );
 
-  if (!membership) {
+  if (!access.ok) {
     return {
       ok: false,
       error: "You do not have permission to test this model.",
@@ -175,7 +177,7 @@ export async function testModel(modelId: string): Promise<TestModelResult> {
     .from(childKeys)
     .where(
       and(
-        eq(childKeys.creatorId, session.user.id),
+        eq(childKeys.organizationId, row.organizationId),
         eq(childKeys.isActive, true),
         or(isNull(childKeys.expiresAt), gt(childKeys.expiresAt, now)),
       ),

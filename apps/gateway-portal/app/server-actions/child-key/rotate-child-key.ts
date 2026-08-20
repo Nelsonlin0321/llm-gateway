@@ -1,11 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
 import { buildChildKeyRotateData } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import {
+  mutationDeniedMessage,
+  requireOrganizationPermission,
+} from "@/lib/organization/access";
 
 import {
   childKeyReturning,
@@ -36,13 +40,25 @@ export async function rotateChildKey(
       id: childKeys.id,
       expiresAt: childKeys.expiresAt,
       issuedAt: childKeys.issuedAt,
+      organizationId: childKeys.organizationId,
     })
     .from(childKeys)
-    .where(and(eq(childKeys.id, id), eq(childKeys.creatorId, session.user.id)))
+    .where(eq(childKeys.id, id))
     .limit(1);
 
   if (!existing) {
     return childKeyValidationError("Child key not found.");
+  }
+
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    existing.organizationId,
+    "childKey",
+    "update",
+  );
+
+  if (!access.ok) {
+    return childKeyValidationError(mutationDeniedMessage(access));
   }
 
   try {

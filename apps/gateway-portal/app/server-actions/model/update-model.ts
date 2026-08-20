@@ -10,7 +10,10 @@ import {
   toModelListItem,
   validateUpdateModelInput,
 } from "@/lib/model/service";
-import { getOrganizationMembership } from "@/lib/organization/service";
+import {
+  mutationDeniedMessage,
+  requireOrganizationPermission,
+} from "@/lib/organization/access";
 
 import {
   modelReturning,
@@ -45,13 +48,15 @@ export async function updateModel(input: unknown): Promise<ModelActionResult> {
     return modelValidationError("Model not found.");
   }
 
-  const membership = await getOrganizationMembership(
+  const access = await requireOrganizationPermission(
     session.user.id,
     existing.organizationId,
+    "model",
+    "update",
   );
 
-  if (!membership) {
-    return modelValidationError("Model not found.");
+  if (!access.ok) {
+    return modelValidationError(mutationDeniedMessage(access));
   }
 
   try {

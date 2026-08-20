@@ -10,7 +10,7 @@ import {
   toModelListItem,
   validateGetModelsInput,
 } from "@/lib/model/service";
-import { getOrganizationMembership } from "@/lib/organization/service";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 
 import { modelReturning } from "./shared";
 
@@ -41,12 +41,14 @@ export async function getModelsForOrganization(
   }
 
   const { organizationId } = parsed.data;
-  const membership = await getOrganizationMembership(
+  const access = await requireOrganizationPermission(
     session.user.id,
     organizationId,
+    "model",
+    "view",
   );
 
-  if (!membership) {
+  if (!access.ok) {
     return {
       ok: false,
       error: "You do not have access to models for this organization.",

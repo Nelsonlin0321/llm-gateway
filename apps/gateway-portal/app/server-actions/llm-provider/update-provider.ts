@@ -11,6 +11,10 @@ import {
   toProviderListItem,
   validateUpdateProviderInput,
 } from "@/lib/llm-provider/service";
+import {
+  mutationDeniedMessage,
+  requireOrganizationPermission,
+} from "@/lib/organization/access";
 
 import {
   providerReturning,
@@ -38,16 +42,22 @@ export async function updateProvider(
       organizationId: llmProviders.organizationId,
     })
     .from(llmProviders)
-    .where(
-      and(
-        eq(llmProviders.id, parsed.data.id),
-        eq(llmProviders.creatorId, session.user.id),
-      ),
-    )
+    .where(eq(llmProviders.id, parsed.data.id))
     .limit(1);
 
   if (!existing) {
     return validationErrorResult("Provider not found.");
+  }
+
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    existing.organizationId,
+    "llmProvider",
+    "update",
+  );
+
+  if (!access.ok) {
+    return validationErrorResult(mutationDeniedMessage(access));
   }
 
   const [duplicate] = await db

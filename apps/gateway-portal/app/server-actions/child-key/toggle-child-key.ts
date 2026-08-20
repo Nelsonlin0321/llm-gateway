@@ -1,12 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { requireSession } from "@/lib/auth-server";
 import { validateToggleChildKeyInput } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import {
+  mutationDeniedMessage,
+  requireOrganizationPermission,
+} from "@/lib/organization/access";
 
 import {
   childKeyReturning,
@@ -29,18 +33,27 @@ export async function toggleChildKey(
   }
 
   const [existing] = await db
-    .select({ id: childKeys.id })
+    .select({
+      id: childKeys.id,
+      organizationId: childKeys.organizationId,
+    })
     .from(childKeys)
-    .where(
-      and(
-        eq(childKeys.id, parsed.data.id),
-        eq(childKeys.creatorId, session.user.id),
-      ),
-    )
+    .where(eq(childKeys.id, parsed.data.id))
     .limit(1);
 
   if (!existing) {
     return childKeyValidationError("Child key not found.");
+  }
+
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    existing.organizationId,
+    "childKey",
+    "update",
+  );
+
+  if (!access.ok) {
+    return childKeyValidationError(mutationDeniedMessage(access));
   }
 
   try {

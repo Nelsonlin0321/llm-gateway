@@ -10,6 +10,7 @@ import {
   validateGetProvidersOptions,
 } from "@/lib/llm-provider/service";
 import type { GetProvidersOptions } from "@/lib/llm-provider/schema";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import { providerReturning } from "./shared";
@@ -17,8 +18,14 @@ import { providerReturning } from "./shared";
 export async function getProviders(options?: GetProvidersOptions) {
   const session = await requireSession();
   const organizationId = await resolveActiveOrganizationId(session);
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    organizationId,
+    "llmProvider",
+    "view",
+  );
 
-  if (!organizationId) {
+  if (!access.ok) {
     return [];
   }
 
@@ -28,7 +35,7 @@ export async function getProviders(options?: GetProvidersOptions) {
     return [];
   }
 
-  const filters = buildProvidersWhereClause(organizationId, parsed.data);
+  const filters = buildProvidersWhereClause(access.organizationId, parsed.data);
   const conditions = [eq(llmProviders.organizationId, filters.organizationId)];
   if ("isActive" in filters && filters.isActive !== undefined) {
     conditions.push(eq(llmProviders.isActive, filters.isActive));

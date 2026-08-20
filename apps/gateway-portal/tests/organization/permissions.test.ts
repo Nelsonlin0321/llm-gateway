@@ -3,43 +3,105 @@ import assert from "node:assert/strict";
 
 import {
   assignableRolesFor,
-  normalizeOrganizationRole,
+  hasPermission,
+  normalizeRole,
+  organizationPluginRoles,
   roleHasPermission,
+  rolePermission,
+  roles,
 } from "@/lib/organization/permissions";
 
-test("root can update and delete organization resources", () => {
-  assert.equal(roleHasPermission("root", { organization: ["update"] }), true);
-  assert.equal(roleHasPermission("root", { organization: ["delete"] }), true);
-  assert.equal(roleHasPermission("root", { member: ["delete"] }), true);
-  assert.equal(roleHasPermission("root", { invitation: ["create"] }), true);
+test("hasPermission follows rolePermission for each role", () => {
+  assert.equal(hasPermission("root", "organization", "delete"), true);
+  assert.equal(hasPermission("root", "childKey", "create"), true);
+  assert.equal(hasPermission("admin", "organization", "update"), true);
+  assert.equal(hasPermission("admin", "organization", "delete"), false);
+  assert.equal(hasPermission("admin", "member", "delete"), true);
+  assert.equal(hasPermission("viewer", "llmProvider", "view"), true);
+  assert.equal(hasPermission("viewer", "llmProvider", "create"), false);
+  assert.equal(hasPermission("member", "model", "view"), true);
+  assert.equal(hasPermission("member", "childKey", "view"), false);
+  assert.equal(hasPermission("member", "organization", "create"), true);
+  assert.equal(hasPermission("member", "member", "create"), false);
 });
 
-test("admin can edit but cannot delete", () => {
-  assert.equal(roleHasPermission("admin", { organization: ["update"] }), true);
-  assert.equal(roleHasPermission("admin", { organization: ["delete"] }), false);
-  assert.equal(roleHasPermission("admin", { member: ["create"] }), true);
-  assert.equal(roleHasPermission("admin", { member: ["update"] }), true);
-  assert.equal(roleHasPermission("admin", { member: ["delete"] }), false);
-  assert.equal(roleHasPermission("admin", { invitation: ["create"] }), true);
-  assert.equal(roleHasPermission("admin", { invitation: ["cancel"] }), true);
+test("unknown and missing roles are denied", () => {
+  assert.equal(hasPermission(null, "organization", "view"), false);
+  assert.equal(hasPermission(undefined, "organization", "view"), false);
+  assert.equal(hasPermission("", "model", "view"), false);
+  assert.equal(hasPermission("unknown", "organization", "view"), false);
 });
 
-test("viewer can only read", () => {
-  assert.equal(roleHasPermission("viewer", { organization: ["update"] }), false);
-  assert.equal(roleHasPermission("viewer", { member: ["create"] }), false);
-  assert.equal(roleHasPermission("viewer", { invitation: ["create"] }), false);
-  assert.equal(roleHasPermission("viewer", { ac: ["read"] }), true);
+test("legacy owner alias maps onto root; member is a first-class role", () => {
+  assert.equal(normalizeRole("owner"), "root");
+  assert.equal(normalizeRole("member"), "member");
+  assert.equal(hasPermission("owner", "organization", "delete"), true);
+  assert.equal(hasPermission("MEMBER", "model", "view"), true);
 });
 
-test("legacy owner and member aliases map onto root and viewer", () => {
-  assert.equal(normalizeOrganizationRole("owner"), "root");
-  assert.equal(normalizeOrganizationRole("member"), "viewer");
-  assert.equal(roleHasPermission("owner", { organization: ["delete"] }), true);
-  assert.equal(roleHasPermission("member", { invitation: ["create"] }), false);
+test("roleHasPermission requires every listed operation", () => {
+  assert.equal(
+    roleHasPermission("root", { organization: ["update", "delete"] }),
+    true,
+  );
+  assert.equal(
+    roleHasPermission("admin", { organization: ["update", "delete"] }),
+    false,
+  );
+  assert.equal(
+    roleHasPermission("admin", { member: ["create", "update"] }),
+    true,
+  );
 });
 
 test("only root can assign the root role", () => {
-  assert.deepEqual(assignableRolesFor("root"), ["root", "admin", "viewer"]);
-  assert.deepEqual(assignableRolesFor("admin"), ["admin", "viewer"]);
+  assert.deepEqual(assignableRolesFor("root"), [
+    "root",
+    "admin",
+    "viewer",
+    "member",
+  ]);
+  assert.deepEqual(assignableRolesFor("admin"), [
+    "admin",
+    "viewer",
+    "member",
+  ]);
   assert.deepEqual(assignableRolesFor("viewer"), []);
+  assert.deepEqual(assignableRolesFor("member"), []);
+});
+
+test("every configured role lists all entities", () => {
+  for (const role of roles) {
+    assert.deepEqual(
+      Object.keys(rolePermission[role]).sort(),
+      ["childKey", "llmProvider", "member", "model", "organization"],
+    );
+  }
+});
+
+test("Better Auth organization endpoints honor the same permission table", () => {
+  assert.equal(
+    organizationPluginRoles.root.authorize({ organization: ["delete"] })
+      .success,
+    true,
+  );
+  assert.equal(
+    organizationPluginRoles.admin.authorize({ organization: ["delete"] })
+      .success,
+    false,
+  );
+  assert.equal(
+    organizationPluginRoles.admin.authorize({ invitation: ["create"] })
+      .success,
+    true,
+  );
+  assert.equal(
+    organizationPluginRoles.viewer.authorize({ invitation: ["create"] })
+      .success,
+    false,
+  );
+  assert.equal(
+    organizationPluginRoles.member.authorize({ member: ["create"] }).success,
+    false,
+  );
 });
