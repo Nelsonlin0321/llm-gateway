@@ -14,7 +14,7 @@ import type {
 } from "./upstream-proxy.js";
 import type { proxyDependencies } from "./dependencies";
 
-async function handleAnthropicProxy(
+async function injectContext(
   c: Parameters<
     MiddlewareHandler<{
       Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
@@ -91,14 +91,14 @@ async function handleAnthropicProxy(
   c.set("proxyContext", proxyContext);
 }
 
-export function createAnthropicProxyHandler(
+export function injectAnthropicProxyContext(
   deps: proxyDependencies = {},
 ): MiddlewareHandler<{
   Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
 }> {
   return async (c, next) => {
     const started = performance.now();
-    const failureResponse = await handleAnthropicProxy(c, deps);
+    const failureResponse = await injectContext(c, deps);
     const elapsedMs = performance.now() - started;
     console.log(`Parse Anthropic request took ${elapsedMs.toFixed(2)} ms`);
     if (failureResponse) {

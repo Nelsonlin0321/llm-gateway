@@ -5,8 +5,8 @@ import {
   requireInjectChildKeyAuth,
   type ChildKeyAuthVariables,
 } from "./child-keys";
-import { createOpenaiProxyHandler } from "./proxy/proxy-openai";
-import { createAnthropicProxyHandler } from "./proxy/proxy-anthropic";
+import { injectOpenAIProxyContext } from "./proxy/proxy-openai";
+import { injectAnthropicProxyContext } from "./proxy/proxy-anthropic";
 import {
   createUpstreamProxyHandler,
   type UpstreamProxyVariables,
@@ -18,9 +18,9 @@ import {
 import { db, llmProviders, models } from "./lib/db";
 
 const app = new Hono<{
-  Variables: ChildKeyAuthVariables &
+  Variables: RequestIdVariables &
+    ChildKeyAuthVariables &
     UpstreamProxyVariables &
-    RequestIdVariables &
     Record<string, unknown>;
 }>();
 
@@ -107,10 +107,10 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 app.use("/openai/*", requireInjectChildKeyAuth);
 app.use("/anthropic/*", requireInjectChildKeyAuth);
 
-app.post("/openai/*", createOpenaiProxyHandler(), createUpstreamProxyHandler());
+app.post("/openai/*", injectOpenAIProxyContext(), createUpstreamProxyHandler());
 app.post(
   "/anthropic/*",
-  createAnthropicProxyHandler(),
+  injectAnthropicProxyContext(),
   createUpstreamProxyHandler(),
 );
 

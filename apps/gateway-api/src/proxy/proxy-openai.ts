@@ -10,7 +10,7 @@ import { isRecord } from "../utils.js";
 import type { UpstreamProxyContext } from "./upstream-proxy.js";
 import type { proxyDependencies } from "./dependencies";
 
-async function handleOpenaiProxy(
+async function injectContext(
   c: Context<any, string, {}>,
   deps: proxyDependencies,
 ): Promise<Response | void> {
@@ -82,12 +82,12 @@ async function handleOpenaiProxy(
   c.set("proxyContext", proxyContext);
 }
 
-export function createOpenaiProxyHandler(
+export function injectOpenAIProxyContext(
   deps: proxyDependencies = {},
 ): MiddlewareHandler {
   return async (c, next) => {
     const started = performance.now();
-    const failureResponse = await handleOpenaiProxy(c, deps);
+    const failureResponse = await injectContext(c, deps);
     const elapsedMs = performance.now() - started;
     console.log(`Parse OpenAI request took ${elapsedMs.toFixed(2)} ms`);
     if (failureResponse) {
