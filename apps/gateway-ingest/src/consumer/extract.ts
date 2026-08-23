@@ -1,7 +1,4 @@
-import type {
-  XAutoClaimResult,
-  XReadGroupResult,
-} from "../lib/redis-client.js";
+import type { XAutoClaimResult, XReadGroupResult } from "../lib/redis-client";
 
 /**
  * One Redis Stream entry after extraction.
@@ -97,9 +94,7 @@ export function extractStreamEntries(
       if (fields !== null && !Array.isArray(fields)) {
         continue;
       }
-      extracted.push(
-        entryFromRaw(streamKey, id, fields, "xreadgroup"),
-      );
+      extracted.push(entryFromRaw(streamKey, id, fields, "xreadgroup"));
     }
   }
 

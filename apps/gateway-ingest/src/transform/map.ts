@@ -1,4 +1,4 @@
-import type { NewEventLog, NewRequestLog } from "../db/schema.js";
+import type { NewEventLog, NewRequestLog } from "../db/schema";
 import {
   parseApiFamily,
   parseBool,
@@ -9,8 +9,8 @@ import {
   parseOptionalString,
   parseTimestamp,
   toLogDate,
-} from "./parse.js";
-import { calculateCost, extractTokenUsage } from "./tokens.js";
+} from "./parse";
+import { calculateCost, extractTokenUsage } from "./tokens";
 
 export type TransformResult =
   | {
@@ -28,6 +28,7 @@ export function transformStreamFields(
 ): TransformResult {
   const eventId = parseOptionalString(fields.event_id);
   const requestId = parseOptionalString(fields.request_id);
+  const organizationId = parseOptionalString(fields.organization_id);
   if (!eventId) {
     return { ok: false, reason: "missing event_id" };
   }
@@ -40,22 +41,25 @@ export function transformStreamFields(
     return { ok: false, reason: "missing gateway_path" };
   }
 
+  if (!organizationId) {
+    return { ok: false, reason: "missing organization_id" };
+  }
+
   const loggedAt = parseTimestamp(fields.logged_at) ?? new Date();
   const logDate = toLogDate(loggedAt);
   const isStream = parseBool(fields.is_stream, false);
 
   const responseText = isStream
-    ? parseOptionalString(fields.response_stream_text) ?? null
-    : parseOptionalString(fields.response_payload_json) ?? null;
+    ? (parseOptionalString(fields.response_stream_text) ?? null)
+    : (parseOptionalString(fields.response_payload_json) ?? null);
 
   const now = new Date();
 
   const requestLog: NewRequestLog = {
     eventId,
     requestId,
-    requestHeadersJson: parseNullableString(fields.request_headers_json),
     requestPayloadJson: parseNullableString(fields.request_payload_json),
-    responseHeadersJson: parseNullableString(fields.response_headers_json),
+    organizationId: fields.organization_id,
     responseText,
     statusCode: parseIntField(fields.status_code),
     isStream,
@@ -126,6 +130,7 @@ export function transformStreamFields(
   const eventLog: NewEventLog = {
     eventId,
     requestId,
+    organizationId: fields.organization_id,
     schemaVersion,
     eventType,
     startedAt,

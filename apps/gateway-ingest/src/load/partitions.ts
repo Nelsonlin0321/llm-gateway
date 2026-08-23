@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import type { Db } from "../lib/db.js";
+import type { Db } from "../lib/db";
 
 /** Parent tables that are PARTITION BY RANGE (log_date). */
 export const PARTITIONED_TABLES = ["request_log", "event_log"] as const;

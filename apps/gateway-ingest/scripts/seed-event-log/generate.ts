@@ -19,6 +19,7 @@ export type MockEventLogRow = {
   requestedModelAlias: string;
   upstreamModel: string;
   upstreamUrl: string;
+  organizationId: string;
   isStream: boolean;
   responseMode: "stream" | "non-stream";
   childKeyId: null;
@@ -222,6 +223,7 @@ export function generateMockEventLogRow(
   return {
     eventId: crypto.randomUUID(),
     requestId: crypto.randomUUID(),
+    organizationId: crypto.randomUUID(),
     schemaVersion: 1,
     eventType: "request",
     startedAt: startedAt.toISOString(),

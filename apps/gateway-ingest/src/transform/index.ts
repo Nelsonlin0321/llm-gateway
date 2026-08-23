@@ -1,7 +1,4 @@
-export {
-  transformStreamFields,
-  type TransformResult,
-} from "./map.js";
+export { transformStreamFields, type TransformResult } from "./map";
 export {
   calculateCost,
   extractTokenUsage,
@@ -15,10 +12,10 @@ export {
   ZERO_TOKEN_USAGE,
   type TokenPrices,
   type TokenUsage,
-} from "./tokens.js";
+} from "./tokens";
 export {
   CACHED_INPUT_TOKEN_PATHS,
   INPUT_TOKEN_PATHS,
   OUTPUT_TOKEN_PATHS,
   STREAM_USAGE_LOOKBACK,
-} from "./token-paths.js";
+} from "./token-paths";

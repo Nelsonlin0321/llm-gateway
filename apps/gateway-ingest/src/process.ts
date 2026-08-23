@@ -1,7 +1,7 @@
-import type { ExtractedStreamEntry } from "./consumer/extract.js";
-import type { Db } from "./lib/db.js";
-import { loadRows } from "./load/index.js";
-import { transformStreamFields } from "./transform/index.js";
+import type { ExtractedStreamEntry } from "./consumer/extract";
+import type { Db } from "./lib/db";
+import { loadRows } from "./load/index";
+import { transformStreamFields } from "./transform/index";
 
 export type ProcessBatchResult = {
   /** Stream entry ids that were handled successfully and should be XACK'd. */

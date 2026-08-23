@@ -1,11 +1,11 @@
-import type { NewEventLog, NewRequestLog } from "../db/schema.js";
-import { eventLog, requestLog } from "../db/schema.js";
-import type { Db } from "../lib/db.js";
+import type { NewEventLog, NewRequestLog } from "../db/schema";
+import { eventLog, requestLog } from "../db/schema";
+import type { Db } from "../lib/db";
 import {
   ensureDayPartitions,
   isMissingPartitionError,
   normalizeLogDate,
-} from "./partitions.js";
+} from "./partitions";
 
 export type LoadRowsInput = {
   requestLog: NewRequestLog;

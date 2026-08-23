@@ -1,12 +1,12 @@
-import { loadConfig } from "./lib/config.js";
-import { db } from "./lib/db.js";
-import { createRedisClient } from "./lib/redis-client.js";
+import { loadConfig } from "./lib/config";
+import { db } from "./lib/db";
+import { createRedisClient } from "./lib/redis-client";
 import {
   ackEntries,
   ensureConsumerGroup,
   readGroupEntries,
-} from "./consumer/index.js";
-import { processExtractedEntries } from "./process.js";
+} from "./consumer/index";
+import { processExtractedEntries } from "./process";
 
 async function main(): Promise<void> {
   const config = loadConfig();

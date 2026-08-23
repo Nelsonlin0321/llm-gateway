@@ -1,7 +1,4 @@
-import {
-  REQUEST_LOG_CONSUMER_GROUP,
-  REQUEST_LOG_STREAM,
-} from "./redis-keys.js";
+import { REQUEST_LOG_CONSUMER_GROUP, REQUEST_LOG_STREAM } from "./redis-keys";
 
 export type IngestConfig = {
   redisUrl: string;
