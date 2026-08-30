@@ -1,5 +1,5 @@
 {
-  "id": "7a5d52f1-8f0a-475d-83eb-bf5b39762a41",
+  "id": "420452f8-bdba-4dea-b500-b51f7059dd30",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -875,6 +875,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "llm_provider_name_fts_idx": {
+          "name": "llm_provider_name_fts_idx",
+          "columns": [
+            {
+              "expression": "to_tsvector('simple'::regconfig, \"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1094,6 +1109,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "model_name_fts_idx": {
+          "name": "model_name_fts_idx",
+          "columns": [
+            {
+              "expression": "to_tsvector('simple'::regconfig, \"name\")",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1203,20 +1233,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "request_headers_json": {
-          "name": "request_headers_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "request_payload_json": {
           "name": "request_payload_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "response_headers_json": {
-          "name": "response_headers_json",
           "type": "text",
           "primaryKey": false,
           "notNull": false

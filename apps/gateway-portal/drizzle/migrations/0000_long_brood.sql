@@ -74,6 +74,8 @@ CREATE TABLE "event_log" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp NOT NULL
 );
+
+
 --> statement-breakpoint
 CREATE TABLE "invitation" (
 	"id" text PRIMARY KEY NOT NULL,
@@ -133,9 +135,7 @@ CREATE TABLE "organization" (
 CREATE TABLE "request_log" (
 	"event_id" text NOT NULL,
 	"request_id" text NOT NULL,
-	"request_headers_json" text,
 	"request_payload_json" text,
-	"response_headers_json" text,
 	"response_text" text,
 	"status_code" integer,
 	"is_stream" boolean DEFAULT false NOT NULL,
@@ -207,9 +207,11 @@ CREATE INDEX "invitation_email_idx" ON "invitation" USING btree ("email");--> st
 CREATE UNIQUE INDEX "llm_provider_name_compatibility_type_key" ON "llm_provider" USING btree ("organization_id","name","compatibility_type");--> statement-breakpoint
 CREATE INDEX "llm_provider_creator_id_idx" ON "llm_provider" USING btree ("creator_id");--> statement-breakpoint
 CREATE INDEX "llm_provider_organization_id_idx" ON "llm_provider" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "llm_provider_name_fts_idx" ON "llm_provider" USING gin (to_tsvector('simple'::regconfig, "name"));--> statement-breakpoint
 CREATE INDEX "member_organizationId_idx" ON "member" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "member_userId_idx" ON "member" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "model_provider_id_idx" ON "model" USING btree ("provider_id");--> statement-breakpoint
+CREATE INDEX "model_name_fts_idx" ON "model" USING gin (to_tsvector('simple'::regconfig, "name"));--> statement-breakpoint
 CREATE INDEX "request_log_date_idx" ON "request_log" USING btree ("log_date");--> statement-breakpoint
 CREATE INDEX "session_userId_idx" ON "session" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_identifier_idx" ON "verification" USING btree ("identifier");
