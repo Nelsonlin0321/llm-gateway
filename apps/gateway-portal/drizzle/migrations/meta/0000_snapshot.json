@@ -1,5 +1,5 @@
 {
-  "id": "420452f8-bdba-4dea-b500-b51f7059dd30",
+  "id": "95f0b946-b00f-4c02-ab94-cfb545cc5071",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -623,7 +623,16 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "event_log_organization_id_log_date_event_id_pk": {
+          "name": "event_log_organization_id_log_date_event_id_pk",
+          "columns": [
+            "organization_id",
+            "log_date",
+            "event_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -1328,7 +1337,16 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "request_log_organization_id_event_id_log_date_pk": {
+          "name": "request_log_organization_id_event_id_log_date_pk",
+          "columns": [
+            "organization_id",
+            "event_id",
+            "log_date"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},

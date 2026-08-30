@@ -72,11 +72,11 @@ CREATE TABLE "event_log" (
 	"input_cache_price" double precision,
 	"organization_id" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp NOT NULL
-);
+	"updated_at" timestamp NOT NULL,
+	CONSTRAINT "event_log_organization_id_log_date_event_id_pk" PRIMARY KEY("organization_id","log_date","event_id")
+ ) PARTITION BY RANGE (log_date)
+;
 
-
---> statement-breakpoint
 CREATE TABLE "invitation" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
@@ -144,9 +144,10 @@ CREATE TABLE "request_log" (
 	"log_date" date NOT NULL,
 	"organization_id" text NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp NOT NULL
-);
---> statement-breakpoint
+	"updated_at" timestamp NOT NULL,
+	CONSTRAINT "request_log_organization_id_event_id_log_date_pk" PRIMARY KEY("organization_id","event_id","log_date")
+ ) PARTITION BY RANGE (log_date);
+
 CREATE TABLE "session" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
