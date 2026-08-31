@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -250,7 +251,9 @@ export const requestLog = pgTable(
   },
   (table) => [
     index("request_log_date_idx").on(table.logDate),
-    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    primaryKey({
+      columns: [table.organizationId, table.eventId, table.logDate],
+    }),
   ],
 );
 
@@ -308,7 +311,9 @@ export const eventLog = pgTable(
     ...timestamps,
   },
   (table) => [
-    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    primaryKey({
+      columns: [table.organizationId, table.logDate, table.eventId],
+    }),
     index("event_log_date_idx").on(table.logDate),
     index("tags_path_gin_idx").using(
       "gin",
