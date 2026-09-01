@@ -8,6 +8,7 @@ import {
 } from "@/lib/llm-provider/built-in";
 import {
   builtInProviderIconHasColor,
+  builtInProviderIconUsesLightFill,
   getBuiltInProviderIconId,
   getBuiltInProviderIconUrl,
 } from "@/lib/llm-provider/icons";
@@ -80,4 +81,12 @@ test("uses colorful Lobe Icons when a color asset exists", () => {
     getBuiltInProviderIconUrl("deepseek", "mono") ?? "",
     /deepseek\.svg$/,
   );
+});
+
+test("inverts black mono marks so they stay visible on dark surfaces", () => {
+  assert.equal(builtInProviderIconUsesLightFill("openai"), true);
+  assert.equal(builtInProviderIconUsesLightFill("x-ai"), true);
+  assert.equal(builtInProviderIconUsesLightFill("groq"), true);
+  assert.equal(builtInProviderIconUsesLightFill("deepseek"), false);
+  assert.equal(builtInProviderIconUsesLightFill("anthropic"), false);
 });

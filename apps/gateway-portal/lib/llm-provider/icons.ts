@@ -33,11 +33,31 @@ const providerIconIds: Record<string, string> = {
   "z-ai": "zhipu",
   "z-ai-cn": "zhipu",
   minimax: "minimax",
+  "minimax-cn": "minimax",
   siliconflow: "siliconcloud",
   yiai: "zeroone",
   ollamacloud: "ollama",
   anthropic: "anthropic",
 };
+
+/**
+ * Mono marks whose SVG fill is black (`currentColor` in an <img>).
+ * Invert them so they stay visible on the dark console.
+ */
+const lightFillIconIds = new Set([
+  "groq",
+  "openai",
+  "xai",
+  "github",
+  "moonshot",
+  "moonshot-cn",
+  "ollamacloud",
+  "yiai",
+  "minimax-cn",
+  "vercel",
+  "nebius",
+  "baseten",
+]);
 
 /** Lobe Icons that ship a dedicated color SVG (`{id}-color.svg`). */
 const colorIconIds = new Set([
@@ -68,6 +88,11 @@ export function getBuiltInProviderIconId(name: string): string | undefined {
 export function builtInProviderIconHasColor(name: string): boolean {
   const iconId = getBuiltInProviderIconId(name);
   return iconId !== undefined && colorIconIds.has(iconId);
+}
+
+export function builtInProviderIconUsesLightFill(name: string): boolean {
+  const iconId = getBuiltInProviderIconId(name);
+  return iconId !== undefined && lightFillIconIds.has(iconId);
 }
 
 export function getBuiltInProviderIconUrl(
