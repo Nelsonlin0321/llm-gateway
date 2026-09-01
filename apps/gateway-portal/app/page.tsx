@@ -25,6 +25,7 @@ import {
   siteTagline,
   siteTitle,
 } from "@/lib/site";
+import { getSessionOrNull } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 
 const capabilities = [
@@ -76,7 +77,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSessionOrNull();
   const siteUrl = getSiteUrl();
   const jsonLd = {
     "@context": "https://schema.org",
@@ -130,17 +132,23 @@ export default function Home() {
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
               <Link
                 href="/workspace"
-                className={cn(buttonVariants({ variant: "default", size: "lg" }))}
+                className={cn(
+                  buttonVariants({ variant: "default", size: "lg" }),
+                )}
               >
                 Open console
                 <ArrowRight className="size-4" />
               </Link>
-              <Link
-                href="/sign-in"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-              >
-                Sign in
-              </Link>
+              {!session?.user ? (
+                <Link
+                  href="/sign-in"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                  )}
+                >
+                  Sign in
+                </Link>
+              ) : null}
             </div>
             <ul className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
               {trustPoints.map((point) => (
