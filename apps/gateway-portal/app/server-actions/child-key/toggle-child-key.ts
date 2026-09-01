@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -16,6 +15,7 @@ import {
   childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
+  revalidateOrganizationChildKeyPaths,
   type ChildKeyActionResult,
 } from "./shared";
 
@@ -63,7 +63,7 @@ export async function toggleChildKey(
       .where(eq(childKeys.id, existing.id))
       .returning(childKeyReturning);
 
-    revalidatePath("/workspace/child-keys");
+    revalidateOrganizationChildKeyPaths(existing.organizationId);
 
     return childKeySuccess(
       childKey,

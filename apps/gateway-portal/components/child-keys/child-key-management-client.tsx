@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Eye, KeyRound, Plus, RefreshCw, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Eye, KeyRound, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { z } from "zod";
@@ -23,9 +24,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -40,6 +43,7 @@ import { hasPermission, type Role } from "@/lib/organization/permissions";
 import { cn } from "@/lib/utils";
 
 type ChildKeyManagementClientProps = {
+  organizationId: string;
   keys: ChildKeyListItem[];
   defaultUserEmail: string;
   role?: Role | null;
@@ -64,6 +68,7 @@ function tagEntries(tags: ChildKeyTags) {
 }
 
 export function ChildKeyManagementClient({
+  organizationId,
   keys,
   defaultUserEmail,
   role = null,
@@ -102,7 +107,7 @@ export function ChildKeyManagementClient({
     values: z.infer<typeof createChildKeyInputSchema>,
   ) => {
     startSubmitting(async () => {
-      const result = await createChildKey(values);
+      const result = await createChildKey(values, organizationId);
 
       if (!result.ok) {
         toast.error(result.error);
@@ -205,28 +210,56 @@ export function ChildKeyManagementClient({
     router.refresh();
   };
 
+  const openCreateModal = () => setFormOpen(true);
+
   return (
     <>
-      <section className="grid grid-cols-3 gap-3">
-        <MetricCard label="Total" value={stats.total.toString()} />
-        <MetricCard label="Active" value={stats.active.toString()} />
-        <MetricCard label="Inactive" value={stats.inactive.toString()} />
-      </section>
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          eyebrow="Access"
+          title="Child API keys"
+          description="Issue scoped keys for teams, projects, and applications without exposing master provider credentials."
+          actions={
+            <>
+              {canCreate ? (
+                <Button type="button" size="sm" onClick={openCreateModal}>
+                  <Plus className="size-3.5" />
+                  Create key
+                </Button>
+              ) : null}
+              <Link
+                href={`/org/${organizationId}`}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                )}
+              >
+                <ArrowLeft className="size-3.5" />
+                Overview
+              </Link>
+            </>
+          }
+        />
 
-      <Card className="border-border bg-card shadow-card">
-        <CardHeader className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-base">Issued keys</CardTitle>
-            <CardDescription>
-              Signed <span className="font-mono">sk_</span> JWTs with optional
-              tags. Secrets are revealed on demand.
-            </CardDescription>
-          </div>
+        <section className="grid grid-cols-3 gap-3">
+          <MetricCard label="Total" value={stats.total.toString()} />
+          <MetricCard label="Active" value={stats.active.toString()} />
+          <MetricCard label="Inactive" value={stats.inactive.toString()} />
+        </section>
+
+        <Card className="border-border bg-card shadow-card">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-base">Issued keys</CardTitle>
+          <CardDescription>
+            Signed <span className="font-mono">sk_</span> JWTs with optional
+            tags. Secrets are revealed on demand.
+          </CardDescription>
           {canCreate ? (
-            <Button size="sm" onClick={() => setFormOpen(true)}>
-              <Plus className="size-3.5" />
-              Create key
-            </Button>
+            <CardAction>
+              <Button type="button" size="sm" onClick={openCreateModal}>
+                <Plus className="size-3.5" />
+                Create key
+              </Button>
+            </CardAction>
           ) : null}
         </CardHeader>
         <CardContent className="p-0">
@@ -243,7 +276,12 @@ export function ChildKeyManagementClient({
                 sharing master provider credentials.
               </p>
               {canCreate ? (
-                <Button size="sm" className="mt-4" onClick={() => setFormOpen(true)}>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-4"
+                  onClick={openCreateModal}
+                >
                   <Plus className="size-3.5" />
                   Create key
                 </Button>
@@ -378,6 +416,7 @@ export function ChildKeyManagementClient({
           )}
         </CardContent>
       </Card>
+      </div>
 
       <ChildKeyFormModal
         open={formOpen}

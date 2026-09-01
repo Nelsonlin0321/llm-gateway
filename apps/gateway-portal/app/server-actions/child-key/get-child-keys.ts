@@ -10,12 +10,14 @@ import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import { childKeyReturning } from "./shared";
 
-export async function getChildKeys() {
+export async function getChildKeys(organizationId?: string | null) {
   const session = await requireSession();
-  const organizationId = await resolveActiveOrganizationId(session);
+  const resolvedOrganizationId =
+    organizationId?.trim() ||
+    (await resolveActiveOrganizationId(session));
   const access = await requireOrganizationPermission(
     session.user.id,
-    organizationId,
+    resolvedOrganizationId,
     "childKey",
     "view",
   );

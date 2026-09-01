@@ -9,7 +9,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function ChildKeyManagementSkeleton() {
   return (
-    <>
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-full max-w-xl" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-28 rounded-md" />
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </div>
+      </header>
+
       <section className="grid gap-3 sm:grid-cols-3">
         {Array.from({ length: 3 }, (_, index) => (
           <Card key={index} className="bg-surface-1 shadow-none">
@@ -42,6 +54,6 @@ export function ChildKeyManagementSkeleton() {
           ))}
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

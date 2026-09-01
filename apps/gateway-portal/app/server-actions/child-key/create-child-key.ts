@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireSession } from "@/lib/auth-server";
@@ -16,17 +15,21 @@ import {
   childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
+  revalidateOrganizationChildKeyPaths,
   type ChildKeyActionResult,
 } from "./shared";
 
 export async function createChildKey(
   input: unknown,
+  organizationId?: string | null,
 ): Promise<ChildKeyActionResult> {
   const session = await requireSession();
-  const organizationId = await resolveActiveOrganizationId(session);
+  const resolvedOrganizationId =
+    organizationId?.trim() ||
+    (await resolveActiveOrganizationId(session));
   const access = await requireOrganizationPermission(
     session.user.id,
-    organizationId,
+    resolvedOrganizationId,
     "childKey",
     "create",
   );
@@ -62,7 +65,7 @@ export async function createChildKey(
       .values(data)
       .returning(childKeyReturning);
 
-    revalidatePath("/workspace/child-keys");
+    revalidateOrganizationChildKeyPaths(access.organizationId);
 
     return childKeySuccess(
       childKey,

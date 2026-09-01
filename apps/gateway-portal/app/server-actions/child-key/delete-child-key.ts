@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 import { requireSession } from "@/lib/auth-server";
@@ -14,6 +13,7 @@ import {
   childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
+  revalidateOrganizationChildKeyPaths,
   type ChildKeyActionResult,
 } from "./shared";
 import { invalidate_child_key_cache } from "@/lib/redis/invalidate";
@@ -58,7 +58,7 @@ export async function deleteChildKey(
       .returning(childKeyReturning);
 
     await invalidate_child_key_cache(id);
-    revalidatePath("/workspace/child-keys");
+    revalidateOrganizationChildKeyPaths(existing.organizationId);
 
     return childKeySuccess(childKey, "Child key deleted successfully.");
   } catch (error) {

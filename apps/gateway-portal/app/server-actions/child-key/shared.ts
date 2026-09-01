@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { childKeys, type ChildKey } from "@/lib/db";
 import type { ChildKeyListItem } from "@/lib/child-key/schema";
 import { toChildKeyListItem } from "@/lib/child-key/service";
@@ -65,4 +67,9 @@ export function childKeySuccess(
     message,
     ...(apiKey ? { apiKey } : {}),
   };
+}
+
+export function revalidateOrganizationChildKeyPaths(organizationId: string) {
+  revalidatePath(`/org/${organizationId}/child-keys`);
+  revalidatePath(`/org/${organizationId}`);
 }
