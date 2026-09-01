@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { createProvider } from "@/app/server-actions/llm-provider/create-provider";
 import { deleteProvider } from "@/app/server-actions/llm-provider/delete-provider";
 import { updateProvider } from "@/app/server-actions/llm-provider/update-provider";
+import { BuiltInProviderIcon } from "@/components/llm-providers/built-in-provider-icon";
 import { ProviderFormModal } from "@/components/llm-providers/provider-form-modal";
 import { ProviderListFilters } from "@/components/llm-providers/provider-list-filters";
 import {
@@ -247,29 +248,41 @@ export function ProviderManagementClient({
                   key={provider.id}
                   className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
                 >
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
-                        {provider.name}
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span
+                      aria-hidden
+                      className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2"
+                    >
+                      <BuiltInProviderIcon
+                        key={provider.name}
+                        name={provider.name}
+                        className="bg-transparent"
+                      />
+                    </span>
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
+                          {provider.name}
+                        </p>
+                        <Badge
+                          variant={provider.isActive ? "success" : "warning"}
+                        >
+                          {provider.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                        <Badge
+                          variant="neutral"
+                          className="font-mono text-[11px] uppercase"
+                        >
+                          {provider.compatibilityType}
+                        </Badge>
+                      </div>
+                      <p className="truncate font-mono text-[12px] text-text-tertiary">
+                        {provider.apiUrl}
                       </p>
-                      <Badge
-                        variant={provider.isActive ? "success" : "warning"}
-                      >
-                        {provider.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                      <Badge
-                        variant="neutral"
-                        className="font-mono text-[11px] uppercase"
-                      >
-                        {provider.compatibilityType}
-                      </Badge>
+                      <p className="text-[11px] text-text-muted">
+                        Updated {formatDate(provider.updatedAt)}
+                      </p>
                     </div>
-                    <p className="truncate font-mono text-[12px] text-text-tertiary">
-                      {provider.apiUrl}
-                    </p>
-                    <p className="text-[11px] text-text-muted">
-                      Updated {formatDate(provider.updatedAt)}
-                    </p>
                   </div>
 
                   <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">

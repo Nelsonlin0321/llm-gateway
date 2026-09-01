@@ -68,6 +68,7 @@ export async function signChildKeyToken(
 ): Promise<string> {
   const claims: JWTClaim = {
     key_id: payload.key_id,
+    issued_at: payload.issued_at,
   };
 
   let signer = new SignJWT(claims).setProtectedHeader({

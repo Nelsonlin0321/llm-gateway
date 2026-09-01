@@ -177,4 +177,5 @@ export type CreateChildKeyResultItem = ChildKeyListItem & {
 
 export type JWTClaim = {
   key_id: string;
+  issued_at: number;
 };
