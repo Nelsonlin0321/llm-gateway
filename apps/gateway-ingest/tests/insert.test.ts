@@ -143,9 +143,12 @@ test("loadRows creates partitions and retries on missing partition", async () =>
   if (result.ok) {
     assert.equal(result.createdPartition, true);
   }
-  assert.equal(ddl.length, 2);
-  assert.match(ddl[0] ?? "", /request_log_2026_08_01/);
-  assert.match(ddl[1] ?? "", /event_log_2026_08_01/);
+  assert.equal(ddl.length, 4);
+  assert.match(ddl[0] ?? "", /request_log_2026_08_01 PARTITION OF request_log/);
+  assert.match(ddl[0] ?? "", /PARTITION BY LIST \(organization_id\)/);
+  assert.match(ddl[1] ?? "", /request_log_2026_08_01_org_1/);
+  assert.match(ddl[2] ?? "", /event_log_2026_08_01 PARTITION OF event_log/);
+  assert.match(ddl[3] ?? "", /event_log_2026_08_01_org_1/);
 });
 
 test("loadRows surfaces non-partition errors without CREATE", async () => {

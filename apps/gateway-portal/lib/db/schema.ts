@@ -263,6 +263,8 @@ export const childKeys = pgTable(
  *
  * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
  *   PARTITION BY RANGE (log_date)
+ *   Daily children PARTITION BY LIST (organization_id)
+ *   Leaf: {table}_{YYYY_MM_DD}_{normalized_organization_id}
  */
 export const requestLog = pgTable(
   "request_log",

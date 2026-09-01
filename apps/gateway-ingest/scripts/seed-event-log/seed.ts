@@ -5,7 +5,7 @@
  *
  * - Date range default: 2026-06-01 .. 2026-08-01 (inclusive)
  * - Each log_date gets a random row count in [10, 1000] by default
- * - Ensures daily partitions before insert
+ * - Ensures daily + org LIST partitions before insert
  * - Optional: write generated rows to JSON
  *
  * Usage:
@@ -274,7 +274,14 @@ async function main(): Promise<void> {
     }
 
     for (const logDate of dates) {
-      await ensureDayPartitions(db, logDate);
+      const orgs = new Set(
+        rows
+          .filter((row) => row.logDate === logDate)
+          .map((row) => row.organizationId),
+      );
+      for (const organizationId of orgs) {
+        await ensureDayPartitions(db, logDate, organizationId);
+      }
     }
     await insertRows(rows, opts.batchSize);
     console.log("[seed-event-log] done", {
@@ -294,12 +301,15 @@ async function main(): Promise<void> {
   let total = 0;
 
   for (const logDate of dates) {
-    await ensureDayPartitions(db, logDate);
     const dayRows = generateMockEventLogRowsForDate(
       logDate,
       genOptions(opts),
       rng,
     );
+    const orgs = new Set(dayRows.map((row) => row.organizationId));
+    for (const organizationId of orgs) {
+      await ensureDayPartitions(db, logDate, organizationId);
+    }
     await insertRows(dayRows, opts.batchSize);
     total += dayRows.length;
     console.log(

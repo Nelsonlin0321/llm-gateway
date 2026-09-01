@@ -2,14 +2,19 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  buildCreatePartitionSql,
+  buildCreateDayPartitionSql,
+  buildCreateOrgPartitionSql,
   clearEnsuredPartitionCache,
+  dayPartitionTableName,
   ensureDayPartitions,
   isAlreadyExistsError,
   isMissingPartitionError,
+  isNotPartitionedError,
   isValidLogDate,
+  isValidOrganizationId,
   nextLogDate,
   normalizeLogDate,
+  normalizeOrganizationId,
   partitionTableName,
 } from "../src/load/partitions.js";
 import type { Db } from "../src/lib/db.js";
@@ -38,22 +43,52 @@ test("nextLogDate advances one UTC day", () => {
   assert.equal(nextLogDate("2026-12-31"), "2027-01-01");
 });
 
-test("partitionTableName matches example naming", () => {
+test("normalizeOrganizationId sanitizes for identifiers", () => {
+  assert.equal(normalizeOrganizationId("org-1"), "org_1");
   assert.equal(
-    partitionTableName("request_log", "2026-08-01"),
-    "request_log_2026_08_01",
+    normalizeOrganizationId("550e8400-e29b-41d4-a716-446655440000"),
+    "550e8400_e29b_41d4_a716_446655440000",
+  );
+  assert.equal(isValidOrganizationId(""), false);
+  assert.equal(isValidOrganizationId("org-1"), true);
+  assert.throws(() => normalizeOrganizationId("   "));
+  assert.throws(() => normalizeOrganizationId("!!!"));
+});
+
+test("partitionTableName matches date + org naming", () => {
+  assert.equal(
+    dayPartitionTableName("request_log", "2026-08-23"),
+    "request_log_2026_08_23",
   );
   assert.equal(
-    partitionTableName("event_log", "2026-08-01"),
-    "event_log_2026_08_01",
+    partitionTableName("request_log", "2026-08-23", "org-1"),
+    "request_log_2026_08_23_org_1",
+  );
+  assert.equal(
+    partitionTableName("event_log", "2026-08-23", "org-1"),
+    "event_log_2026_08_23_org_1",
   );
 });
 
-test("buildCreatePartitionSql matches expected DDL", () => {
+test("buildCreateDayPartitionSql LIST-partitions the daily child", () => {
   assert.equal(
-    buildCreatePartitionSql("request_log", "2026-08-01"),
-    "CREATE TABLE IF NOT EXISTS request_log_2026_08_01 PARTITION OF request_log " +
-      "FOR VALUES FROM ('2026-08-01') TO ('2026-08-02')",
+    buildCreateDayPartitionSql("request_log", "2026-08-23"),
+    "CREATE TABLE IF NOT EXISTS request_log_2026_08_23 PARTITION OF request_log " +
+      "FOR VALUES FROM ('2026-08-23') TO ('2026-08-24') " +
+      "PARTITION BY LIST (organization_id)",
+  );
+});
+
+test("buildCreateOrgPartitionSql attaches the org leaf", () => {
+  assert.equal(
+    buildCreateOrgPartitionSql("request_log", "2026-08-23", "org-1"),
+    "CREATE TABLE IF NOT EXISTS request_log_2026_08_23_org_1 PARTITION OF request_log_2026_08_23 " +
+      "FOR VALUES IN ('org-1')",
+  );
+  assert.equal(
+    buildCreateOrgPartitionSql("event_log", "2026-08-23", "o'hara"),
+    "CREATE TABLE IF NOT EXISTS event_log_2026_08_23_o_hara PARTITION OF event_log_2026_08_23 " +
+      "FOR VALUES IN ('o''hara')",
   );
 });
 
@@ -78,6 +113,13 @@ test("isMissingPartitionError detects Postgres partition miss", () => {
     true,
   );
   assert.equal(
+    isMissingPartitionError({
+      code: "23514",
+      message: 'no partition of relation "request_log_2026_08_23" found for row',
+    }),
+    true,
+  );
+  assert.equal(
     isMissingPartitionError({ code: "23514", message: "check constraint" }),
     false,
   );
@@ -96,12 +138,22 @@ test("isAlreadyExistsError detects 42P07", () => {
   assert.equal(isAlreadyExistsError({ code: "23514" }), false);
 });
 
-test("ensureDayPartitions runs CREATE for both parents once", async () => {
+test("isNotPartitionedError detects legacy daily leaves", () => {
+  assert.equal(
+    isNotPartitionedError({
+      message:
+        'cannot create partition of relation "request_log_2026_08_23" because it is not partitioned',
+    }),
+    true,
+  );
+  assert.equal(isNotPartitionedError({ message: "already exists" }), false);
+});
+
+test("ensureDayPartitions runs CREATE for both parents once per org", async () => {
   clearEnsuredPartitionCache();
   const executed: string[] = [];
   const db = {
     execute: async (query: { queryChunks?: unknown } | string) => {
-      // drizzle sql.raw — extract string from toSQL or stringified form
       const text =
         typeof query === "string"
           ? query
@@ -115,12 +167,24 @@ test("ensureDayPartitions runs CREATE for both parents once", async () => {
     },
   } as unknown as Db;
 
-  await ensureDayPartitions(db, "2026-08-01");
-  assert.equal(executed.length, 2);
-  assert.match(executed[0] ?? "", /request_log_2026_08_01/);
-  assert.match(executed[1] ?? "", /event_log_2026_08_01/);
+  await ensureDayPartitions(db, "2026-08-23", "org-1");
+  assert.equal(executed.length, 4);
+  assert.match(executed[0] ?? "", /request_log_2026_08_23 PARTITION OF request_log/);
+  assert.match(executed[0] ?? "", /PARTITION BY LIST \(organization_id\)/);
+  assert.match(
+    executed[1] ?? "",
+    /request_log_2026_08_23_org_1 PARTITION OF request_log_2026_08_23/,
+  );
+  assert.match(executed[2] ?? "", /event_log_2026_08_23 PARTITION OF event_log/);
+  assert.match(
+    executed[3] ?? "",
+    /event_log_2026_08_23_org_1 PARTITION OF event_log_2026_08_23/,
+  );
 
-  // Second call is cached — no more DDL.
-  await ensureDayPartitions(db, "2026-08-01");
-  assert.equal(executed.length, 2);
+  await ensureDayPartitions(db, "2026-08-23", "org-1");
+  assert.equal(executed.length, 4);
+
+  await ensureDayPartitions(db, "2026-08-23", "org-2");
+  assert.equal(executed.length, 8);
+  assert.match(executed[5] ?? "", /request_log_2026_08_23_org_2/);
 });

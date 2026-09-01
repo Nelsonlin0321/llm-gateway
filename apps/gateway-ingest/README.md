@@ -39,7 +39,7 @@ gateway-api  ──XADD──►  Redis Stream  llm-gateway-request-logs
                                 ▼
                     PostgreSQL (Drizzle)
                     request_log + event_log
-                    (daily range partitions)
+                    (daily range + org list partitions)
 ```
 
 ---
@@ -83,7 +83,7 @@ bun run scripts/seed-event-log/seed.ts --per-day=50
 bun run seed:event-log:json
 ```
 
-The seeder creates missing daily partitions (`event_log_YYYY_MM_DD` / `request_log_YYYY_MM_DD`) before insert.
+The seeder creates missing daily LIST parents (`event_log_YYYY_MM_DD` / `request_log_YYYY_MM_DD`) and per-org leaves (`…_YYYY_MM_DD_{normalized_organization_id}`) before insert.
 
 ---
 
