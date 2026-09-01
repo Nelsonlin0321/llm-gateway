@@ -12,7 +12,19 @@ const providerCardSkeletons = Array.from({ length: 4 }, (_, index) => index);
 
 export function ProviderManagementSkeleton() {
   return (
-    <>
+    <div className="flex flex-col gap-6">
+      <header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-full max-w-xl" />
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-32 rounded-md" />
+          <Skeleton className="h-8 w-24 rounded-md" />
+        </div>
+      </header>
+
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {metricSkeletons.map((index) => (
           <Card
@@ -97,6 +109,6 @@ export function ProviderManagementSkeleton() {
           </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }

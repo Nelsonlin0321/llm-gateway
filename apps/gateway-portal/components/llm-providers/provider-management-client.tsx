@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Boxes, PencilLine, Plus, Trash2 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { ArrowLeft, Boxes, PencilLine, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import { createProvider } from "@/app/server-actions/llm-provider/create-provider";
@@ -22,8 +22,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -40,6 +42,7 @@ import { hasPermission, type Role } from "@/lib/organization/permissions";
 import { cn } from "@/lib/utils";
 
 type ProviderManagementClientProps = {
+  organizationId: string;
   providers: ProviderListItem[];
   query?: ProviderListQuery;
   role?: Role | null;
@@ -59,16 +62,13 @@ function formatDate(value: string) {
 }
 
 export function ProviderManagementClient({
+  organizationId,
   providers,
   query = {},
   role = null,
 }: ProviderManagementClientProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const organizationId = pathname.match(/^\/org\/([^/]+)/)?.[1];
-  const modelsHref = organizationId
-    ? `/org/${organizationId}/models`
-    : "/workspace";
+  const modelsHref = `/org/${organizationId}/models`;
   const [modalState, setModalState] = useState<ModalState>(null);
   const [providerPendingDelete, setProviderPendingDelete] =
     useState<ProviderListItem | null>(null);
@@ -102,7 +102,7 @@ export function ProviderManagementClient({
     values: ReturnType<typeof createProviderInputSchema.parse>,
   ) => {
     startSubmitting(async () => {
-      const result = await createProvider(values);
+      const result = await createProvider(values, organizationId);
 
       if (!result.ok) {
         toast.error(result.error);
@@ -155,33 +155,61 @@ export function ProviderManagementClient({
     router.refresh();
   };
 
+  const openCreateModal = () => setModalState({ mode: "create" });
+
   return (
     <>
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-5">
-        <MetricCard label="Total" value={stats.total.toString()} />
-        <MetricCard label="Active" value={stats.active.toString()} />
-        <MetricCard label="Inactive" value={stats.inactive.toString()} />
-        <MetricCard label="OpenAI" value={stats.openai.toString()} />
-        <MetricCard label="Anthropic" value={stats.anthropic.toString()} />
-      </section>
+      <div className="flex flex-col gap-6">
+        <PageHeader
+          eyebrow="Infrastructure"
+          title="Providers"
+          description="Connect upstream LLM endpoints, store encrypted credentials, and manage routing metadata."
+          actions={
+            <>
+              {canCreate ? (
+                <Button type="button" size="sm" onClick={openCreateModal}>
+                  <Plus className="size-3.5" />
+                  Add provider
+                </Button>
+              ) : null}
+              <Link
+                href={`/org/${organizationId}`}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                )}
+              >
+                <ArrowLeft className="size-3.5" />
+                Overview
+              </Link>
+            </>
+          }
+        />
 
-      <Card className="border-border bg-card shadow-card">
-        <CardHeader className="flex flex-col gap-3 border-b border-border sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-base">Configured providers</CardTitle>
-            <CardDescription>
-              {stats.total === 0
-                ? hasProviderListFilters(query)
-                  ? "No providers match these filters."
-                  : "No providers yet — add an upstream endpoint to begin."
-                : `${stats.total} provider${stats.total === 1 ? "" : "s"} in this workspace.`}
-            </CardDescription>
-          </div>
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-5">
+          <MetricCard label="Total" value={stats.total.toString()} />
+          <MetricCard label="Active" value={stats.active.toString()} />
+          <MetricCard label="Inactive" value={stats.inactive.toString()} />
+          <MetricCard label="OpenAI" value={stats.openai.toString()} />
+          <MetricCard label="Anthropic" value={stats.anthropic.toString()} />
+        </section>
+
+        <Card className="border-border bg-card shadow-card">
+        <CardHeader className="border-b border-border">
+          <CardTitle className="text-base">Configured providers</CardTitle>
+          <CardDescription>
+            {stats.total === 0
+              ? hasProviderListFilters(query)
+                ? "No providers match these filters."
+                : "No providers yet — add an upstream endpoint to begin."
+              : `${stats.total} provider${stats.total === 1 ? "" : "s"} in this workspace.`}
+          </CardDescription>
           {canCreate ? (
-            <Button size="sm" onClick={() => setModalState({ mode: "create" })}>
-              <Plus className="size-3.5" />
-              Add provider
-            </Button>
+            <CardAction>
+              <Button type="button" size="sm" onClick={openCreateModal}>
+                <Plus className="size-3.5" />
+                Add provider
+              </Button>
+            </CardAction>
           ) : null}
         </CardHeader>
         <div className="border-b border-border px-4 py-3 sm:px-5">
@@ -202,9 +230,10 @@ export function ProviderManagementClient({
               </p>
               {canCreate ? (
                 <Button
+                  type="button"
                   size="sm"
                   className="mt-4"
-                  onClick={() => setModalState({ mode: "create" })}
+                  onClick={openCreateModal}
                 >
                   <Plus className="size-3.5" />
                   Add provider
@@ -283,7 +312,8 @@ export function ProviderManagementClient({
             </div>
           )}
         </CardContent>
-      </Card>
+        </Card>
+      </div>
 
       <ProviderFormModal
         open={modalState !== null}

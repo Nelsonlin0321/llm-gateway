@@ -3,27 +3,29 @@ import { ProviderManagementClient } from "@/components/llm-providers/provider-ma
 import { requireSession } from "@/lib/auth-server";
 import type { ProviderListQuery } from "@/lib/llm-provider/schema";
 import { getOrganizationRole } from "@/lib/organization/access";
-import { resolveActiveOrganizationId } from "@/lib/organization/service";
+
+type ProvidersManagementSectionProps = {
+  organizationId: string;
+  query?: ProviderListQuery;
+};
 
 export async function ProvidersManagementSection({
-  query,
-}: {
-  query?: ProviderListQuery;
-}) {
+  organizationId,
+  query = {},
+}: ProvidersManagementSectionProps) {
   const session = await requireSession();
-  const role = await getOrganizationRole(
-    session.user.id,
-    await resolveActiveOrganizationId(session),
-  );
+  const role = await getOrganizationRole(session.user.id, organizationId);
   const providers = await getProviders({
+    organizationId,
     includeInactive: true,
     ...query,
   });
 
   return (
     <ProviderManagementClient
+      organizationId={organizationId}
       providers={providers}
-      query={query ?? {}}
+      query={query}
       role={role}
     />
   );

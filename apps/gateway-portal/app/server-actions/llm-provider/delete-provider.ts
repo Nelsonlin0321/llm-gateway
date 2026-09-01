@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 import { db, llmProviders } from "@/lib/db";
@@ -13,6 +12,7 @@ import {
 
 import {
   providerReturning,
+  revalidateOrganizationProviderPaths,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -56,8 +56,7 @@ export async function deleteProvider(
       .where(eq(llmProviders.id, id))
       .returning(providerReturning);
 
-    revalidatePath("/providers");
-    revalidatePath("/dashboard");
+    revalidateOrganizationProviderPaths(existing.organizationId);
 
     return {
       ok: true,

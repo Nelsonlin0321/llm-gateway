@@ -3,12 +3,7 @@ import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 
 import { PortalHeader } from "@/components/portal-header";
 import ReactHotToastProvider from "@/components/providers/react-hot-toast";
-import {
-  getSiteUrl,
-  siteDescription,
-  siteName,
-  siteTitle,
-} from "@/lib/site";
+import { getSiteUrl, siteDescription, siteName, siteTitle } from "@/lib/site";
 import "./globals.css";
 
 /* OpenRouter skill: Plus Jakarta Sans (Gordita fallback) + Geist Mono */
@@ -78,7 +73,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#07090c",
+  themeColor: "#0f1218",
   colorScheme: "dark",
 };
 

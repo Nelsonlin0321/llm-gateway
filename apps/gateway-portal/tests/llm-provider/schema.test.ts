@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   createProviderInputSchema,
+  getProvidersOptionsSchema,
   parseProviderListSearchParams,
   providerNamePattern,
   updateProviderInputSchema,
@@ -48,6 +49,18 @@ test("allows provider edits to keep the stored API key", () => {
 
   assert.equal(parsed.apiKey, undefined);
   assert.equal(parsed.isActive, false);
+});
+
+test("getProviders options accept an organization id", () => {
+  const parsed = getProvidersOptionsSchema.parse({
+    organizationId: "org-1",
+    includeInactive: true,
+    q: "moonshot",
+  });
+
+  assert.equal(parsed?.organizationId, "org-1");
+  assert.equal(parsed?.includeInactive, true);
+  assert.equal(parsed?.q, "moonshot");
 });
 
 test("parseProviderListSearchParams reads compatibility and name query", () => {

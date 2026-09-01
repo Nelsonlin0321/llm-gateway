@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -16,18 +15,22 @@ import { resolveActiveOrganizationId } from "@/lib/organization/service";
 
 import {
   providerReturning,
+  revalidateOrganizationProviderPaths,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
 
 export async function createProvider(
   input: unknown,
+  organizationId?: string | null,
 ): Promise<ProviderActionResult> {
   const session = await requireSession();
-  const organizationId = await resolveActiveOrganizationId(session);
+  const resolvedOrganizationId =
+    organizationId?.trim() ||
+    (await resolveActiveOrganizationId(session));
   const access = await requireOrganizationPermission(
     session.user.id,
-    organizationId,
+    resolvedOrganizationId,
     "llmProvider",
     "create",
   );
@@ -76,8 +79,7 @@ export async function createProvider(
       )
       .returning(providerReturning);
 
-    revalidatePath(`/${access.organizationId}/providers`);
-    revalidatePath(`/${access.organizationId}`);
+    revalidateOrganizationProviderPaths(access.organizationId);
 
     return {
       ok: true,

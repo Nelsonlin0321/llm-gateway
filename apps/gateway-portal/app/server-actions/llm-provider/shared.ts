@@ -1,3 +1,5 @@
+import { revalidatePath } from "next/cache";
+
 import { llmProviders, type LLMProvider } from "@/lib/db";
 import { toProviderListItem } from "@/lib/llm-provider/service";
 
@@ -46,4 +48,10 @@ export function validationErrorResult(
     error,
     fieldErrors,
   };
+}
+
+export function revalidateOrganizationProviderPaths(organizationId: string) {
+  revalidatePath(`/org/${organizationId}/providers`);
+  revalidatePath(`/org/${organizationId}/models`);
+  revalidatePath(`/org/${organizationId}`);
 }

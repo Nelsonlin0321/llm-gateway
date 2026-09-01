@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
@@ -18,6 +17,7 @@ import {
 
 import {
   providerReturning,
+  revalidateOrganizationProviderPaths,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -87,8 +87,7 @@ export async function updateProvider(
       .where(eq(llmProviders.id, parsed.data.id))
       .returning(providerReturning);
 
-    revalidatePath(`/${existing.organizationId}/providers`);
-    revalidatePath(`/${existing.organizationId}`);
+    revalidateOrganizationProviderPaths(existing.organizationId);
 
     return {
       ok: true,
