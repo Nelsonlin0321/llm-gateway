@@ -52,6 +52,7 @@ export function buildUpstreamHeaders(req: Request, apiKey: string): Headers {
     headers.set(key, value);
   }
   headers.set("authorization", `Bearer ${apiKey}`);
+  headers.set("Authorization", `Bearer ${apiKey}`);
   headers.set("x-api-key", apiKey); // Follow the Anthropic API spec.
   headers.set("content-type", "application/json");
   return headers;
