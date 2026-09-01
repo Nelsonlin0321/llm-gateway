@@ -24,6 +24,9 @@ function buildChildKeyRecord(
     name: "prod-bot",
     key: "encrypted-must-not-log",
     creatorId: "creator-1",
+    organizationId: "org-1",
+    rateLimitRpm: null,
+    monthlyBudgetUsd: null,
     userEmail: "user@example.com",
     isActive: true,
     tags: { env: "prod", team: "platform" },
@@ -59,10 +62,6 @@ function buildProxyContext(
     upstreamModel: "gpt-5.4-mini-upstream",
     upstreamUrl: "https://api.openai.com/v1/chat/completions",
     masterApiKey: "sk-provider-secret",
-    upstreamHeaders: new Headers({
-      authorization: "Bearer sk-provider-secret",
-      "content-type": "application/json",
-    }),
     upstreamBody: JSON.stringify({
       model: "gpt-5.4-mini-upstream",
       messages: [{ role: "user", content: "hi" }],
@@ -117,6 +116,18 @@ class FakeStreamRedis implements RedisCacheClient {
 
   async del(): Promise<number> {
     return 0;
+  }
+
+  async incr(): Promise<number> {
+    return 1;
+  }
+
+  async expire(): Promise<number> {
+    return 1;
+  }
+
+  async ping(): Promise<string> {
+    return "PONG";
   }
 
   async xadd(
@@ -227,6 +238,7 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
     extractFieldValuesFromXaddArgs(redis.xaddCalls[0]!.args),
   );
   assert.equal(flat.request_id, "req-1");
+  assert.equal(flat.organization_id, "org-1");
   assert.equal(flat.status_code, "200");
   assert.equal(flat.duration_ms, "150");
   assert.equal(flat.response_id, "chatcmpl-1");

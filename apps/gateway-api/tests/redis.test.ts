@@ -68,6 +68,20 @@ class FakeRedis implements RedisCacheClient {
     return existed ? 1 : 0;
   }
 
+  async incr(key: string): Promise<number> {
+    const next = Number(this.store.get(key) ?? "0") + 1;
+    this.store.set(key, String(next));
+    return next;
+  }
+
+  async expire(): Promise<number> {
+    return 1;
+  }
+
+  async ping(): Promise<string> {
+    return "PONG";
+  }
+
   async xadd(
     key: string,
     ...args: (string | Buffer | number)[]

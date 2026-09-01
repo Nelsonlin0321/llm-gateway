@@ -6,10 +6,13 @@ import { z } from "zod";
 import { requireSession } from "@/lib/auth-server";
 import { validateToggleChildKeyInput } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 import {
   mutationDeniedMessage,
   requireOrganizationPermission,
 } from "@/lib/organization/access";
+import { invalidate_child_key_cache } from "@/lib/redis/invalidate";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   childKeyReturning,
@@ -63,7 +66,17 @@ export async function toggleChildKey(
       .where(eq(childKeys.id, existing.id))
       .returning(childKeyReturning);
 
+    await invalidate_child_key_cache(existing.id);
     revalidateOrganizationChildKeyPaths(existing.organizationId);
+    await writeAuditLog({
+      organizationId: existing.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "toggle",
+      entity: "childKey",
+      entityId: existing.id,
+      metadata: { isActive: parsed.data.isActive },
+    });
 
     return childKeySuccess(
       childKey,
@@ -72,10 +85,8 @@ export async function toggleChildKey(
         : "Child key deactivated.",
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to update the child key status.";
-    return childKeyValidationError(message);
+    return childKeyValidationError(
+      publicMutationError("Unable to update the child key status.", error),
+    );
   }
 }

@@ -17,6 +17,9 @@ function buildChildKeyRecord(): ChildKeyDbRecord {
     name: "test-key",
     key: "encrypted-key",
     creatorId: "creator_1",
+    organizationId: "org_1",
+    rateLimitRpm: null,
+    monthlyBudgetUsd: null,
     userEmail: "user@example.com",
     isActive: true,
     tags: { env: "test" },
@@ -40,8 +43,8 @@ test("proxyToAnthropic returns resolver failures without forwarding", async () =
   app.post(
     "/anthropic/v1/messages",
     injectAnthropicProxyContext({
-      resolveProviderModel: async (_providerId, _modelAlias, creatorId) => {
-        assert.equal(creatorId, "creator_1");
+      resolveProviderModel: async (_providerId, _modelAlias, organizationId) => {
+        assert.equal(organizationId, "org_1");
         return {
           ok: false,
           status: 403,
@@ -110,10 +113,10 @@ test("proxyToAnthropic builds proxy context and emits response log", async () =>
   app.post(
     "/anthropic/v1/messages",
     injectAnthropicProxyContext({
-      resolveProviderModel: async (providerId, modelAlias, creatorId) => {
+      resolveProviderModel: async (providerId, modelAlias, organizationId) => {
         assert.equal(providerId, "minimax");
         assert.equal(modelAlias, "MiniMax-M3");
-        assert.equal(creatorId, "creator_1");
+        assert.equal(organizationId, "org_1");
         return {
           ok: true,
           value: {

@@ -28,7 +28,7 @@ export type ProviderLookup = {
   findByName(
     name: string,
     compatibilityType: ProviderCompatibility,
-    creatorId: string,
+    organizationId: string,
   ): Promise<ProviderLookupRecord | null>;
 };
 
@@ -56,7 +56,7 @@ export type ProviderModelLookup = {
     name: string,
     modelAlias: string,
     compatibilityType: ProviderCompatibility,
-    creatorId: string,
+    organizationId: string,
   ): Promise<ProviderModelLookupRecord | null>;
 };
 
@@ -82,7 +82,7 @@ const defaultLookup: ProviderLookup = {
   async findByName(
     name: string,
     compatibilityType: ProviderCompatibility,
-    creatorId: string,
+    organizationId: string,
   ): Promise<ProviderLookupRecord | null> {
     const [record] = await db
       .select({
@@ -98,7 +98,7 @@ const defaultLookup: ProviderLookup = {
         and(
           eq(llmProviders.name, name),
           eq(llmProviders.compatibilityType, compatibilityType),
-          eq(llmProviders.creatorId, creatorId),
+          eq(llmProviders.organizationId, organizationId),
         ),
       )
       .orderBy(desc(llmProviders.updatedAt))
@@ -113,7 +113,7 @@ const defaultProviderModelLookup: ProviderModelLookup = {
     name: string,
     modelAlias: string,
     compatibilityType: ProviderCompatibility,
-    creatorId: string,
+    organizationId: string,
   ): Promise<ProviderModelLookupRecord | null> {
     const query = async () => {
       const [row] = await db
@@ -137,7 +137,8 @@ const defaultProviderModelLookup: ProviderModelLookup = {
             eq(models.alias, `${name}/${modelAlias}`),
             eq(llmProviders.name, name),
             eq(llmProviders.compatibilityType, compatibilityType),
-            eq(llmProviders.creatorId, creatorId),
+            eq(llmProviders.organizationId, organizationId),
+            eq(models.organizationId, organizationId),
           ),
         )
         .orderBy(desc(models.updatedAt))
@@ -166,11 +167,10 @@ const defaultProviderModelLookup: ProviderModelLookup = {
 
     const llmAndModel = await redis_cache(
       getProviderModelCacheKey({
+        organizationId,
         providerName: name,
         compatibilityType,
         modelAlias,
-        creatorId,
-        application: "gateway-api",
       }),
       query,
     );
@@ -217,7 +217,7 @@ export async function resolveProviderModel(
   providerName: string,
   modelAlias: string,
   compatibilityType: ProviderCompatibility,
-  creatorId: string,
+  organizationId: string,
   lookup: ProviderModelLookup = defaultProviderModelLookup,
   providerLookup: ProviderLookup = defaultLookup,
 ): Promise<ResolveProviderModelResult> {
@@ -228,7 +228,7 @@ export async function resolveProviderModel(
       providerName,
       modelAlias,
       compatibilityType,
-      creatorId,
+      organizationId,
     );
   } catch {
     return resolutionFailure(
@@ -244,7 +244,7 @@ export async function resolveProviderModel(
       providerRecord = await providerLookup.findByName(
         providerName,
         compatibilityType,
-        creatorId,
+        organizationId,
       );
     } catch {
       return resolutionFailure(

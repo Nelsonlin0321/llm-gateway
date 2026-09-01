@@ -1,10 +1,13 @@
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { nextCookies } from "better-auth/next-js";
 import { organization } from "better-auth/plugins";
-import { db } from "@/lib/db";
+import { and, eq } from "drizzle-orm";
+import { db, member } from "@/lib/db";
 import { sendInvitationEmail, sendVerificationEmail } from "@/lib/email";
 import {
+  assignableRolesFor,
   defaultRole,
   ORGANIZATION_CREATOR_ROLE,
   ORGANIZATION_ROLE_LABELS,
@@ -13,6 +16,41 @@ import {
   roles,
   normalizeRole,
 } from "./organization/permissions";
+
+
+function resolveTrustedOrigins(): string[] {
+  const fromEnv = (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+  const origins = [...fromEnv];
+  const base = process.env.BETTER_AUTH_URL?.trim();
+  if (base) {
+    try {
+      origins.push(new URL(base).origin);
+    } catch {
+      // Ignore malformed BETTER_AUTH_URL; Better Auth will still validate it.
+    }
+  }
+  if (origins.length === 0) {
+    origins.push("http://localhost:3000");
+  }
+  return [...new Set(origins)];
+}
+
+function googleSocialProvider() {
+  const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) {
+    return undefined;
+  }
+  return {
+    google: {
+      clientId,
+      clientSecret,
+    },
+  };
+}
 
 function invitationUrl(invitationId: string) {
   const base = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
@@ -41,19 +79,38 @@ export const auth = betterAuth({
       });
     },
   },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    },
-  },
+  socialProviders: googleSocialProvider() ?? {},
   account: {
+    encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
       // Google verifies emails; allow linking to existing email/password accounts
       // even when the local user has not completed email verification.
       trustedProviders: ["google"],
       requireLocalEmailVerified: false,
+    },
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
+    cookieCache: {
+      enabled: true,
+      maxAge: 60 * 5,
+    },
+  },
+  rateLimit: {
+    enabled: true,
+    window: 10,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 3 },
+      "/forget-password": { window: 60, max: 3 },
+    },
+  },
+  advanced: {
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for", "x-real-ip"],
     },
   },
   databaseHooks: {
@@ -99,7 +156,7 @@ export const auth = betterAuth({
   onAPIError: {
     errorURL: "/sign-in",
   },
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: resolveTrustedOrigins(),
   experimental: { joins: true },
   plugins: [
     nextCookies(),
@@ -109,6 +166,33 @@ export const auth = betterAuth({
       allowUserToCreateOrganization: true,
       invitationExpiresIn: 60 * 60 * 24 * 7,
       cancelPendingInvitationsOnReInvite: true,
+      organizationHooks: {
+        beforeCreateInvitation: async ({ invitation, inviter, organization: invitedOrg }) => {
+          const [membership] = await db
+            .select({ role: member.role })
+            .from(member)
+            .where(
+              and(
+                eq(member.userId, inviter.id),
+                eq(member.organizationId, invitedOrg.id),
+              ),
+            )
+            .limit(1);
+          const allowed = assignableRolesFor(membership?.role);
+          const invitedRoles = String(invitation.role ?? defaultRole)
+            .split(",")
+            .map((role) => normalizeRole(role.trim()))
+            .filter(Boolean);
+          if (
+            invitedRoles.length === 0 ||
+            invitedRoles.some((role) => !allowed.includes(role))
+          ) {
+            throw new APIError("FORBIDDEN", {
+              message: "You cannot assign this role.",
+            });
+          }
+        },
+      },
       sendInvitationEmail: async ({
         email,
         organization: invitedOrganization,

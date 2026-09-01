@@ -1,8 +1,7 @@
 import getRedisClient, { RedisCacheClient } from "./redis-client";
 import {
-  App,
   getChildKeyCacheKey,
-  getProviderModelCacheKey,
+  getProviderModelCachePattern,
 } from "./redis-keys";
 
 export async function redis_invalidate(
@@ -56,19 +55,19 @@ export async function redis_invalidate_pattern(
 }
 
 export async function invalidate_llm_provider_and_model_cache(
+  organizationId: string,
   providerName: string,
-  modelAlias: string,
   compatibilityType: string,
-  application: App,
   client: RedisCacheClient | null = getRedisClient(),
 ) {
-  const cacheKey = getProviderModelCacheKey(
-    providerName,
-    modelAlias,
-    compatibilityType,
-    application,
+  return redis_invalidate_pattern(
+    getProviderModelCachePattern({
+      organizationId,
+      providerName,
+      compatibilityType,
+    }),
+    client,
   );
-  return redis_invalidate(cacheKey, client);
 }
 
 export async function invalidate_child_key_cache(

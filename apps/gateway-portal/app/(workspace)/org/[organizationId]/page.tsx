@@ -11,7 +11,17 @@ export const metadata: Metadata = privatePageMetadata(
   "Monitor usage, manage providers, and govern access from a single control plane.",
 );
 
-export default function WorkspacePage() {
+type OrganizationOverviewPageProps = {
+  params: Promise<{
+    organizationId: string;
+  }>;
+};
+
+export default async function WorkspacePage({
+  params,
+}: OrganizationOverviewPageProps) {
+  const { organizationId } = await params;
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -21,7 +31,7 @@ export default function WorkspacePage() {
       />
 
       <Suspense fallback={<WorkspaceOverviewSkeleton />}>
-        <WorkspaceOverviewSection />
+        <WorkspaceOverviewSection organizationId={organizationId} />
       </Suspense>
     </div>
   );

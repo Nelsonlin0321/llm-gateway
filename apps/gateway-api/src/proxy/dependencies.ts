@@ -4,6 +4,6 @@ export type proxyDependencies = {
   resolveProviderModel?: (
     providerId: string,
     modelAlias: string,
-    creatorId: string,
+    organizationId: string,
   ) => Promise<ResolveProviderModelResult>;
 };

@@ -8,6 +8,13 @@
       "when": 1788061482054,
       "tag": "0000_late_ulik",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788069600000,
+      "tag": "0001_enterprise_hardening",
+      "breakpoints": true
     }
   ]
 }

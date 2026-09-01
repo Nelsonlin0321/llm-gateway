@@ -60,8 +60,16 @@ export type UpstreamProxyDependencies = {
   emitRequestLog?: EmitRequestLogFn;
 };
 
+function upstreamTimeoutMs(): number {
+  const parsed = Number(process.env.UPSTREAM_TIMEOUT_MS ?? 120_000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+}
+
 const defaultForwardUpstream: ForwardUpstream = (input, init) =>
-  proxy(input, init);
+  proxy(input, {
+    ...init,
+    signal: init.signal ?? AbortSignal.timeout(upstreamTimeoutMs()),
+  });
 
 function toResponseCapture(
   requestId: string,

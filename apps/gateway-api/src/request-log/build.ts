@@ -43,6 +43,7 @@ export function buildRequestLogFields(
     is_stream: input.isStream ? "true" : "false",
     response_mode: response.responseMode,
 
+    organization_id: input.organizationId,
     child_key_id: input.childKeyId,
     child_key_name: input.childKeyName,
     child_key_creator_id: input.childKeyCreatorId,

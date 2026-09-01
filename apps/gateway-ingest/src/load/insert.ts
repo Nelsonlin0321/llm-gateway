@@ -14,12 +14,20 @@ export type LoadRowsInput = {
 
 export type LoadRowsResult =
   | { ok: true; createdPartition?: boolean }
-  | { ok: false; error: unknown };
+  | { ok: false; error: unknown; duplicate?: boolean };
+
+export function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const code = (error as { code?: unknown }).code;
+  return code === "23505";
+}
 
 async function insertBoth(db: Db, input: LoadRowsInput): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx.insert(requestLog).values(input.requestLog);
-    await tx.insert(eventLog).values(input.eventLog);
+    await tx.insert(requestLog).values(input.requestLog).onConflictDoNothing();
+    await tx.insert(eventLog).values(input.eventLog).onConflictDoNothing();
   });
 }
 
@@ -38,8 +46,11 @@ export async function loadRows(
     await insertBoth(db, input);
     return { ok: true };
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: true };
+    }
     if (!isMissingPartitionError(error)) {
-      return { ok: false, error };
+      return { ok: false, error, duplicate: isUniqueViolation(error) };
     }
 
     const logDate =
@@ -65,6 +76,9 @@ export async function loadRows(
       await insertBoth(db, input);
       return { ok: true, createdPartition: true };
     } catch (retryError) {
+      if (isUniqueViolation(retryError)) {
+        return { ok: true, createdPartition: true };
+      }
       return { ok: false, error: retryError };
     }
   }

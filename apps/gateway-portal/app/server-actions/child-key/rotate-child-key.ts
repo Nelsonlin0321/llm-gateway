@@ -5,10 +5,12 @@ import { eq } from "drizzle-orm";
 import { requireSession } from "@/lib/auth-server";
 import { buildChildKeyRotateData } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 import {
   mutationDeniedMessage,
   requireOrganizationPermission,
 } from "@/lib/organization/access";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   childKeyReturning,
@@ -72,6 +74,14 @@ export async function rotateChildKey(
 
     await invalidate_child_key_cache(id);
     revalidateOrganizationChildKeyPaths(existing.organizationId);
+    await writeAuditLog({
+      organizationId: existing.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "rotate",
+      entity: "childKey",
+      entityId: existing.id,
+    });
 
     return childKeySuccess(
       childKey,
@@ -79,10 +89,8 @@ export async function rotateChildKey(
       apiKey,
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to rotate the child API key.";
-    return childKeyValidationError(message);
+    return childKeyValidationError(
+      publicMutationError("Unable to rotate the child API key.", error),
+    );
   }
 }

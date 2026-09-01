@@ -10,8 +10,10 @@ import {
   toProviderListItem,
   validateCreateProviderInput,
 } from "@/lib/llm-provider/service";
+import { writeAuditLog } from "@/lib/audit";
 import { requireOrganizationPermission } from "@/lib/organization/access";
 import { resolveActiveOrganizationId } from "@/lib/organization/service";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   providerReturning,
@@ -80,6 +82,15 @@ export async function createProvider(
       .returning(providerReturning);
 
     revalidateOrganizationProviderPaths(access.organizationId);
+    await writeAuditLog({
+      organizationId: access.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "create",
+      entity: "llmProvider",
+      entityId: provider.id,
+      metadata: { name: provider.name },
+    });
 
     return {
       ok: true,
@@ -87,8 +98,8 @@ export async function createProvider(
       message: "Provider created successfully.",
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to create the provider.";
-    return validationErrorResult(message);
+    return validationErrorResult(
+      publicMutationError("Unable to create the provider.", error),
+    );
   }
 }

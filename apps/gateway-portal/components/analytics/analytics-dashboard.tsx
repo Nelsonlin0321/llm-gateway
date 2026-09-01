@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 
 type AnalyticsDashboardProps = {
+  organizationId: string;
   initialMeta: AnalyticsMetaResult;
   initialSeries: AnalyticsSeriesResult;
   initialQuery: AnalyticsControlsState;
@@ -56,6 +57,7 @@ function rangeLabel(series: AnalyticsSeriesResult): string {
 }
 
 export function AnalyticsDashboard({
+  organizationId,
   initialMeta,
   initialSeries,
   initialQuery,
@@ -76,6 +78,7 @@ export function AnalyticsDashboard({
     startTransition(async () => {
       setError(null);
       const result = await getAnalyticsSeries({
+        organizationId,
         metric: nextQuery.metric,
         dimension: nextQuery.dimension,
         datePreset: nextQuery.datePreset,
@@ -90,7 +93,7 @@ export function AnalyticsDashboard({
       }
       setSeries(result.data);
     });
-  }, []);
+  }, [organizationId]);
 
   const handleControlsChange = (patch: Partial<AnalyticsControlsState>) => {
     const next = { ...query, ...patch };

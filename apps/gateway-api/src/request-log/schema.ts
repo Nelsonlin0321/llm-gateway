@@ -41,6 +41,7 @@ export type RequestLogV1Fields = {
   is_stream: "true" | "false";
   response_mode: ResponseMode;
 
+  organization_id: string;
   child_key_id: string;
   child_key_name: string;
   child_key_creator_id: string;
@@ -112,6 +113,7 @@ export type BuildRequestLogInput = {
   inputCachePrice: number;
   isStream: boolean;
 
+  organizationId: string;
   childKeyId: string;
   childKeyName: string;
   childKeyCreatorId: string;

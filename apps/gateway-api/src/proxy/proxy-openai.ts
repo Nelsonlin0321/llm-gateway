@@ -34,9 +34,9 @@ async function injectContext(
   const { parsed, downstreamBody, metadata } = prepared.value;
   const resolved = await (
     deps.resolveProviderModel ??
-    ((providerName: string, modelAlias: string, creatorId: string) =>
-      resolveProviderModel(providerName, modelAlias, "openai", creatorId))
-  )(parsed.providerName, parsed.model, childKeyRecord.creatorId);
+    ((providerName: string, modelAlias: string, organizationId: string) =>
+      resolveProviderModel(providerName, modelAlias, "openai", organizationId))
+  )(parsed.providerName, parsed.model, childKeyRecord.organizationId);
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }

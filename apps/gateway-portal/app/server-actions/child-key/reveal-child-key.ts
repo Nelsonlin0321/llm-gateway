@@ -5,10 +5,12 @@ import { eq } from "drizzle-orm";
 import { requireSession } from "@/lib/auth-server";
 import { decryptChildKey } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 import {
   mutationDeniedMessage,
   requireOrganizationPermission,
 } from "@/lib/organization/access";
+import { publicMutationError } from "@/lib/safe-error";
 
 export type RevealChildKeyResult =
   | {
@@ -58,17 +60,25 @@ export async function revealChildKey(
   }
 
   try {
+    const apiKey = decryptChildKey(childKey.key);
+    await writeAuditLog({
+      organizationId: childKey.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "reveal",
+      entity: "childKey",
+      entityId: childKey.id,
+    });
     return {
       ok: true,
       id: childKey.id,
       name: childKey.name,
-      apiKey: decryptChildKey(childKey.key),
+      apiKey,
     };
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to decrypt the child API key.";
-    return { ok: false, error: message };
+    return {
+      ok: false,
+      error: publicMutationError("Unable to decrypt the child API key.", error),
+    };
   }
 }

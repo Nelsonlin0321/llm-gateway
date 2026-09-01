@@ -13,6 +13,10 @@ export {
 export type { ChildKeyAuthzResult } from "./service";
 export { requireInjectChildKeyAuth } from "./middleware";
 export type { ChildKeyAuthVariables } from "./middleware";
+export {
+  consumeChildKeyRateLimit,
+  createChildKeyRateLimitMiddleware,
+} from "./rate-limit";
 export type {
   ChildKeyAuthFailure,
   ChildKeyAuthResult,

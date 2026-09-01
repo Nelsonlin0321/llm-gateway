@@ -108,6 +108,10 @@ export const member = pgTable(
     createdAt: timestamp("created_at").notNull(),
   },
   (table) => [
+    uniqueIndex("member_organizationId_userId_key").on(
+      table.organizationId,
+      table.userId,
+    ),
     index("member_organizationId_idx").on(table.organizationId),
     index("member_userId_idx").on(table.userId),
   ],
@@ -132,6 +136,27 @@ export const invitation = pgTable(
   (table) => [
     index("invitation_organizationId_idx").on(table.organizationId),
     index("invitation_email_idx").on(table.email),
+  ],
+);
+
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: text().primaryKey(),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    actorUserId: text().references(() => user.id, { onDelete: "set null" }),
+    actorEmail: text().notNull(),
+    action: text().notNull(),
+    entity: text().notNull(),
+    entityId: text(),
+    metadata: jsonb().$type<Record<string, unknown>>(),
+    createdAt: timestamp().defaultNow().notNull(),
+  },
+  (table) => [
+    index("audit_log_organization_id_idx").on(table.organizationId),
+    index("audit_log_created_at_idx").on(table.createdAt),
   ],
 );
 
@@ -190,6 +215,10 @@ export const models = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("model_organization_id_alias_key").on(
+      table.organizationId,
+      table.alias,
+    ),
     index("model_provider_id_idx").on(table.providerId),
     index("model_name_fts_idx").using(
       "gin",
@@ -215,11 +244,16 @@ export const childKeys = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     expiresAt: timestamp({ mode: "date" }),
     issuedAt: integer().notNull(),
+    /** Requests per minute. Null uses the gateway default. 0 disables the cap. */
+    rateLimitRpm: integer(),
+    /** Optional monthly spend cap in USD. Null means unlimited. */
+    monthlyBudgetUsd: doublePrecision(),
     ...timestamps,
   },
   (table) => [
     // Existing DB index uses GIN + jsonb_path_ops; declared for schema parity.
     index("child_key_tags_idx").using("gin", table.tags),
+    index("child_key_organization_id_idx").on(table.organizationId),
   ],
 );
 

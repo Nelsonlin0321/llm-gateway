@@ -45,13 +45,8 @@ test("buildChildKeyRotateData issues a new sk_ secret and advances issuedAt", as
   // Simulate same-second rotation: source issuedAt equals "now".
   const rotated = await buildChildKeyRotateData({
     id: created.id,
-    name: "team-growth-prod",
-    creatorId: "user-1",
-    userEmail: "dev@example.com",
-    tags: { env: "prod", team: "growth" },
     expiresAt: null,
     issuedAt: created.data.issuedAt as number,
-    key: created.data.key as string,
   });
 
   assert.ok(rotated.apiKey.startsWith(CHILD_KEY_PREFIX));
@@ -61,8 +56,6 @@ test("buildChildKeyRotateData issues a new sk_ secret and advances issuedAt", as
 
   const verified = await verifyChildKeyToken(rotated.apiKey);
   assert.equal(verified.key_id, created.id);
-  assert.equal(verified.name, "team-growth-prod");
-  assert.equal(verified.creator_id, "user-1");
   assert.equal(verified.issued_at, rotated.issuedAt);
 
   // New ciphertext decrypts to the new secret only.
@@ -89,13 +82,8 @@ test("buildChildKeyRotateData preserves expiresAt as JWT exp and keeps id stable
 
   const rotated = await buildChildKeyRotateData({
     id: created.id,
-    name: "expiring-key",
-    creatorId: "user-2",
-    userEmail: "ops@example.com",
-    tags: {},
     expiresAt,
     issuedAt: created.data.issuedAt as number,
-    key: created.data.key as string,
   });
 
   const verified = await verifyChildKeyToken(rotated.apiKey);

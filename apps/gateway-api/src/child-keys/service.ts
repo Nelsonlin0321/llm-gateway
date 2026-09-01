@@ -149,13 +149,14 @@ export async function authenticateChildApiKey(
         "code" in error &&
         (error as { code?: string }).code === "ERR_JWT_EXPIRED");
 
+    if (!expired) {
+      console.error("[child-key] JWT verification failed", error);
+    }
     return {
       ok: false,
       status: 401,
       error: {
-        message: expired
-          ? "API key has expired."
-          : `Invalid API key: ${message}`,
+        message: expired ? "API key has expired." : "Invalid API key.",
         type: "authentication_error",
       },
     };

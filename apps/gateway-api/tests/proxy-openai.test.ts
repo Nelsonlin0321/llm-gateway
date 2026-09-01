@@ -17,6 +17,9 @@ function buildChildKeyRecord(): ChildKeyDbRecord {
     name: "test-key",
     key: "encrypted-key",
     creatorId: "creator_1",
+    organizationId: "org_1",
+    rateLimitRpm: null,
+    monthlyBudgetUsd: null,
     userEmail: "user@example.com",
     isActive: true,
     tags: { env: "test" },
@@ -47,8 +50,8 @@ test("proxyToOpenai forwards requests and emits response log fields", async () =
   app.post(
     "/openai/v1/chat/completions",
     injectOpenAIProxyContext({
-      resolveProviderModel: async (_providerId, _modelAlias, creatorId) => {
-        assert.equal(creatorId, "creator_1");
+      resolveProviderModel: async (_providerId, _modelAlias, organizationId) => {
+        assert.equal(organizationId, "org_1");
         return {
           ok: true,
           value: {

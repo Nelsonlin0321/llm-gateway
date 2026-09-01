@@ -85,6 +85,7 @@ export async function emitRequestLog(
     outputPrice: ctx.outputPrice,
     inputCachePrice: ctx.inputCachePrice,
     isStream: ctx.isStream,
+    organizationId: ctx.childKeyRecord.organizationId,
     childKeyId: ctx.childKeyRecord.id,
     childKeyName: ctx.childKeyRecord.name,
     childKeyCreatorId: ctx.childKeyRecord.creatorId,

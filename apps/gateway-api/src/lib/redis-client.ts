@@ -14,6 +14,9 @@ export interface RedisCacheClient {
   get(key: string): Promise<string | null>;
   set(key: string, value: string, ...args: unknown[]): Promise<unknown>;
   del(key: string): Promise<number>;
+  incr(key: string): Promise<number>;
+  expire(key: string, seconds: number): Promise<number>;
+  ping(): Promise<string>;
   xadd(key: string, ...args: (string | Buffer | number)[]): Promise<string>;
 }
 

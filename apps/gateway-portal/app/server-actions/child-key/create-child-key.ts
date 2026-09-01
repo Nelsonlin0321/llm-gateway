@@ -8,8 +8,10 @@ import {
   validateCreateChildKeyInput,
 } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 import { requireOrganizationPermission } from "@/lib/organization/access";
 import { resolveActiveOrganizationId } from "@/lib/organization/service";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   childKeyReturning,
@@ -66,6 +68,15 @@ export async function createChildKey(
       .returning(childKeyReturning);
 
     revalidateOrganizationChildKeyPaths(access.organizationId);
+    await writeAuditLog({
+      organizationId: access.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "create",
+      entity: "childKey",
+      entityId: childKey.id,
+      metadata: { name: childKey.name },
+    });
 
     return childKeySuccess(
       childKey,
@@ -73,10 +84,8 @@ export async function createChildKey(
       apiKey,
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to create the child API key.";
-    return childKeyValidationError(message);
+    return childKeyValidationError(
+      publicMutationError("Unable to create the child API key.", error),
+    );
   }
 }

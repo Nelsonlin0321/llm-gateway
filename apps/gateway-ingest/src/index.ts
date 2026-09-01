@@ -6,6 +6,7 @@ import {
   ensureConsumerGroup,
   readGroupEntries,
 } from "./consumer/index";
+import { REQUEST_LOG_DLQ_STREAM } from "./lib/redis-keys";
 import { processExtractedEntries } from "./process";
 
 async function main(): Promise<void> {
@@ -102,11 +103,34 @@ async function main(): Promise<void> {
 
     const batch = await processExtractedEntries(db, result.entries);
 
+    const deadLetterIds: string[] = [];
+    for (const dead of batch.deadLetters) {
+      try {
+        await client.xadd(
+          REQUEST_LOG_DLQ_STREAM,
+          "*",
+          "source_id",
+          dead.id,
+          "reason",
+          dead.reason,
+          "payload_json",
+          JSON.stringify(dead.fields),
+        );
+        deadLetterIds.push(dead.id);
+      } catch (error) {
+        console.error(
+          "[gateway-ingest] failed to write dead-letter; leaving pending",
+          { id: dead.id, error },
+        );
+      }
+    }
+
+    const idsToAck = [...batch.idsToAck, ...deadLetterIds];
     const ackResult = await ackEntries({
       client,
       streamKey: config.streamKey,
       groupName: config.groupName,
-      ids: batch.idsToAck,
+      ids: idsToAck,
     });
 
     if (!ackResult.ok) {
@@ -124,8 +148,9 @@ async function main(): Promise<void> {
       loaded: batch.loaded,
       skippedMissingPayload: batch.skippedMissingPayload,
       failed: batch.failed,
+      deadLettered: deadLetterIds.length,
       acked: ackResult.ok ? ackResult.acked : 0,
-      ids: batch.idsToAck,
+      ids: idsToAck,
     });
   }
 }
