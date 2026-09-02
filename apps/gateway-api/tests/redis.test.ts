@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   redis_cache,
   redis_invalidate,
+  resolveRedisRest,
   type RedisCacheClient,
 } from "../src/lib/redis-client.js";
 
@@ -212,6 +213,35 @@ test("redis_invalidate removes cached values", async () => {
 test("redis_invalidate returns false on missing client", async () => {
   const removed = await redis_invalidate("user:3", null);
   assert.equal(removed, false);
+});
+
+test("resolveRedisRest prefers explicit Upstash REST bindings", () => {
+  const rest = resolveRedisRest({
+    REDIS_URL: "rediss://default:other@example.upstash.io:6379",
+    UPSTASH_REDIS_REST_URL: "https://rest.upstash.io",
+    UPSTASH_REDIS_REST_TOKEN: "rest-token",
+  });
+  assert.deepEqual(rest, {
+    url: "https://rest.upstash.io",
+    token: "rest-token",
+  });
+});
+
+test("resolveRedisRest derives REST credentials from REDIS_URL", () => {
+  const rest = resolveRedisRest({
+    REDIS_URL: "rediss://default:secret%2Ftoken@merry-koi.upstash.io:6379",
+  });
+  assert.deepEqual(rest, {
+    url: "https://merry-koi.upstash.io",
+    token: "secret/token",
+  });
+});
+
+test("resolveRedisRest returns null for local Redis without a password", () => {
+  const rest = resolveRedisRest({
+    REDIS_URL: "redis://localhost:6379",
+  });
+  assert.equal(rest, null);
 });
 
 test("redis_invalidate returns false when redis delete fails", async () => {

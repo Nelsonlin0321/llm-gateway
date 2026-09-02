@@ -1,3 +1,4 @@
+import type { WorkerBindings } from "../env.js";
 import { getRedisClient, type RedisCacheClient } from "../lib/redis-client.js";
 import { REQUEST_LOG_STREAM } from "../lib/redis-keys.js";
 import { buildRequestLogFields, requestLogFieldsToXaddArgs } from "./build.js";
@@ -50,7 +51,7 @@ export type EmitRequestLogResult =
 const DEFAULT_REQUEST_LOG_STREAM_MAXLEN = 10_000;
 
 export function getRequestLogStreamMaxLen(
-  env: NodeJS.ProcessEnv = process.env,
+  env: WorkerBindings = process.env,
 ): number {
   const value = (env.REQUEST_LOG_STREAM_MAXLEN ?? "").trim();
   const parsed = Number(value);

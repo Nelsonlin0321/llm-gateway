@@ -1,9 +1,13 @@
+import type { WorkerBindings } from "../env";
+
 export type GatewayConfig = {
   port: number;
   databaseUrl: string;
   jwtSigningSecret: string;
   apiEncryptKey: string;
   redisUrl: string | null;
+  upstashRedisRestUrl: string | null;
+  upstashRedisRestToken: string | null;
   requestBodyLimitBytes: number;
   upstreamTimeoutMs: number;
   /** Default child-key requests per minute. 0 disables. */
@@ -19,11 +23,7 @@ function parsePositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
 }
 
-function requireSecret(
-  name: string,
-  value: string,
-  minLength: number,
-): string {
+function requireSecret(name: string, value: string, minLength: number): string {
   if (!value) {
     throw new Error(`${name} is required.`);
   }
@@ -34,17 +34,20 @@ function requireSecret(
 }
 
 /**
- * Load and validate gateway-api process config.
+ * Load and validate gateway-api config from Worker bindings / process env.
  * Skips hard secret checks when `NODE_ENV=test` so unit tests can import modules.
  */
 export function loadGatewayConfig(
-  env: NodeJS.ProcessEnv = process.env,
+  env: WorkerBindings = process.env,
 ): GatewayConfig {
   const isTest = env.NODE_ENV === "test";
   const databaseUrl = (env.DATABASE_URL ?? "").trim();
   const jwtSigningSecret = (env.JWT_SIGNING_SECRET ?? "").trim();
   const apiEncryptKey = (env.API_ENCRYPT_KEY ?? "").trim();
   const redisUrl = (env.REDIS_URL ?? "").trim() || null;
+  const upstashRedisRestUrl = (env.UPSTASH_REDIS_REST_URL ?? "").trim() || null;
+  const upstashRedisRestToken =
+    (env.UPSTASH_REDIS_REST_TOKEN ?? "").trim() || null;
 
   if (!isTest) {
     if (!databaseUrl) {
@@ -65,6 +68,8 @@ export function loadGatewayConfig(
     jwtSigningSecret,
     apiEncryptKey,
     redisUrl,
+    upstashRedisRestUrl,
+    upstashRedisRestToken,
     requestBodyLimitBytes: parsePositiveInt(
       env.REQUEST_BODY_LIMIT_BYTES,
       1_048_576,

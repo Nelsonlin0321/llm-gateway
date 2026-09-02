@@ -2,9 +2,13 @@
   "name": "gateway-api",
   "type": "module",
   "scripts": {
-    "dev": "bun run --hot src/index.ts",
+    "dev": "wrangler dev",
+    "dev:bun": "bun run --hot src/index.ts",
     "build": "tsc --noEmit",
-    "start": "bun run src/index.ts",
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "cf-typegen": "wrangler types",
+    "secret:put": "wrangler secret put",
     "test": "bun test tests --path-ignore-patterns='**/*.live.test.ts'",
     "test:openai-chat": "LIVE_PROXY_TEST=1 bun test tests/openai-chat-completions-*.live.test.ts",
     "test:anthropic-messages": "LIVE_PROXY_TEST=1 bun test tests/anthropic-messages-*.live.test.ts",
@@ -14,15 +18,16 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@upstash/redis": "^1.38.3",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.31",
-    "ioredis": "^5.11.1",
     "jose": "^6.2.4"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "drizzle-kit": "^0.31.10",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "wrangler": "^4.128.0"
   }
 }

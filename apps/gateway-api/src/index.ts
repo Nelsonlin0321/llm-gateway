@@ -9,6 +9,7 @@ import {
   requireInjectChildKeyAuth,
   type ChildKeyAuthVariables,
 } from "./child-keys";
+import { applyWorkerBindings, mergeWorkerEnv, type WorkerBindings } from "./env";
 import { injectOpenAIProxyContext } from "./proxy/proxy-openai";
 import { injectAnthropicProxyContext } from "./proxy/proxy-anthropic";
 import {
@@ -19,34 +20,44 @@ import {
   requestIdMiddleware,
   type RequestIdVariables,
 } from "./request-log/index";
-import { loadGatewayConfig } from "./lib/config";
+import { loadGatewayConfig, type GatewayConfig } from "./lib/config";
 import { db, llmProviders, models } from "./lib/db";
-import { getRedisClient } from "./lib/redis-client";
+import { getRedisClient, resolveRedisRest } from "./lib/redis-client";
 
-const config = loadGatewayConfig();
+type AppVariables = RequestIdVariables &
+  ChildKeyAuthVariables &
+  UpstreamProxyVariables & {
+    gatewayConfig: GatewayConfig;
+  } & Record<string, unknown>;
 
 const app = new Hono<{
-  Variables: RequestIdVariables &
-    ChildKeyAuthVariables &
-    UpstreamProxyVariables &
-    Record<string, unknown>;
+  Bindings: WorkerBindings;
+  Variables: AppVariables;
 }>();
+
+app.use("*", async (c, next) => {
+  const env = mergeWorkerEnv(c.env);
+  applyWorkerBindings(env);
+  c.set("gatewayConfig", loadGatewayConfig(env));
+  await next();
+});
 
 app.use("*", logger());
 app.use("*", requestIdMiddleware);
 app.use("*", secureHeaders());
 
-if (config.corsOrigins.length > 0) {
-  app.use(
-    "*",
-    cors({
-      origin: config.corsOrigins,
-      allowHeaders: ["Authorization", "Content-Type", "x-api-key", "x-request-id"],
-      allowMethods: ["GET", "POST", "OPTIONS"],
-      maxAge: 86400,
-    }),
-  );
-}
+app.use("*", async (c, next) => {
+  const origins = c.get("gatewayConfig").corsOrigins;
+  if (origins.length === 0) {
+    return next();
+  }
+  return cors({
+    origin: origins,
+    allowHeaders: ["Authorization", "Content-Type", "x-api-key", "x-request-id"],
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    maxAge: 86400,
+  })(c, next);
+});
 
 type ProviderWithModels = {
   name: string;
@@ -127,10 +138,11 @@ app.get("/", (c) => {
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 app.get("/ready", async (c) => {
+  const redisConfigured = Boolean(resolveRedisRest());
   const checks: { postgres: "ok" | "error"; redis: "ok" | "skipped" | "error" } =
     {
       postgres: "error",
-      redis: config.redisUrl ? "error" : "skipped",
+      redis: redisConfigured ? "error" : "skipped",
     };
 
   try {
@@ -140,7 +152,7 @@ app.get("/ready", async (c) => {
     console.error("[ready] postgres check failed", error);
   }
 
-  if (config.redisUrl) {
+  if (redisConfigured) {
     const redis = getRedisClient();
     try {
       if (!redis) {
@@ -160,22 +172,31 @@ app.get("/ready", async (c) => {
   return c.json({ status: ready ? "ok" : "error", checks }, ready ? 200 : 503);
 });
 
-const childKeyRateLimit = createChildKeyRateLimitMiddleware(
-  config.defaultRateLimitRpm,
-);
+app.use("/openai/*", async (c, next) => {
+  return bodyLimit({ maxSize: c.get("gatewayConfig").requestBodyLimitBytes })(
+    c,
+    next,
+  );
+});
+app.use("/openai/*", requireInjectChildKeyAuth);
+app.use("/openai/*", async (c, next) => {
+  return createChildKeyRateLimitMiddleware(
+    c.get("gatewayConfig").defaultRateLimitRpm,
+  )(c, next);
+});
 
-app.use(
-  "/openai/*",
-  bodyLimit({ maxSize: config.requestBodyLimitBytes }),
-  requireInjectChildKeyAuth,
-  childKeyRateLimit,
-);
-app.use(
-  "/anthropic/*",
-  bodyLimit({ maxSize: config.requestBodyLimitBytes }),
-  requireInjectChildKeyAuth,
-  childKeyRateLimit,
-);
+app.use("/anthropic/*", async (c, next) => {
+  return bodyLimit({ maxSize: c.get("gatewayConfig").requestBodyLimitBytes })(
+    c,
+    next,
+  );
+});
+app.use("/anthropic/*", requireInjectChildKeyAuth);
+app.use("/anthropic/*", async (c, next) => {
+  return createChildKeyRateLimitMiddleware(
+    c.get("gatewayConfig").defaultRateLimitRpm,
+  )(c, next);
+});
 
 async function listOrganizationModels(
   c: Context,
@@ -210,16 +231,10 @@ app.post(
   createUpstreamProxyHandler(),
 );
 
-const port = config.port;
-
 export default {
-  port,
+  port: Number(process.env.PORT) || 8080,
   fetch: app.fetch,
   idleTimeout: 255,
 };
-
-if (process.env.NODE_ENV !== "test") {
-  console.log(`LLM proxy listening on http://localhost:${port}`);
-}
 
 export { app };

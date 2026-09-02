@@ -96,12 +96,19 @@ function toResponseCapture(
 }
 
 function scheduleEmit(
+  c: Context,
   emit: EmitRequestLogFn,
   input: EmitRequestLogInput,
 ): void {
-  void emit(input).catch((error) => {
+  const task = emit(input).catch((error) => {
     console.error("[request-log] emitRequestLog rejected", error);
   });
+
+  try {
+    c.executionCtx.waitUntil(task);
+  } catch {
+    // Bun / unit tests have no Worker executionCtx.
+  }
 }
 
 export async function handleUpstreamProxy(
@@ -137,7 +144,7 @@ export async function handleUpstreamProxy(
   const emit = deps.emitRequestLog ?? emitRequestLog;
 
   const emitWithResponse = (response: RequestLogResponseCapture) => {
-    scheduleEmit(emit, {
+    scheduleEmit(c, emit, {
       proxyContext: ctx,
       response,
     });

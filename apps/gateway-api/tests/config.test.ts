@@ -23,3 +23,24 @@ test("loadGatewayConfig requires secrets outside test", () => {
     /DATABASE_URL is required/,
   );
 });
+
+test("loadGatewayConfig accepts Worker binding-style env", () => {
+  const config = loadGatewayConfig({
+    NODE_ENV: "production",
+    DATABASE_URL: "postgres://example",
+    JWT_SIGNING_SECRET: "a".repeat(32),
+    API_ENCRYPT_KEY: "b".repeat(16),
+    REDIS_URL: "rediss://default:token@example.upstash.io:6379",
+    UPSTASH_REDIS_REST_URL: "https://example.upstash.io",
+    UPSTASH_REDIS_REST_TOKEN: "token",
+    GATEWAY_CORS_ORIGINS: "https://portal.example, https://app.example",
+    REQUEST_BODY_LIMIT_BYTES: "2048",
+  });
+  assert.equal(config.databaseUrl, "postgres://example");
+  assert.equal(config.upstashRedisRestUrl, "https://example.upstash.io");
+  assert.deepEqual(config.corsOrigins, [
+    "https://portal.example",
+    "https://app.example",
+  ]);
+  assert.equal(config.requestBodyLimitBytes, 2048);
+});
