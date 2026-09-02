@@ -6,6 +6,14 @@ import { isRecord } from "../utils.js";
 import type { UpstreamProxyContext } from "./upstream-proxy";
 import type { proxyDependencies } from "./dependencies";
 
+function getResolveProviderModel(deps: proxyDependencies) {
+  return (
+    deps.resolveProviderModel ??
+    ((providerName: string, modelAlias: string, organizationId: string) =>
+      resolveProviderModel(providerName, modelAlias, "openai", organizationId))
+  );
+}
+
 async function injectContext(
   c: Context<any, string, {}>,
   deps: proxyDependencies,
@@ -32,11 +40,12 @@ async function injectContext(
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
   const { parsed, downstreamBody, metadata } = prepared.value;
-  const resolved = await (
-    deps.resolveProviderModel ??
-    ((providerName: string, modelAlias: string, organizationId: string) =>
-      resolveProviderModel(providerName, modelAlias, "openai", organizationId))
-  )(parsed.providerName, parsed.model, childKeyRecord.organizationId);
+  const resolveModel = getResolveProviderModel(deps);
+  const resolved = await resolveModel(
+    parsed.providerName,
+    parsed.model,
+    childKeyRecord.organizationId,
+  );
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
