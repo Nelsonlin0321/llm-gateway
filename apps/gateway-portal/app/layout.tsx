@@ -79,6 +79,7 @@ export const viewport: Viewport = {
 
 const portalHeaderNavItems = [
   { label: "Product", href: "/" },
+  { label: "Docs", href: "/docs" },
   { label: "Console", href: "/workspace" },
 ] as const;
 

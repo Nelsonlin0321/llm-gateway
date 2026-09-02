@@ -64,7 +64,7 @@ export function SignInForm() {
   return (
     <AuthShell
       title="Sign in"
-      heading="Sign in to Gateway"
+      heading="Sign in to llm-gateway.io"
       subheading="Access providers, child API keys, policies, and usage analytics for your organization."
       description="Sign in to manage providers, child keys, and workspace settings."
       footerLabel="Need an account?"

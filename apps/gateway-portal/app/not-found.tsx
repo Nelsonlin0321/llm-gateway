@@ -3,10 +3,10 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowRight,
+  BookOpen,
   Compass,
   KeyRound,
   LayoutDashboard,
-  Server,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -38,15 +38,15 @@ const destinations = [
     icon: LayoutDashboard,
   },
   {
+    href: "/docs",
+    label: "API docs",
+    detail: "Call the gateway with a child key",
+    icon: BookOpen,
+  },
+  {
     href: "/workspace",
     label: "Console",
     detail: "Open the organization workspace after sign-in",
-    icon: Server,
-  },
-  {
-    href: "/sign-in",
-    label: "Sign in",
-    detail: "Access the control plane with your account",
     icon: KeyRound,
   },
 ] as const;

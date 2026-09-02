@@ -37,7 +37,7 @@ export async function updateProfile(
       .where(eq(user.id, session.user.id))
       .returning(profileReturning);
 
-    revalidatePath("/profile/settting");
+    revalidatePath("/profile/setting");
     revalidatePath("/workspace");
 
     return {

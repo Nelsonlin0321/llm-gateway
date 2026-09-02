@@ -139,6 +139,14 @@ export default async function Home() {
                 Open console
                 <ArrowRight className="size-4" />
               </Link>
+              <Link
+                href="/docs"
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "lg" }),
+                )}
+              >
+                API docs
+              </Link>
               {!session?.user ? (
                 <Link
                   href="/sign-in"
@@ -289,6 +297,9 @@ export default async function Home() {
           <nav aria-label="Footer" className="flex flex-wrap gap-4">
             <Link href="/" className="hover:text-text-secondary">
               Product
+            </Link>
+            <Link href="/docs" className="hover:text-text-secondary">
+              API docs
             </Link>
             <Link href="/sign-up" className="hover:text-text-secondary">
               Create account

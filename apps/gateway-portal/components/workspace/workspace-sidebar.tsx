@@ -119,10 +119,11 @@ const accountNavigation = [
   },
   {
     label: "Profile",
-    href: "/profile/settting",
+    href: "/profile/setting",
     icon: UserRound,
-    match: () => false,
-    disabled: true,
+    match: (pathname: string) =>
+      pathname === "/profile/setting" ||
+      pathname.startsWith("/profile/setting/"),
   },
   {
     label: "Billing",

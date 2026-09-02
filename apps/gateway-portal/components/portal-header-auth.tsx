@@ -141,7 +141,7 @@ export function PortalHeaderAuth() {
               <DropdownMenuItem
                 className="cursor-pointer gap-2"
                 onClick={() => {
-                  router.push("/profile/settting");
+                  router.push("/profile/setting");
                 }}
               >
                 <UserCog className="size-4" />

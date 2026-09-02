@@ -4,16 +4,13 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-09-02",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": {
-    "enabled": true,
-  },
   "dev": {
     "port": 8081,
     "local_protocol": "http",
   },
-  // Cron Triggers invoke `scheduled()`. Minimum interval is once per minute.
+  // Cron Triggers invoke `scheduled()`. Minimum interval is once per 5 minutes.
   "triggers": {
-    "crons": ["* * * * *"],
+    "crons": ["*/5 * * * *"],
   },
   // Non-secret config. These become Worker bindings (`env` / `process.env`).
   // Override locally by putting the same key in `.env`.
@@ -24,7 +21,7 @@
     "REQUEST_LOG_READ_COUNT": "20",
     "REQUEST_LOG_BLOCK_MS": "0",
     "REQUEST_LOG_CLAIM_MIN_IDLE_MS": "30000",
-    "REQUEST_LOG_IDLE_EXIT_MS": "30000",
+    "REQUEST_LOG_IDLE_EXIT_MS": "10000",
     "REQUEST_LOG_MAX_DURATION_MS": "60000",
   },
   // Secret *names* only — values are never stored in this file.
@@ -36,4 +33,17 @@
       "REDIS_URL",
     ],
   },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": false,
+      "head_sampling_rate": 1,
+      "persist": true
+    }
+  }
 }
