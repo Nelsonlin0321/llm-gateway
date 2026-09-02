@@ -7,8 +7,12 @@ import type { AnalyticsControlsState } from "@/components/analytics/analytics-co
  * Server-side loader for the analytics dashboard.
  * Prefetches meta + default series (request count by env/provider, last 7d).
  */
-export async function AnalyticsSection() {
-  const metaResult = await getAnalyticsMeta();
+export async function AnalyticsSection({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const metaResult = await getAnalyticsMeta(organizationId);
 
   if (!metaResult.ok) {
     return (
@@ -28,6 +32,7 @@ export async function AnalyticsSection() {
     "provider";
 
   const seriesResult = await getAnalyticsSeries({
+    organizationId,
     metric: "requestCount",
     dimension: defaultDimension,
     datePreset: "7d",
@@ -57,6 +62,7 @@ export async function AnalyticsSection() {
 
   return (
     <AnalyticsDashboard
+      organizationId={organizationId}
       initialMeta={meta}
       initialSeries={series}
       initialQuery={initialQuery}

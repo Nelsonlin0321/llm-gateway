@@ -1,6 +1,6 @@
 # Graceful shutdown via `SIGINT` / `SIGTERM` explained
 
-This note explains the signal handlers in [`src/index.ts`](file:///Volumes/mnt/Workspace/llm-gateway/apps/gateway-ingest/src/index.ts#L66-L123), especially this part:
+This note explains the signal handlers in [`src/index.ts`](../src/index.ts), especially this part:
 
 ```ts
 process.on("SIGINT", () => {
@@ -53,18 +53,19 @@ This pattern is common inside event handlers, where you want to trigger async cl
 
 ## What does `shutdown(signal)` actually do?
 
-In [`src/index.ts`](file:///Volumes/mnt/Workspace/llm-gateway/apps/gateway-ingest/src/index.ts#L68-L80), `shutdown`:
+In [`src/index.ts`](../src/index.ts), `shutdown`:
 
 1. ensures it runs only once using the `stopping` flag
-2. logs which signal was received
+2. logs the reason (signal or idle-exit)
 3. tries to gracefully close Redis with `await client.quit()`
 4. falls back to `client.disconnect()` if `quit()` throws
 5. exits the process with success code `0`
 
-The `stopping` flag is also used by the main consume loop:
+The `stopping` flag is also used by the consume loop (`src/consume-loop.ts`):
 
-- the loop condition is `while (!stopping)`
+- the loop condition is `while (!isStopping())`
 - after shutdown starts, the loop stops scheduling new `XREADGROUP` calls
+- `REQUEST_LOG_IDLE_EXIT_MS` can also end a drain and then calls this same shutdown path (outside orchestration starts the next run)
 
 ## Practical effect
 

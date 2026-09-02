@@ -19,6 +19,7 @@ export type MockEventLogRow = {
   requestedModelAlias: string;
   upstreamModel: string;
   upstreamUrl: string;
+  organizationId: string;
   isStream: boolean;
   responseMode: "stream" | "non-stream";
   childKeyId: null;
@@ -99,6 +100,18 @@ const PROVIDER_CATALOG: ProviderCatalogEntry[] = [
       "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
   },
 ];
+
+/** Small org pool so seed data does not create a LIST partition per row. */
+export const MOCK_ORGANIZATION_IDS = [
+  "org_seed_01",
+  "org_seed_02",
+  "org_seed_03",
+  "org_seed_04",
+  "org_seed_05",
+  "org_seed_06",
+  "org_seed_07",
+  "org_seed_08",
+] as const;
 
 const TEAMS = ["growth", "platform", "ml", "infra", "research"] as const;
 const ENVS = ["prod", "staging", "dev"] as const;
@@ -222,6 +235,7 @@ export function generateMockEventLogRow(
   return {
     eventId: crypto.randomUUID(),
     requestId: crypto.randomUUID(),
+    organizationId: pick(MOCK_ORGANIZATION_IDS, rng),
     schemaVersion: 1,
     eventType: "request",
     startedAt: startedAt.toISOString(),

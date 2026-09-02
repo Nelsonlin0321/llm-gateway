@@ -5,9 +5,9 @@ import {
   parseResponseIdFromSseText,
   resolveResponseMode,
 } from "./parse-response.js";
-import type { CaptureLevel, ResponseMode } from "./schema.js";
+import type { ResponseMode } from "./schema.js";
 
-/** Hard cap for retained SSE text to bound memory (capture policy applied later). */
+/** Hard cap for retained SSE text to bound memory. */
 const STREAM_BUFFER_MAX_CHARS = 1_000_000;
 
 export type InstrumentedResponseCapture = {
@@ -15,9 +15,9 @@ export type InstrumentedResponseCapture = {
   responseMode: ResponseMode;
   responseContentType: string;
   responseHeaders: Headers;
-  /** Raw JSON body text (capture policy applied when building the log). */
+  /** Raw JSON body text. */
   responsePayloadJson?: string;
-  /** Raw SSE transcript (capture policy applied when building the log). */
+  /** Raw SSE transcript. */
   responseStreamText?: string;
   responseId?: string;
   errorType?: string;
@@ -31,7 +31,6 @@ export type InstrumentedResponseCapture = {
 export type InstrumentResponseOptions = {
   isStream: boolean;
   startedAtMs: number;
-  captureLevel: CaptureLevel;
   /**
    * Called once the full response body has been observed (JSON fully read,
    * or SSE stream closed / errored). Must not throw into the client path.

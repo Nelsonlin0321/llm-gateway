@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { and, eq, ne } from "drizzle-orm";
 import { z } from "zod";
 
@@ -11,13 +10,17 @@ import {
   toProviderListItem,
   validateUpdateProviderInput,
 } from "@/lib/llm-provider/service";
+import { writeAuditLog } from "@/lib/audit";
 import {
   mutationDeniedMessage,
   requireOrganizationPermission,
 } from "@/lib/organization/access";
+import { invalidate_llm_provider_and_model_cache } from "@/lib/redis/invalidate";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   providerReturning,
+  revalidateOrganizationProviderPaths,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -38,6 +41,8 @@ export async function updateProvider(
   const [existing] = await db
     .select({
       id: llmProviders.id,
+      name: llmProviders.name,
+      compatibilityType: llmProviders.compatibilityType,
       encryptedApiKey: llmProviders.encryptedApiKey,
       organizationId: llmProviders.organizationId,
     })
@@ -87,8 +92,31 @@ export async function updateProvider(
       .where(eq(llmProviders.id, parsed.data.id))
       .returning(providerReturning);
 
-    revalidatePath(`/${existing.organizationId}/providers`);
-    revalidatePath(`/${existing.organizationId}`);
+    revalidateOrganizationProviderPaths(existing.organizationId);
+    await invalidate_llm_provider_and_model_cache(
+      existing.organizationId,
+      existing.name,
+      existing.compatibilityType,
+    );
+    if (
+      existing.name !== parsed.data.name ||
+      existing.compatibilityType !== parsed.data.compatibilityType
+    ) {
+      await invalidate_llm_provider_and_model_cache(
+        existing.organizationId,
+        parsed.data.name,
+        parsed.data.compatibilityType,
+      );
+    }
+    await writeAuditLog({
+      organizationId: existing.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "update",
+      entity: "llmProvider",
+      entityId: provider.id,
+      metadata: { name: provider.name },
+    });
 
     return {
       ok: true,
@@ -96,9 +124,8 @@ export async function updateProvider(
       message: "Provider updated successfully.",
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to update the provider.";
-
-    return validationErrorResult(message);
+    return validationErrorResult(
+      publicMutationError("Unable to update the provider.", error),
+    );
   }
 }

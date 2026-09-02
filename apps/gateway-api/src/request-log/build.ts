@@ -1,8 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import {
-  applyPayloadCapture,
-  sanitizeHeaders,
+  // sanitizeHeaders,
   stringifyChildKeyTags,
 } from "./capture.js";
 import {
@@ -18,25 +17,7 @@ import {
 export function buildRequestLogFields(
   input: BuildRequestLogInput,
 ): RequestLogV1Fields {
-  const captureLevel = input.captureLevel;
   const response = input.response;
-
-  const requestPayloadJson = applyPayloadCapture(
-    input.requestPayloadJson,
-    captureLevel,
-  );
-  const upstreamRequestPayloadJson = applyPayloadCapture(
-    input.upstreamRequestPayloadJson,
-    captureLevel,
-  );
-  const responsePayloadJson = applyPayloadCapture(
-    response.responsePayloadJson,
-    captureLevel,
-  );
-  const responseStreamText = applyPayloadCapture(
-    response.responseStreamText,
-    captureLevel,
-  );
 
   const fields: RequestLogV1Fields = {
     schema_version: REQUEST_LOG_SCHEMA_VERSION,
@@ -62,6 +43,7 @@ export function buildRequestLogFields(
     is_stream: input.isStream ? "true" : "false",
     response_mode: response.responseMode,
 
+    organization_id: input.organizationId,
     child_key_id: input.childKeyId,
     child_key_name: input.childKeyName,
     child_key_creator_id: input.childKeyCreatorId,
@@ -69,29 +51,28 @@ export function buildRequestLogFields(
     child_key_tags_json: stringifyChildKeyTags(input.childKeyTags),
     user_email: input.userEmail,
 
-    request_headers_json: JSON.stringify(sanitizeHeaders(input.requestHeaders)),
+    // request_headers_json: JSON.stringify(sanitizeHeaders(input.requestHeaders)),
     metadata_json: input.metadataJson || "{}",
-    capture_level: captureLevel,
 
     status_code: String(response.statusCode),
     response_content_type: response.responseContentType || "",
-    response_headers_json: JSON.stringify(
-      sanitizeHeaders(response.responseHeaders),
-    ),
+    // response_headers_json: JSON.stringify(
+    //   sanitizeHeaders(response.responseHeaders),
+    // ),
     duration_ms: String(response.durationMs),
   };
 
-  if (requestPayloadJson !== undefined) {
-    fields.request_payload_json = requestPayloadJson;
+  if (input.requestPayloadJson !== undefined) {
+    fields.request_payload_json = input.requestPayloadJson;
   }
-  if (upstreamRequestPayloadJson !== undefined) {
-    fields.upstream_request_payload_json = upstreamRequestPayloadJson;
+  if (input.upstreamRequestPayloadJson !== undefined) {
+    fields.upstream_request_payload_json = input.upstreamRequestPayloadJson;
   }
-  if (responsePayloadJson !== undefined) {
-    fields.response_payload_json = responsePayloadJson;
+  if (response.responsePayloadJson !== undefined) {
+    fields.response_payload_json = response.responsePayloadJson;
   }
-  if (responseStreamText !== undefined) {
-    fields.response_stream_text = responseStreamText;
+  if (response.responseStreamText !== undefined) {
+    fields.response_stream_text = response.responseStreamText;
   }
   if (response.responseId) {
     fields.response_id = response.responseId;

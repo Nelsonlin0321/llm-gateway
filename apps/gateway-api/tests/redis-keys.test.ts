@@ -6,25 +6,23 @@ import { getProviderModelCacheKey } from "../src/lib/redis-keys.js";
 test("getProviderModelCacheKey builds stable keys", () => {
   assert.equal(
     getProviderModelCacheKey({
+      organizationId: "org-1",
       providerName: "openai",
       compatibilityType: "openai",
       modelAlias: "gateway-alias",
-      creatorId: "creator-1",
-      application: "gateway-api",
     }),
-    "provider-model:openai:openai:creator-1:gateway-alias:gateway-api",
+    "provider-model:org-1:openai:openai:gateway-alias",
   );
 });
 
 test("getProviderModelCacheKey URI-encodes path segments", () => {
   assert.equal(
     getProviderModelCacheKey({
+      organizationId: "org/1",
       providerName: "provider/with spaces",
       compatibilityType: "openai",
       modelAlias: "gpt-4/mini",
-      creatorId: "creator/1",
-      application: "gateway-api",
     }),
-    "provider-model:provider%2Fwith%20spaces:openai:creator%2F1:gpt-4%2Fmini:gateway-api",
+    "provider-model:org%2F1:openai:provider%2Fwith%20spaces:gpt-4%2Fmini",
   );
 });

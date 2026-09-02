@@ -3,7 +3,7 @@ import {
   INPUT_TOKEN_PATHS,
   OUTPUT_TOKEN_PATHS,
   STREAM_USAGE_LOOKBACK,
-} from "./token-paths.js";
+} from "./token-paths";
 
 export type TokenUsage = {
   inputToken: number;
@@ -195,10 +195,7 @@ export function extractTokenUsage(input: {
 /**
  * cost = cached/1M * cachePrice + input/1M * inputPrice + output/1M * outputPrice
  */
-export function calculateCost(
-  tokens: TokenUsage,
-  prices: TokenPrices,
-): number {
+export function calculateCost(tokens: TokenUsage, prices: TokenPrices): number {
   const perMillion = 1_000_000;
   const cost =
     (tokens.cachedInputToken / perMillion) * prices.inputCachePrice +

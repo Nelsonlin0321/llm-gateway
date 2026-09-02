@@ -47,15 +47,6 @@ export function parseChildKeyJwtPayload(
   if (typeof payload.key_id !== "string" || payload.key_id.length === 0) {
     throw new Error("Child key token payload is missing key_id.");
   }
-  if (typeof payload.name !== "string" || payload.name.length === 0) {
-    throw new Error("Child key token payload is missing name.");
-  }
-  if (
-    typeof payload.creator_id !== "string" ||
-    payload.creator_id.length === 0
-  ) {
-    throw new Error("Child key token payload is missing creator_id.");
-  }
 
   return {
     key_id: payload.key_id,

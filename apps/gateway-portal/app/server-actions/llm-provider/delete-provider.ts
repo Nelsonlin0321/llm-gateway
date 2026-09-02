@@ -1,18 +1,21 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 import { db, llmProviders } from "@/lib/db";
 import { requireSession } from "@/lib/auth-server";
+import { writeAuditLog } from "@/lib/audit";
 import { toProviderListItem } from "@/lib/llm-provider/service";
 import {
   mutationDeniedMessage,
   requireOrganizationPermission,
 } from "@/lib/organization/access";
+import { invalidate_llm_provider_and_model_cache } from "@/lib/redis/invalidate";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   providerReturning,
+  revalidateOrganizationProviderPaths,
   validationErrorResult,
   type ProviderActionResult,
 } from "./shared";
@@ -29,6 +32,8 @@ export async function deleteProvider(
   const [existing] = await db
     .select({
       id: llmProviders.id,
+      name: llmProviders.name,
+      compatibilityType: llmProviders.compatibilityType,
       organizationId: llmProviders.organizationId,
     })
     .from(llmProviders)
@@ -56,8 +61,21 @@ export async function deleteProvider(
       .where(eq(llmProviders.id, id))
       .returning(providerReturning);
 
-    revalidatePath("/providers");
-    revalidatePath("/dashboard");
+    revalidateOrganizationProviderPaths(existing.organizationId);
+    await invalidate_llm_provider_and_model_cache(
+      existing.organizationId,
+      existing.name,
+      existing.compatibilityType,
+    );
+    await writeAuditLog({
+      organizationId: existing.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "delete",
+      entity: "llmProvider",
+      entityId: existing.id,
+      metadata: { name: existing.name },
+    });
 
     return {
       ok: true,
@@ -65,9 +83,8 @@ export async function deleteProvider(
       message: "Provider deleted successfully.",
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to delete the provider.";
-
-    return validationErrorResult(message);
+    return validationErrorResult(
+      publicMutationError("Unable to delete the provider.", error),
+    );
   }
 }

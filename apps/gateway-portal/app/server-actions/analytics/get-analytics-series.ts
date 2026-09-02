@@ -7,6 +7,7 @@ import {
   type AnalyticsSeriesResult,
 } from "@/lib/analytics/schema";
 import { fetchAnalyticsSeries } from "@/lib/analytics/service";
+import { requireOrganizationPermission } from "@/lib/organization/access";
 
 export type GetAnalyticsSeriesResult =
   | { ok: true; data: AnalyticsSeriesResult }
@@ -19,7 +20,7 @@ export type GetAnalyticsSeriesResult =
 export async function getAnalyticsSeries(
   input: AnalyticsQueryInput,
 ): Promise<GetAnalyticsSeriesResult> {
-  await requireSession();
+  const session = await requireSession();
 
   const parsed = validateAnalyticsQuery(input);
   if (!parsed.success) {
@@ -28,6 +29,16 @@ export async function getAnalyticsSeries(
       error: "Invalid analytics query.",
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
+  }
+
+  const access = await requireOrganizationPermission(
+    session.user.id,
+    parsed.data.organizationId,
+    "organization",
+    "view",
+  );
+  if (!access.ok) {
+    return { ok: false, error: access.error };
   }
 
   try {

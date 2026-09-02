@@ -5,15 +5,15 @@
  *
  * - Date range default: 2026-06-01 .. 2026-08-01 (inclusive)
  * - Each log_date gets a random row count in [10, 1000] by default
- * - Ensures daily partitions before insert
+ * - Ensures daily + org LIST partitions before insert
  * - Optional: write generated rows to JSON
  *
  * Usage:
  *   bun run scripts/seed-event-log/seed.ts
  *   bun run scripts/seed-event-log/seed.ts --per-day-min=10 --per-day-max=1000
  *   bun run scripts/seed-event-log/seed.ts --per-day=50
- *   bun run scripts/seed-event-log/seed.ts --write-json=scripts/data/event-log-mock.json
- *   bun run scripts/seed-event-log/seed.ts --dry-run --write-json=scripts/data/event-log-mock.json
+ *   bun run scripts/seed-event-log/seed.ts --write-json=scripts/data/event-log-mockon
+ *   bun run scripts/seed-event-log/seed.ts --dry-run --write-json=scripts/data/event-log-mockon
  *
  * Requires DATABASE_URL (see .env.example).
  */
@@ -21,10 +21,10 @@
 import { mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
-import type { NewEventLog } from "../../src/db/schema.js";
-import { eventLog } from "../../src/db/schema.js";
-import { db } from "../../src/lib/db.js";
-import { ensureDayPartitions } from "../../src/load/partitions.js";
+import type { NewEventLog } from "../../src/db/schema";
+import { eventLog } from "../../src/db/schema";
+import { db } from "../../src/lib/db";
+import { ensureDayPartitions } from "../../src/load/partitions";
 import {
   createRng,
   DEFAULT_PER_DAY_MAX,
@@ -33,7 +33,7 @@ import {
   generateMockEventLogRows,
   generateMockEventLogRowsForDate,
   type MockEventLogRow,
-} from "./generate.js";
+} from "./generate";
 
 type CliOptions = {
   from: string;
@@ -155,6 +155,7 @@ function toInsertRow(row: MockEventLogRow): NewEventLog {
   return {
     eventId: row.eventId,
     requestId: row.requestId,
+    organizationId: row.organizationId,
     schemaVersion: row.schemaVersion,
     eventType: row.eventType,
     startedAt: new Date(row.startedAt),
@@ -273,7 +274,14 @@ async function main(): Promise<void> {
     }
 
     for (const logDate of dates) {
-      await ensureDayPartitions(db, logDate);
+      const orgs = new Set(
+        rows
+          .filter((row) => row.logDate === logDate)
+          .map((row) => row.organizationId),
+      );
+      for (const organizationId of orgs) {
+        await ensureDayPartitions(db, logDate, organizationId);
+      }
     }
     await insertRows(rows, opts.batchSize);
     console.log("[seed-event-log] done", {
@@ -293,12 +301,15 @@ async function main(): Promise<void> {
   let total = 0;
 
   for (const logDate of dates) {
-    await ensureDayPartitions(db, logDate);
     const dayRows = generateMockEventLogRowsForDate(
       logDate,
       genOptions(opts),
       rng,
     );
+    const orgs = new Set(dayRows.map((row) => row.organizationId));
+    for (const organizationId of orgs) {
+      await ensureDayPartitions(db, logDate, organizationId);
+    }
     await insertRows(dayRows, opts.batchSize);
     total += dayRows.length;
     console.log(

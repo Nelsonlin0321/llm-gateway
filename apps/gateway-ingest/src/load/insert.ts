@@ -1,11 +1,11 @@
-import type { NewEventLog, NewRequestLog } from "../db/schema.js";
-import { eventLog, requestLog } from "../db/schema.js";
-import type { Db } from "../lib/db.js";
+import type { NewEventLog, NewRequestLog } from "../db/schema";
+import { eventLog, requestLog } from "../db/schema";
+import type { Db } from "../lib/db";
 import {
   ensureDayPartitions,
   isMissingPartitionError,
   normalizeLogDate,
-} from "./partitions.js";
+} from "./partitions";
 
 export type LoadRowsInput = {
   requestLog: NewRequestLog;
@@ -14,21 +14,30 @@ export type LoadRowsInput = {
 
 export type LoadRowsResult =
   | { ok: true; createdPartition?: boolean }
-  | { ok: false; error: unknown };
+  | { ok: false; error: unknown; duplicate?: boolean };
+
+export function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const code = (error as { code?: unknown }).code;
+  return code === "23505";
+}
 
 async function insertBoth(db: Db, input: LoadRowsInput): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx.insert(requestLog).values(input.requestLog);
-    await tx.insert(eventLog).values(input.eventLog);
+    await tx.insert(requestLog).values(input.requestLog).onConflictDoNothing();
+    await tx.insert(eventLog).values(input.eventLog).onConflictDoNothing();
   });
 }
 
 /**
  * Insert one request_log + event_log pair in a single transaction.
  *
- * Both tables are PARTITION BY RANGE (log_date). If Postgres reports that no
- * partition covers the row's log_date, create the daily partitions for both
- * parents and retry the insert once.
+ * Both tables are PARTITION BY RANGE (log_date), with daily children
+ * PARTITION BY LIST (organization_id). If Postgres reports that no partition
+ * covers the row, create the day + org partitions for both parents and retry
+ * the insert once.
  */
 export async function loadRows(
   db: Db,
@@ -38,13 +47,18 @@ export async function loadRows(
     await insertBoth(db, input);
     return { ok: true };
   } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: true };
+    }
     if (!isMissingPartitionError(error)) {
-      return { ok: false, error };
+      return { ok: false, error, duplicate: isUniqueViolation(error) };
     }
 
     const logDate =
       normalizeLogDate(input.requestLog.logDate) ??
       normalizeLogDate(input.eventLog.logDate);
+    const organizationId =
+      input.requestLog.organizationId || input.eventLog.organizationId;
 
     if (!logDate) {
       return {
@@ -55,16 +69,28 @@ export async function loadRows(
       };
     }
 
+    if (!organizationId) {
+      return {
+        ok: false,
+        error: new Error(
+          "missing partition but could not resolve organization_id",
+        ),
+      };
+    }
+
     console.warn(
-      "[gateway-ingest] missing partition for log_date; creating daily partitions and retrying",
-      { logDate },
+      "[gateway-ingest] missing partition; creating day + org partitions and retrying",
+      { logDate, organizationId },
     );
 
     try {
-      await ensureDayPartitions(db, logDate);
+      await ensureDayPartitions(db, logDate, organizationId);
       await insertBoth(db, input);
       return { ok: true, createdPartition: true };
     } catch (retryError) {
+      if (isUniqueViolation(retryError)) {
+        return { ok: true, createdPartition: true };
+      }
       return { ok: false, error: retryError };
     }
   }

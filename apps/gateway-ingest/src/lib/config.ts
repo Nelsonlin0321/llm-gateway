@@ -1,7 +1,4 @@
-import {
-  REQUEST_LOG_CONSUMER_GROUP,
-  REQUEST_LOG_STREAM,
-} from "./redis-keys.js";
+import { REQUEST_LOG_CONSUMER_GROUP, REQUEST_LOG_STREAM } from "./redis-keys";
 
 export type IngestConfig = {
   redisUrl: string;
@@ -18,6 +15,13 @@ export type IngestConfig = {
    * Set to 0 to skip reclaim (new messages only).
    */
   claimMinIdleMs: number;
+  /**
+   * Exit the process after this many milliseconds with no events to
+   * ingest. Any ingested event resets the timer. 0 = never idle-exit
+   * (consume until SIGINT/SIGTERM). Scheduling between runs is owned
+   * by outside orchestration.
+   */
+  idleExitMs: number;
 };
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
@@ -62,5 +66,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): IngestConfig {
     // XREADGROUP Wait up to 5_000 milliseconds (5 seconds) if there are no new messages available.
     claimMinIdleMs: parsePositiveInt(env.REQUEST_LOG_CLAIM_MIN_IDLE_MS, 60_000),
     // XAUTOCLAIM:Only claim messages that have been idle for at least 60 seconds.
+    idleExitMs: parsePositiveInt(env.REQUEST_LOG_IDLE_EXIT_MS, 30_000),
+    // Exit after 30s with no events; timer resets on each ingested event.
   };
 }

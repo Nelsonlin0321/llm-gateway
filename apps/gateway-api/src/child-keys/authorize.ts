@@ -68,17 +68,16 @@ export async function authorizeChildKey(
     if (shouldBypassChildKeyCache()) {
       record = await childKeyRepository.findById(payload.key_id);
     } else {
-      const cacheKey = getChildKeyCacheKey(payload.key_id, "");
+      const cacheKey = getChildKeyCacheKey(payload.key_id);
       record = await redis_cache(cacheKey, () =>
         childKeyRepository.findById(payload.key_id),
       );
     }
   } catch (error) {
-    const detail =
-      error instanceof Error ? error.message : "database unavailable";
+    console.error("[child-key] authorization lookup failed", error);
     return authzFailure(
       503,
-      `Unable to authorize API key (database error): ${detail}`,
+      "Unable to authorize API key right now.",
       "server_error",
     );
   }

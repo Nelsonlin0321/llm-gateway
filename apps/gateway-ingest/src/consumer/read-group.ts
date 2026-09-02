@@ -2,12 +2,12 @@ import type {
   RedisStreamClient,
   XAutoClaimResult,
   XReadGroupResult,
-} from "../lib/redis-client.js";
+} from "../lib/redis-client";
 import {
   extractAutoclaimEntries,
   extractStreamEntries,
   type ExtractedStreamEntry,
-} from "./extract.js";
+} from "./extract";
 
 /** Initial / wrap-around XAUTOCLAIM scan cursor. */
 export const XAUTOCLAIM_START_ID = "0-0";

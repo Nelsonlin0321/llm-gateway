@@ -1,11 +1,19 @@
-import type { ExtractedStreamEntry } from "./consumer/extract.js";
-import type { Db } from "./lib/db.js";
-import { loadRows } from "./load/index.js";
-import { transformStreamFields } from "./transform/index.js";
+import type { ExtractedStreamEntry } from "./consumer/extract";
+import type { Db } from "./lib/db";
+import { loadRows } from "./load/index";
+import { transformStreamFields } from "./transform/index";
+
+export type DeadLetterEntry = {
+  id: string;
+  fields: Record<string, string>;
+  reason: string;
+};
 
 export type ProcessBatchResult = {
   /** Stream entry ids that were handled successfully and should be XACK'd. */
   idsToAck: string[];
+  /** Unrecoverable payloads to park on the DLQ before ACK. */
+  deadLetters: DeadLetterEntry[];
   transformed: number;
   loaded: number;
   skippedMissingPayload: number;
@@ -24,6 +32,7 @@ export async function processExtractedEntries(
   entries: ExtractedStreamEntry[],
 ): Promise<ProcessBatchResult> {
   const idsToAck: string[] = [];
+  const deadLetters: DeadLetterEntry[] = [];
   let transformed = 0;
   let loaded = 0;
   let skippedMissingPayload = 0;
@@ -43,11 +52,15 @@ export async function processExtractedEntries(
 
       const mapped = transformStreamFields(entry.fields);
       if (!mapped.ok) {
-        failed += 1;
         console.error(
-          "[gateway-ingest] transform failed; leaving pending for reclaim",
+          "[gateway-ingest] transform failed; moving to dead-letter stream",
           { id: entry.id, reason: mapped.reason },
         );
+        deadLetters.push({
+          id: entry.id,
+          fields: entry.fields,
+          reason: mapped.reason,
+        });
         continue;
       }
       transformed += 1;
@@ -92,6 +105,7 @@ export async function processExtractedEntries(
 
   return {
     idsToAck,
+    deadLetters,
     transformed,
     loaded,
     skippedMissingPayload,

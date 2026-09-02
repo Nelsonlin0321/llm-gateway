@@ -25,6 +25,7 @@ function sampleRows(): {
       gatewayPath: "/v1/chat/completions",
       loggedAt: now,
       logDate: "2026-08-01",
+      organizationId: "org-1",
       createdAt: now,
       updatedAt: now,
     },
@@ -65,6 +66,7 @@ function sampleRows(): {
       cost: 0,
       loggedAt: now,
       logDate: "2026-08-01",
+      organizationId: "org-1",
       inputPrice: 1,
       outputPrice: 2,
       inputCachePrice: 0.1,
@@ -100,9 +102,11 @@ function makeDb(options: {
       }
       const tx = {
         insert: () => ({
-          values: async () => {
-            options.inserts = (options.inserts ?? 0) + 1;
-          },
+          values: () => ({
+            onConflictDoNothing: async () => {
+              options.inserts = (options.inserts ?? 0) + 1;
+            },
+          }),
         }),
       };
       await fn(tx);
@@ -139,9 +143,12 @@ test("loadRows creates partitions and retries on missing partition", async () =>
   if (result.ok) {
     assert.equal(result.createdPartition, true);
   }
-  assert.equal(ddl.length, 2);
-  assert.match(ddl[0] ?? "", /request_log_2026_08_01/);
-  assert.match(ddl[1] ?? "", /event_log_2026_08_01/);
+  assert.equal(ddl.length, 4);
+  assert.match(ddl[0] ?? "", /request_log_2026_08_01 PARTITION OF request_log/);
+  assert.match(ddl[0] ?? "", /PARTITION BY LIST \(organization_id\)/);
+  assert.match(ddl[1] ?? "", /request_log_2026_08_01_org_1/);
+  assert.match(ddl[2] ?? "", /event_log_2026_08_01 PARTITION OF event_log/);
+  assert.match(ddl[3] ?? "", /event_log_2026_08_01_org_1/);
 });
 
 test("loadRows surfaces non-partition errors without CREATE", async () => {
@@ -159,6 +166,19 @@ test("loadRows surfaces non-partition errors without CREATE", async () => {
   const result = await loadRows(db, sampleRows());
   assert.equal(result.ok, false);
   assert.equal(ddl.length, 0);
+});
+
+test("loadRows treats unique violations as success", async () => {
+  clearEnsuredPartitionCache();
+  const db = {
+    transaction: async () => {
+      throw { code: "23505", message: "duplicate key" };
+    },
+    execute: async () => undefined,
+  } as unknown as Db;
+
+  const result = await loadRows(db, sampleRows());
+  assert.equal(result.ok, true);
 });
 
 test("loadRows fails when partition create fails", async () => {

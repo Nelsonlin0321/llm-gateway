@@ -20,6 +20,7 @@ test("loadConfig applies defaults for XAUTOCLAIM + XREADGROUP path", () => {
   assert.equal(config.count, 20);
   assert.equal(config.blockMs, 5_000);
   assert.equal(config.claimMinIdleMs, 60_000);
+  assert.equal(config.idleExitMs, 30_000);
 });
 
 test("loadConfig honors overrides", () => {
@@ -31,6 +32,7 @@ test("loadConfig honors overrides", () => {
     REQUEST_LOG_READ_COUNT: "25",
     REQUEST_LOG_BLOCK_MS: "500",
     REQUEST_LOG_CLAIM_MIN_IDLE_MS: "120000",
+    REQUEST_LOG_IDLE_EXIT_MS: "15000",
   });
 
   assert.equal(config.streamKey, "custom-stream");
@@ -39,6 +41,7 @@ test("loadConfig honors overrides", () => {
   assert.equal(config.count, 25);
   assert.equal(config.blockMs, 500);
   assert.equal(config.claimMinIdleMs, 120_000);
+  assert.equal(config.idleExitMs, 15_000);
 });
 
 test("loadConfig falls back on invalid numbers", () => {
@@ -47,9 +50,11 @@ test("loadConfig falls back on invalid numbers", () => {
     REQUEST_LOG_READ_COUNT: "nope",
     REQUEST_LOG_BLOCK_MS: "-1",
     REQUEST_LOG_CLAIM_MIN_IDLE_MS: "",
+    REQUEST_LOG_IDLE_EXIT_MS: "nope",
   });
 
   assert.equal(config.count, 20);
   assert.equal(config.blockMs, 5_000);
   assert.equal(config.claimMinIdleMs, 60_000);
+  assert.equal(config.idleExitMs, 30_000);
 });

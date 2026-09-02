@@ -1,19 +1,27 @@
-export type App = "gateway-api" | "gateway-portal" | "both";
-
-export const getChildKeyCacheKey = (
-  keyId: string,
-  application: App = "both",
-): string => {
-  return `child-key:${application}:${keyId}`;
+export const getChildKeyCacheKey = (keyId: string): string => {
+  return `child-key:${keyId}`;
 };
 
-export const getProviderModelCacheKey = (
-  providerName: string,
-  modelAlias: string,
-  compatibilityType: string,
-  application: App,
-): string => {
-  return `provider-model:${application}:${encodeURIComponent(compatibilityType)}:${encodeURIComponent(
-    providerName,
-  )}:${encodeURIComponent(modelAlias)}`;
+export const getProviderModelCacheKey = (params: {
+  organizationId: string;
+  providerName: string;
+  compatibilityType: string;
+  modelAlias: string;
+}): string => {
+  const { organizationId, providerName, compatibilityType, modelAlias } =
+    params;
+  return `provider-model:${encodeURIComponent(organizationId)}:${encodeURIComponent(
+    compatibilityType,
+  )}:${encodeURIComponent(providerName)}:${encodeURIComponent(modelAlias)}`;
+};
+
+export const getProviderModelCachePattern = (params: {
+  organizationId: string;
+  providerName: string;
+  compatibilityType: string;
+}): string => {
+  const { organizationId, providerName, compatibilityType } = params;
+  return `provider-model:${encodeURIComponent(organizationId)}:${encodeURIComponent(
+    compatibilityType,
+  )}:${encodeURIComponent(providerName)}:*`;
 };

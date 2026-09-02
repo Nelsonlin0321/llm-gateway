@@ -7,7 +7,6 @@
 export const REQUEST_LOG_SCHEMA_VERSION = "1" as const;
 export const REQUEST_LOG_EVENT_TYPE = "request_log" as const;
 
-export type CaptureLevel = "metadata" | "redacted" | "full";
 export type ResponseMode = "json" | "sse";
 
 /**
@@ -42,6 +41,7 @@ export type RequestLogV1Fields = {
   is_stream: "true" | "false";
   response_mode: ResponseMode;
 
+  organization_id: string;
   child_key_id: string;
   child_key_name: string;
   child_key_creator_id: string;
@@ -50,20 +50,17 @@ export type RequestLogV1Fields = {
   child_key_tags_json: string;
   user_email: string;
 
-  request_headers_json: string;
-  /** Present when capture_level is `redacted` or `full`. */
+  // request_headers_json: string;
   request_payload_json?: string;
   metadata_json: string;
-  /** Present when capture_level is `redacted` or `full`. */
   upstream_request_payload_json?: string;
-  capture_level: CaptureLevel;
 
   status_code: string;
   response_content_type: string;
-  response_headers_json: string;
-  /** Non-stream JSON body when capture_level allows bodies. */
+  // response_headers_json: string;
+  /** Non-stream JSON body. */
   response_payload_json?: string;
-  /** SSE transcript when capture_level allows bodies. */
+  /** SSE transcript. */
   response_stream_text?: string;
   response_id?: string;
   error_type?: string;
@@ -98,7 +95,6 @@ export type RequestLogResponseCapture = {
 export type BuildRequestLogInput = {
   eventId?: string;
   loggedAt?: Date;
-  captureLevel: CaptureLevel;
 
   gatewayPath: string;
   httpMethod: string;
@@ -117,6 +113,7 @@ export type BuildRequestLogInput = {
   inputCachePrice: number;
   isStream: boolean;
 
+  organizationId: string;
   childKeyId: string;
   childKeyName: string;
   childKeyCreatorId: string;
@@ -125,7 +122,7 @@ export type BuildRequestLogInput = {
   userEmail: string;
 
   /** Original client headers (Authorization will be stripped). */
-  requestHeaders: Headers | Record<string, string>;
+  // requestHeaders: Headers | Record<string, string>;
   /** Original client JSON body (stringified). */
   requestPayloadJson: string;
   /** Request metadata extracted from the client body (already stringified). */

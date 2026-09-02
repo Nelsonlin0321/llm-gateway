@@ -39,7 +39,7 @@ gateway-api  ──XADD──►  Redis Stream  llm-gateway-request-logs
                                 ▼
                     PostgreSQL (Drizzle)
                     request_log + event_log
-                    (daily range partitions)
+                    (daily range + org list partitions)
 ```
 
 ---
@@ -54,6 +54,7 @@ gateway-api  ──XADD──►  Redis Stream  llm-gateway-request-logs
 - **ACK only after successful DB write**  
 - Daily partition ensure + **mock seed** scripts for analytics demos  
 - Graceful shutdown signal handling  
+- Idle-exit when the stream is empty (outside orchestration starts the next run)  
 
 ---
 
@@ -65,6 +66,11 @@ cp .env.example .env   # set REDIS_URL and DATABASE_URL
 bun install
 bun run dev
 ```
+
+The worker does not poll Redis forever. It drains until
+`REQUEST_LOG_IDLE_EXIT_MS` elapses with no events (the timer resets on each
+ingested event), then exits. Outside orchestration starts the next run.
+Set `REQUEST_LOG_IDLE_EXIT_MS=0` for a long-lived dev consumer.
 
 With `REQUEST_LOG_DEBUG=1`, successful loads print token/cost summaries.
 
@@ -83,7 +89,7 @@ bun run scripts/seed-event-log/seed.ts --per-day=50
 bun run seed:event-log:json
 ```
 
-The seeder creates missing daily partitions (`event_log_YYYY_MM_DD` / `request_log_YYYY_MM_DD`) before insert.
+The seeder creates missing daily LIST parents (`event_log_YYYY_MM_DD` / `request_log_YYYY_MM_DD`) and per-org leaves (`…_YYYY_MM_DD_{normalized_organization_id}`) before insert.
 
 ---
 
@@ -99,6 +105,7 @@ The seeder creates missing daily partitions (`event_log_YYYY_MM_DD` / `request_l
 | `REQUEST_LOG_READ_COUNT` | `100` | Batch budget (claim first, then new) |
 | `REQUEST_LOG_BLOCK_MS` | `2000` | Block when waiting for new messages |
 | `REQUEST_LOG_CLAIM_MIN_IDLE_MS` | `60000` | Min idle before reclaim (`0` skips) |
+| `REQUEST_LOG_IDLE_EXIT_MS` | `30000` | Exit after this many ms with no events. Timer resets on each ingested event. `0` = never idle-exit |
 | `REQUEST_LOG_DEBUG` | — | Verbose load summaries when `1` |
 
 ---
@@ -131,7 +138,8 @@ When claim already returned entries, the new-message `XREADGROUP` is **non-block
 | `src/transform/` | Map stream fields → rows; token paths + cost |
 | `src/load/` | Insert both tables in one transaction; partitions |
 | `src/process.ts` | Per-batch orchestrator |
-| `src/index.ts` | Main loop |
+| `src/index.ts` | Startup, signals, idle-exit |
+| `src/consume-loop.ts` | Drain until idle-exit or stop |
 | `scripts/seed-event-log/` | Mock generator + seeder CLI |
 
 Token lookup paths for new providers live in `src/transform/token-paths.ts`.
@@ -150,8 +158,8 @@ Token lookup paths for new providers live in `src/transform/token-paths.ts`.
 
 | Script | Description |
 | ------ | ----------- |
-| `bun run dev` | Hot-reload consumer loop |
-| `bun run start` | Long-lived consumer |
+| `bun run dev` | Hot-reload worker |
+| `bun run start` | Drain until idle, then exit |
 | `bun run build` | Typecheck (`tsc --noEmit`) |
 | `bun test` | Unit tests |
 | `bun run seed:event-log` | Partitions + insert mock `event_log` |

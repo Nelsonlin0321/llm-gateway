@@ -17,7 +17,15 @@ import { providerReturning } from "./shared";
 
 export async function getProviders(options?: GetProvidersOptions) {
   const session = await requireSession();
-  const organizationId = await resolveActiveOrganizationId(session);
+  const parsed = validateGetProvidersOptions(options);
+
+  if (!parsed.success) {
+    return [];
+  }
+
+  const organizationId =
+    parsed.data?.organizationId ??
+    (await resolveActiveOrganizationId(session));
   const access = await requireOrganizationPermission(
     session.user.id,
     organizationId,
@@ -26,12 +34,6 @@ export async function getProviders(options?: GetProvidersOptions) {
   );
 
   if (!access.ok) {
-    return [];
-  }
-
-  const parsed = validateGetProvidersOptions(options);
-
-  if (!parsed.success) {
     return [];
   }
 

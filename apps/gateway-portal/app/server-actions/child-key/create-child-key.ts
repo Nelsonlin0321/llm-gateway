@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { requireSession } from "@/lib/auth-server";
@@ -9,24 +8,30 @@ import {
   validateCreateChildKeyInput,
 } from "@/lib/child-key/service";
 import { db, childKeys } from "@/lib/db";
+import { writeAuditLog } from "@/lib/audit";
 import { requireOrganizationPermission } from "@/lib/organization/access";
 import { resolveActiveOrganizationId } from "@/lib/organization/service";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   childKeyReturning,
   childKeySuccess,
   childKeyValidationError,
+  revalidateOrganizationChildKeyPaths,
   type ChildKeyActionResult,
 } from "./shared";
 
 export async function createChildKey(
   input: unknown,
+  organizationId?: string | null,
 ): Promise<ChildKeyActionResult> {
   const session = await requireSession();
-  const organizationId = await resolveActiveOrganizationId(session);
+  const resolvedOrganizationId =
+    organizationId?.trim() ||
+    (await resolveActiveOrganizationId(session));
   const access = await requireOrganizationPermission(
     session.user.id,
-    organizationId,
+    resolvedOrganizationId,
     "childKey",
     "create",
   );
@@ -62,7 +67,16 @@ export async function createChildKey(
       .values(data)
       .returning(childKeyReturning);
 
-    revalidatePath("/workspace/child-keys");
+    revalidateOrganizationChildKeyPaths(access.organizationId);
+    await writeAuditLog({
+      organizationId: access.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "create",
+      entity: "childKey",
+      entityId: childKey.id,
+      metadata: { name: childKey.name },
+    });
 
     return childKeySuccess(
       childKey,
@@ -70,10 +84,8 @@ export async function createChildKey(
       apiKey,
     );
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to create the child API key.";
-    return childKeyValidationError(message);
+    return childKeyValidationError(
+      publicMutationError("Unable to create the child API key.", error),
+    );
   }
 }

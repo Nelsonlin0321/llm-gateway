@@ -1,10 +1,11 @@
 import type { MiddlewareHandler } from "hono";
 import { authenticateChildApiKey } from "./service";
+import type { ChildKeyDbRecord } from "./types";
 // import type { ChildKeyDbRecord } from "./types.js";
 
-// export type ChildKeyAuthVariables = {
-//   childKeyRecord: ChildKeyDbRecord;
-// };
+export type ChildKeyAuthVariables = {
+  childKeyRecord: ChildKeyDbRecord;
+};
 
 /**
  * Require a valid **plain** child API key on proxy routes.
@@ -14,7 +15,7 @@ import { authenticateChildApiKey } from "./service";
  *
  * Sets `childKey` (verified JWT payload) and `childApiKey` (plain `sk_…`) on context.
  */
-export const requireChildKeyAuth: MiddlewareHandler = async (c, next) => {
+export const requireInjectChildKeyAuth: MiddlewareHandler = async (c, next) => {
   const result = await authenticateChildApiKey(c.req.header("Authorization"));
 
   if (!result.ok) {

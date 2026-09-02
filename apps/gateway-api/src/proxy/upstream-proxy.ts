@@ -2,9 +2,9 @@ import type { Context, MiddlewareHandler } from "hono";
 import { proxy } from "hono/proxy";
 
 import type { ChildKeyDbRecord } from "../child-keys/types.js";
+import { buildUpstreamHeaders } from "../shared/upstream.js";
 import {
   emitRequestLog,
-  getCaptureLevel,
   getOrCreateRequestId,
   instrumentUpstreamResponse,
   type EmitRequestLogInput,
@@ -12,7 +12,6 @@ import {
   type InstrumentedResponseCapture,
   type RequestLogResponseCapture,
 } from "../request-log/index.js";
-import { buildCurlCommand, isUpstreamCurlLogEnabled } from "./curl";
 
 export type UpstreamProxyContext = {
   // routing / request envelope (for request-log stream)
@@ -39,7 +38,6 @@ export type UpstreamProxyContext = {
   upstreamModel: string;
   upstreamUrl: string;
   masterApiKey: string;
-  upstreamHeaders: Headers;
   upstreamBody: string;
 
   // child key context
@@ -62,8 +60,16 @@ export type UpstreamProxyDependencies = {
   emitRequestLog?: EmitRequestLogFn;
 };
 
+function upstreamTimeoutMs(): number {
+  const parsed = Number(process.env.UPSTREAM_TIMEOUT_MS ?? 120_000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120_000;
+}
+
 const defaultForwardUpstream: ForwardUpstream = (input, init) =>
-  proxy(input, init);
+  proxy(input, {
+    ...init,
+    signal: init.signal ?? AbortSignal.timeout(upstreamTimeoutMs()),
+  });
 
 function toResponseCapture(
   requestId: string,
@@ -90,12 +96,19 @@ function toResponseCapture(
 }
 
 function scheduleEmit(
+  c: Context,
   emit: EmitRequestLogFn,
   input: EmitRequestLogInput,
 ): void {
-  void emit(input).catch((error) => {
+  const task = emit(input).catch((error) => {
     console.error("[request-log] emitRequestLog rejected", error);
   });
+
+  try {
+    c.executionCtx.waitUntil(task);
+  } catch {
+    // Bun / unit tests have no Worker executionCtx.
+  }
 }
 
 export async function handleUpstreamProxy(
@@ -129,44 +142,26 @@ export async function handleUpstreamProxy(
   c.header("x-request-id", requestId);
 
   const emit = deps.emitRequestLog ?? emitRequestLog;
-  const requestHeaders = c.req.raw.headers;
-  const captureLevel = getCaptureLevel();
-  const shouldLogUpstreamCurl = isUpstreamCurlLogEnabled();
 
   const emitWithResponse = (response: RequestLogResponseCapture) => {
-    scheduleEmit(emit, {
+    scheduleEmit(c, emit, {
       proxyContext: ctx,
-      requestHeaders,
       response,
-      captureLevel,
     });
   };
 
   try {
-    if (shouldLogUpstreamCurl) {
-      console.log(
-        buildCurlCommand({
-          url: ctx.upstreamUrl,
-          method: c.req.method,
-          headers: ctx.upstreamHeaders,
-          body: ctx.upstreamBody,
-          captureLevel,
-        }),
-      );
-    }
-
     const upstream = await (deps.forwardUpstream ?? defaultForwardUpstream)(
       ctx.upstreamUrl,
       {
         method: c.req.method,
-        headers: ctx.upstreamHeaders,
         body: ctx.upstreamBody,
+        headers: buildUpstreamHeaders(c.req.raw, ctx.masterApiKey),
       },
     );
     return await instrumentUpstreamResponse(upstream, {
       isStream: ctx.isStream,
       startedAtMs,
-      captureLevel,
       onComplete: (capture) => {
         emitWithResponse(toResponseCapture(requestId, startedAt, capture));
       },

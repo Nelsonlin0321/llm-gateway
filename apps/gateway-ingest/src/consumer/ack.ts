@@ -1,4 +1,4 @@
-import type { RedisStreamClient } from "../lib/redis-client.js";
+import type { RedisStreamClient } from "../lib/redis-client";
 
 export type AckEntriesInput = {
   client: RedisStreamClient;

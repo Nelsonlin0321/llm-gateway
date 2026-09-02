@@ -34,6 +34,7 @@ function baseFields(
     child_key_issued_at: "1700000000",
     child_key_tags_json: '{"env":"test"}',
     user_email: "dev@example.com",
+    organization_id: "org-1",
     request_headers_json: '{"content-type":"application/json"}',
     request_payload_json: '{"messages":[]}',
     metadata_json: '{"trace":"t1"}',
@@ -71,6 +72,8 @@ test("transformStreamFields maps request_log and event_log", () => {
 
   assert.equal(result.eventLog.apiFamily, "openai");
   assert.equal(result.eventLog.provider, "azure");
+  assert.equal(result.eventLog.organizationId, "org-1");
+  assert.equal(result.requestLog.organizationId, "org-1");
   assert.equal(result.eventLog.inputToken, 60); // 100 - 40
   assert.equal(result.eventLog.outputToken, 20);
   assert.equal(result.eventLog.cachedInputToken, 40);

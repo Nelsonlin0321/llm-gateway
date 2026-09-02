@@ -11,8 +11,6 @@ import type { ChildKeyJwtPayload } from "@/lib/child-key/schema";
 
 const samplePayload: ChildKeyJwtPayload = {
   key_id: "key-123",
-  name: "team-growth-prod",
-  creator_id: "creator-123",
   issued_at: 1694502400,
 };
 
@@ -24,8 +22,6 @@ test("signChildKeyToken prefixes sk_ and is verifiable", async () => {
 
   const verified = await verifyChildKeyToken(token);
   assert.equal(verified.key_id, samplePayload.key_id);
-  assert.equal(verified.name, samplePayload.name);
-  assert.equal(verified.creator_id, samplePayload.creator_id);
   assert.equal(verified.issued_at, 1694502400);
 });
 
@@ -35,8 +31,6 @@ test("decodeChildKeyToken returns payload without re-verifying", async () => {
   const token = await signChildKeyToken(samplePayload);
   const decoded = decodeChildKeyToken(token);
   assert.equal(decoded.key_id, "key-123");
-  assert.equal(decoded.name, "team-growth-prod");
-  assert.equal(decoded.creator_id, "creator-123");
   assert.equal(decoded.issued_at, 1694502400);
 });
 

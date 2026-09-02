@@ -4,7 +4,7 @@
 
 <p align="left">
   <img src="https://img.shields.io/badge/framework-Hono-orange" alt="Hono" />
-  <img src="https://img.shields.io/badge/runtime-Bun-f472b6?logo=bun" alt="Bun" />
+  <img src="https://img.shields.io/badge/runtime-Cloudflare%20Workers-f38020?logo=cloudflare" alt="Cloudflare Workers" />
   <img src="https://img.shields.io/badge/auth-child%20API%20keys-7624f4" alt="Auth" />
   <img src="https://img.shields.io/badge/streams-Redis-DC382D?logo=redis&logoColor=white" alt="Redis" />
 </p>
@@ -37,7 +37,7 @@ Client
   │  model: "deepseek/chat"
   ▼
 ┌──────────────────────────────────────┐
-│  gateway-api (Hono · Bun · :8080)    │
+│  gateway-api (Hono · Workers · :8080)│
 │  1. request id                       │
 │  2. child-key auth (+ Redis cache)   │
 │  3. resolve provider + model (PG)    │
@@ -59,24 +59,24 @@ Providers and models are managed in **gateway-portal**. This service only **read
 
 ## Quick start
 
-Requires [Bun](https://bun.sh) ≥ 1.1, Postgres, and (recommended) Redis.
+Requires [Bun](https://bun.sh) ≥ 1.1, Postgres, and (recommended) [Upstash Redis](https://upstash.com) (HTTP REST — required on Cloudflare Workers).
 
 ```bash
 cd apps/gateway-api
 bun install
 
-# .env — share secrets with gateway-portal:
+# .env — share secrets with gateway-portal. wrangler dev loads this file:
 #   DATABASE_URL=
 #   JWT_SIGNING_SECRET=
 #   API_ENCRYPT_KEY=
-#   REDIS_URL=              # optional locally; required for logs + cache in prod
-#   PORT=8080
-#   REQUEST_LOG_CAPTURE_LEVEL=metadata
+#   REDIS_URL=              # Upstash rediss:// URL; REST is derived from it
 
-bun run dev
+bun run dev                 # wrangler dev on http://localhost:8080
 ```
 
 Open [http://localhost:8080](http://localhost:8080) · health at `/health`.
+
+Non-secret settings live in `wrangler.jsonc` `vars`. Secret **names** are listed in `wrangler.jsonc` `secrets.required`; values stay in `.env` locally and in Cloudflare secrets when deployed.
 
 ### Call examples
 
@@ -128,17 +128,48 @@ Optional client `metadata` is stripped before the upstream call and stored on th
 
 ## Environment
 
-| Variable | Default | Purpose |
-| -------- | ------- | ------- |
-| `DATABASE_URL` | — | Postgres (same as portal) |
-| `JWT_SIGNING_SECRET` | — | Verify child key JWTs (must match portal) |
-| `API_ENCRYPT_KEY` | — | Decrypt provider master keys (must match portal) |
-| `REDIS_URL` | — | Auth/model cache + request-log stream |
-| `PORT` | `8080` | HTTP listen port |
-| `REQUEST_LOG_CAPTURE_LEVEL` | `metadata` | `metadata` \| `redacted` \| `full` |
-| `REQUEST_LOG_STREAM_MAXLEN` | `10000` | Approximate max stream length (`XADD MAXLEN ~`) |
+Bindings are available as `c.env.<NAME>` (and `process.env` after request hydration).
 
-> Never commit `.env` files or master keys.
+### Secrets (`wrangler.jsonc` → `secrets.required`)
+
+Set locally in `.env`. Set in production with `wrangler secret put <NAME>` — **do not** put values in `wrangler.jsonc`.
+
+| Binding | Purpose |
+| ------- | ------- |
+| `DATABASE_URL` | Postgres (same as portal) |
+| `JWT_SIGNING_SECRET` | Verify child key JWTs (must match portal, ≥ 32 chars) |
+| `API_ENCRYPT_KEY` | Decrypt provider master keys (must match portal, ≥ 16 chars) |
+| `REDIS_URL` | Upstash Redis TCP URL; Worker derives REST URL + token |
+
+Optional instead of (or in addition to) `REDIS_URL`:
+
+| Binding | Purpose |
+| ------- | ------- |
+| `UPSTASH_REDIS_REST_URL` | Upstash REST URL |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash REST token |
+
+### Vars (`wrangler.jsonc` → `vars`)
+
+| Binding | Default | Purpose |
+| ------- | ------- | ------- |
+| `REQUEST_BODY_LIMIT_BYTES` | `1048576` | Max proxy request body |
+| `UPSTREAM_TIMEOUT_MS` | `120000` | Upstream fetch timeout |
+| `CHILD_KEY_RATE_LIMIT_RPM` | `600` | Default child-key requests per minute (`0` disables) |
+| `REQUEST_LOG_STREAM_MAXLEN` | `10000` | Approximate max stream length (`XADD MAXLEN ~`) |
+| `GATEWAY_CORS_ORIGINS` | *(empty)* | Comma-separated CORS allowlist; empty disables CORS |
+
+### Deploy secrets
+
+```bash
+cd apps/gateway-api
+bunx wrangler secret put DATABASE_URL
+bunx wrangler secret put JWT_SIGNING_SECRET
+bunx wrangler secret put API_ENCRYPT_KEY
+bunx wrangler secret put REDIS_URL
+bun run deploy
+```
+
+> Never commit `.env` / `.dev.vars` files or master keys.
 
 ---
 
@@ -199,8 +230,10 @@ Downstream consumer: [`gateway-ingest`](../gateway-ingest).
 
 ```
 apps/gateway-api/
+├── wrangler.jsonc            # Worker name, vars, required secrets
 ├── src/
-│   ├── index.ts              # App entry, routes
+│   ├── index.ts              # App entry, routes (Worker fetch export)
+│   ├── env.ts                # Binding types + process.env hydration
 │   ├── child-keys/           # Auth middleware + JWT verify
 │   ├── proxy/                # OpenAI / Anthropic / upstream handlers
 │   ├── payload/              # Body rewrite helpers
@@ -218,8 +251,9 @@ apps/gateway-api/
 
 | Command | Description |
 | ------- | ----------- |
-| `bun run dev` | Hot-reload proxy |
-| `bun run start` | Production-style start |
+| `bun run dev` | `wrangler dev` (workerd, loads `.env`) |
+| `bun run dev:bun` | Bun hot-reload (still uses `.env` via Bun) |
+| `bun run deploy` | Deploy to Cloudflare Workers |
 | `bun run build` | Typecheck |
 | `bun test` | Unit tests (excludes `*.live.test.ts`) |
 | `bun run test:openai-chat` | Live OpenAI path smoke tests |
@@ -244,7 +278,7 @@ bun run scripts/bulk-proxy-test.ts
 
 - Master keys decrypted only in-process for the upstream hop.  
 - Child keys are JWTs (`sk_` prefix); rotate via portal.  
-- Use `REQUEST_LOG_CAPTURE_LEVEL=metadata` in production.  
+- Keep `REQUEST_LOG_STREAM_MAXLEN` modest in production (`vars` in `wrangler.jsonc`).  
 - Share `JWT_SIGNING_SECRET` and `API_ENCRYPT_KEY` only with portal (and secrets manager).
 
 ---

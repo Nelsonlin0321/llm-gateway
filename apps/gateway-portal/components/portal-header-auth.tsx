@@ -103,9 +103,6 @@ export function PortalHeaderAuth() {
           <p className="max-w-40 truncate text-[13px] font-medium text-text-primary">
             {user.name || "Account"}
           </p>
-          <p className="max-w-40 truncate text-[11px] text-text-tertiary">
-            {user.email}
-          </p>
         </div>
 
         <DropdownMenu>

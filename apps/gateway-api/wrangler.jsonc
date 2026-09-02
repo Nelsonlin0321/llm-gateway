@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "gateway-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  "dev": {
+    "port": 8080,
+    "local_protocol": "http",
+  },
+  // Non-secret config. These become Worker bindings (`c.env` / `process.env`).
+  // Override locally by putting the same key in `.env` only when
+  // `secrets.required` is not filtering that key; prefer changing `vars` here.
+  "vars": {
+    "REQUEST_BODY_LIMIT_BYTES": "1048576",
+    "UPSTREAM_TIMEOUT_MS": "120000",
+    "CHILD_KEY_RATE_LIMIT_RPM": "600",
+    "REQUEST_LOG_STREAM_MAXLEN": "10000",
+    "GATEWAY_CORS_ORIGINS": "",
+  },
+  // Secret *names* only — values are never stored in this file.
+  // Local: `wrangler dev` loads these keys from `.env` in this directory.
+  // Production: `bun run secret:put` / `wrangler secret put <NAME>`.
+  "secrets": {
+    "required": [
+      "DATABASE_URL",
+      "JWT_SIGNING_SECRET",
+      "API_ENCRYPT_KEY",
+      "REDIS_URL",
+    ],
+  },
+}

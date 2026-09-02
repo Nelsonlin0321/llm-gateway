@@ -65,6 +65,7 @@ export const providerListQuerySchema = z.object({
 export const getProvidersOptionsSchema = providerListQuerySchema
   .extend({
     includeInactive: z.coerce.boolean().optional(),
+    organizationId: z.string().trim().min(1).optional(),
   })
   .optional();
 
@@ -78,6 +79,7 @@ export type ProviderListQuery = {
 export type GetProvidersOptions =
   | (ProviderListQuery & {
       includeInactive?: boolean;
+      organizationId?: string;
     })
   | undefined;
 

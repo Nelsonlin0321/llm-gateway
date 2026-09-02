@@ -194,18 +194,23 @@ function buildBars(series: AnalyticsSeriesResult): OverviewBarSegment[][] {
   });
 }
 
-function analyticsHref(metric: AnalyticsMetric, dimension: string): string {
+function analyticsHref(
+  organizationId: string,
+  metric: AnalyticsMetric,
+  dimension: string,
+): string {
   const params = new URLSearchParams({
     metric,
     dimension,
     range: "7d",
   });
-  return `/workspace/analytics?${params.toString()}`;
+  return `/org/${organizationId}/analytics?${params.toString()}`;
 }
 
 function toUsagePanel(
   spec: PanelSpec,
   series: AnalyticsSeriesResult,
+  organizationId: string,
 ): OverviewUsagePanel {
   const total = metricTotal(series, spec.metric);
   const rangeLabel =
@@ -226,7 +231,7 @@ function toUsagePanel(
     legend: series.empty ? [] : buildLegend(series, spec.metric),
     bars: series.empty ? [] : buildBars(series),
     empty: series.empty,
-    analyticsHref: analyticsHref(spec.metric, spec.dimension),
+    analyticsHref: analyticsHref(organizationId, spec.metric, spec.dimension),
   };
 }
 
@@ -234,7 +239,7 @@ function toUsagePanel(
  * Load workspace overview KPIs + usage snapshot panels from real tables.
  */
 export async function fetchWorkspaceOverview(
-  userId: string,
+  organizationId: string,
 ): Promise<WorkspaceOverview> {
   const [
     activeProviderRows,
@@ -249,33 +254,44 @@ export async function fetchWorkspaceOverview(
       .select({ value: count() })
       .from(llmProviders)
       .where(
-        and(eq(llmProviders.creatorId, userId), eq(llmProviders.isActive, true)),
+        and(
+          eq(llmProviders.organizationId, organizationId),
+          eq(llmProviders.isActive, true),
+        ),
       ),
     db
       .select({ value: count() })
       .from(llmProviders)
-      .where(eq(llmProviders.creatorId, userId)),
+      .where(eq(llmProviders.organizationId, organizationId)),
     db
       .select({ value: count() })
       .from(childKeys)
-      .where(and(eq(childKeys.creatorId, userId), eq(childKeys.isActive, true))),
+      .where(
+        and(
+          eq(childKeys.organizationId, organizationId),
+          eq(childKeys.isActive, true),
+        ),
+      ),
     db
       .select({ value: count() })
       .from(childKeys)
-      .where(eq(childKeys.creatorId, userId)),
+      .where(eq(childKeys.organizationId, organizationId)),
     fetchAnalyticsSeries({
+      organizationId,
       metric: "cost",
       dimension: "provider",
       datePreset: "7d",
       filters: {},
     }),
     fetchAnalyticsSeries({
+      organizationId,
       metric: "requestCount",
       dimension: "env",
       datePreset: "7d",
       filters: {},
     }),
     fetchAnalyticsSeries({
+      organizationId,
       metric: "totalToken",
       dimension: "requestedModel",
       datePreset: "7d",
@@ -284,9 +300,9 @@ export async function fetchWorkspaceOverview(
   ]);
 
   const panels = [
-    toUsagePanel(PANEL_SPECS[0]!, costSeries),
-    toUsagePanel(PANEL_SPECS[1]!, requestSeries),
-    toUsagePanel(PANEL_SPECS[2]!, tokenSeries),
+    toUsagePanel(PANEL_SPECS[0]!, costSeries, organizationId),
+    toUsagePanel(PANEL_SPECS[1]!, requestSeries, organizationId),
+    toUsagePanel(PANEL_SPECS[2]!, tokenSeries, organizationId),
   ];
 
   const rangeLabel = panels[0]?.rangeLabel ?? "Last 7 days";

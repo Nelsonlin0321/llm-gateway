@@ -15,7 +15,17 @@ export const metadata: Metadata = privatePageMetadata(
   "Explore requests, tokens, and cost as stacked series by day. Choose a metric, stack by dimension, and filter on metadata attributes.",
 );
 
-export default function AnalyticsPage() {
+type OrganizationAnalyticsPageProps = {
+  params: Promise<{
+    organizationId: string;
+  }>;
+};
+
+export default async function AnalyticsPage({
+  params,
+}: OrganizationAnalyticsPageProps) {
+  const { organizationId } = await params;
+
   return (
     <section className="flex flex-col gap-6">
       <PageHeader
@@ -34,7 +44,7 @@ export default function AnalyticsPage() {
       />
 
       <Suspense fallback={<AnalyticsSkeleton />}>
-        <AnalyticsSection />
+        <AnalyticsSection organizationId={organizationId} />
       </Suspense>
     </section>
   );

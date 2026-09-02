@@ -8,6 +8,7 @@ import {
   eachLogDate,
   generateMockEventLogRow,
   generateMockEventLogRows,
+  MOCK_ORGANIZATION_IDS,
   resolvePerDayCount,
 } from "../scripts/seed-event-log/generate.js";
 
@@ -37,6 +38,9 @@ test("generateMockEventLogRow fills required fields", () => {
   assert.equal(row.childKeyCreatorId, null);
   assert.ok(row.eventId.length > 0);
   assert.ok(row.requestId.length > 0);
+  assert.ok(
+    (MOCK_ORGANIZATION_IDS as readonly string[]).includes(row.organizationId),
+  );
   assert.ok(["openai", "anthropic"].includes(row.apiFamily));
   assert.ok(row.inputToken >= 10 && row.inputToken <= 100_000);
   assert.ok(row.outputToken >= 10 && row.outputToken <= 100_000);

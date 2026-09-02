@@ -48,6 +48,7 @@ function goodFields(): Record<string, string> {
     child_key_issued_at: "1",
     child_key_tags_json: "{}",
     user_email: "a@b.c",
+    organization_id: "org-1",
     request_headers_json: "{}",
     metadata_json: "{}",
     capture_level: "metadata",
@@ -81,18 +82,19 @@ function fakeDb(options: {
             // drizzle table objects expose columns; fall back to call order
             false;
           return {
-            values: async (row: unknown) => {
-              // Prefer column shape on the row itself.
-              const rowObj = row as Record<string, unknown>;
-              const kind: "request" | "event" =
-                "responseText" in rowObj || "requestHeadersJson" in rowObj
-                  ? "request"
-                  : "event";
-              void isRequest;
-              void insertIndex;
-              insertIndex += 1;
-              calls.push({ table: kind, row });
-            },
+            values: (row: unknown) => ({
+              onConflictDoNothing: async () => {
+                const rowObj = row as Record<string, unknown>;
+                const kind: "request" | "event" =
+                  "responseText" in rowObj || "requestHeadersJson" in rowObj
+                    ? "request"
+                    : "event";
+                void isRequest;
+                void insertIndex;
+                insertIndex += 1;
+                calls.push({ table: kind, row });
+              },
+            }),
           };
         },
       };
@@ -113,13 +115,15 @@ test("processExtractedEntries ACKs missing payload without DB write", async () =
   assert.equal(calls.length, 0);
 });
 
-test("processExtractedEntries does not ACK on transform failure", async () => {
+test("processExtractedEntries dead-letters unrecoverable transform failures", async () => {
   const db = fakeDb({});
   const result = await processExtractedEntries(db, [
     makeEntry({ id: "bad-1", fields: { event_id: "only" } }),
   ]);
   assert.deepEqual(result.idsToAck, []);
-  assert.equal(result.failed, 1);
+  assert.equal(result.failed, 0);
+  assert.equal(result.deadLetters.length, 1);
+  assert.equal(result.deadLetters[0]?.id, "bad-1");
   assert.equal(result.loaded, 0);
 });
 

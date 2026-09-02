@@ -37,7 +37,7 @@ export function ensureStreamUsageOptions(
  * - keep the original `model` value until the proxy resolves the upstream name
  * - force stream usage options for streamed chat completions requests
  */
-export function prepareOpenaiPayload(
+export function parseOpenaiPayload(
   body: unknown,
   requestPath: string,
 ): PrepareResult {

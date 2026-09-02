@@ -19,6 +19,7 @@ export interface RedisStreamClient {
     group: string,
     ...ids: string[]
   ): Promise<number>;
+  xadd(key: string, ...args: (string | Buffer | number)[]): Promise<string>;
   quit(): Promise<"OK">;
   disconnect(): void;
 }

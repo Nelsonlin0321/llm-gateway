@@ -1,16 +1,20 @@
 import type { Context, MiddlewareHandler } from "hono";
-import { prepareOpenaiPayload } from "../payload/payload-openai";
-import { resolveProviderModel } from "../providers/resolve.js";
-import {
-  buildUpstreamBody,
-  buildUpstreamHeaders,
-  buildUpstreamUrl,
-} from "../shared/upstream.js";
+import { parseOpenaiPayload } from "../payload/payload-openai";
+import { resolveProviderModel } from "../providers/resolve";
+import { buildUpstreamBody, buildUpstreamUrl } from "../shared/upstream.js";
 import { isRecord } from "../utils.js";
-import type { UpstreamProxyContext } from "./upstream-proxy.js";
+import type { UpstreamProxyContext } from "./upstream-proxy";
 import type { proxyDependencies } from "./dependencies";
 
-async function handleOpenaiProxy(
+function getResolveProviderModel(deps: proxyDependencies) {
+  return (
+    deps.resolveProviderModel ??
+    ((providerName: string, modelAlias: string, organizationId: string) =>
+      resolveProviderModel(providerName, modelAlias, "openai", organizationId))
+  );
+}
+
+async function injectContext(
   c: Context<any, string, {}>,
   deps: proxyDependencies,
 ): Promise<Response | void> {
@@ -31,16 +35,17 @@ async function handleOpenaiProxy(
 
   const childKeyRecord = c.get("childKeyRecord");
   const requestPath = new URL(c.req.url).pathname;
-  const prepared = prepareOpenaiPayload(body, requestPath);
+  const prepared = parseOpenaiPayload(body, requestPath);
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
   const { parsed, downstreamBody, metadata } = prepared.value;
-  const resolved = await (
-    deps.resolveProviderModel ??
-    ((providerName: string, modelAlias: string, creatorId: string) =>
-      resolveProviderModel(providerName, modelAlias, "openai", creatorId))
-  )(parsed.providerName, parsed.model, childKeyRecord.creatorId);
+  const resolveModel = getResolveProviderModel(deps);
+  const resolved = await resolveModel(
+    parsed.providerName,
+    parsed.model,
+    childKeyRecord.organizationId,
+  );
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
@@ -72,7 +77,6 @@ async function handleOpenaiProxy(
     upstreamModel: resolved.value.model,
     upstreamUrl: upstreamUrl,
     masterApiKey: resolved.value.apiKey,
-    upstreamHeaders: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
     upstreamBody: upstreamBody,
 
     // child key context
@@ -82,12 +86,12 @@ async function handleOpenaiProxy(
   c.set("proxyContext", proxyContext);
 }
 
-export function createOpenaiProxyHandler(
+export function injectOpenAIProxyContext(
   deps: proxyDependencies = {},
 ): MiddlewareHandler {
   return async (c, next) => {
     const started = performance.now();
-    const failureResponse = await handleOpenaiProxy(c, deps);
+    const failureResponse = await injectContext(c, deps);
     const elapsedMs = performance.now() - started;
     console.log(`Parse OpenAI request took ${elapsedMs.toFixed(2)} ms`);
     if (failureResponse) {

@@ -8,6 +8,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -107,6 +108,10 @@ export const member = pgTable(
     createdAt: timestamp("created_at").notNull(),
   },
   (table) => [
+    uniqueIndex("member_organizationId_userId_key").on(
+      table.organizationId,
+      table.userId,
+    ),
     index("member_organizationId_idx").on(table.organizationId),
     index("member_userId_idx").on(table.userId),
   ],
@@ -131,6 +136,27 @@ export const invitation = pgTable(
   (table) => [
     index("invitation_organizationId_idx").on(table.organizationId),
     index("invitation_email_idx").on(table.email),
+  ],
+);
+
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: text().primaryKey(),
+    organizationId: text()
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    actorUserId: text().references(() => user.id, { onDelete: "set null" }),
+    actorEmail: text().notNull(),
+    action: text().notNull(),
+    entity: text().notNull(),
+    entityId: text(),
+    metadata: jsonb().$type<Record<string, unknown>>(),
+    createdAt: timestamp().defaultNow().notNull(),
+  },
+  (table) => [
+    index("audit_log_organization_id_idx").on(table.organizationId),
+    index("audit_log_created_at_idx").on(table.createdAt),
   ],
 );
 
@@ -189,6 +215,10 @@ export const models = pgTable(
     ...timestamps,
   },
   (table) => [
+    uniqueIndex("model_organization_id_alias_key").on(
+      table.organizationId,
+      table.alias,
+    ),
     index("model_provider_id_idx").on(table.providerId),
     index("model_name_fts_idx").using(
       "gin",
@@ -214,11 +244,16 @@ export const childKeys = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     expiresAt: timestamp({ mode: "date" }),
     issuedAt: integer().notNull(),
+    /** Requests per minute. Null uses the gateway default. 0 disables the cap. */
+    rateLimitRpm: integer(),
+    /** Optional monthly spend cap in USD. Null means unlimited. */
+    monthlyBudgetUsd: doublePrecision(),
     ...timestamps,
   },
   (table) => [
     // Existing DB index uses GIN + jsonb_path_ops; declared for schema parity.
     index("child_key_tags_idx").using("gin", table.tags),
+    index("child_key_organization_id_idx").on(table.organizationId),
   ],
 );
 
@@ -228,15 +263,17 @@ export const childKeys = pgTable(
  *
  * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
  *   PARTITION BY RANGE (log_date)
+ *   Daily children PARTITION BY LIST (organization_id)
+ *   Leaf: {table}_{YYYY_MM_DD}_{normalized_organization_id}
  */
 export const requestLog = pgTable(
   "request_log",
   {
     eventId: text().notNull(),
     requestId: text().notNull(),
-    requestHeadersJson: text(),
+    // requestHeadersJson: text(),
     requestPayloadJson: text(),
-    responseHeadersJson: text(),
+    // responseHeadersJson: text(),
     responseText: text(),
     statusCode: integer(),
     isStream: boolean().notNull().default(false),
@@ -250,7 +287,9 @@ export const requestLog = pgTable(
   },
   (table) => [
     index("request_log_date_idx").on(table.logDate),
-    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    primaryKey({
+      columns: [table.organizationId, table.eventId, table.logDate],
+    }),
   ],
 );
 
@@ -308,7 +347,9 @@ export const eventLog = pgTable(
     ...timestamps,
   },
   (table) => [
-    // primaryKey({ columns: [table.eventId, table.logDate] }),
+    primaryKey({
+      columns: [table.organizationId, table.logDate, table.eventId],
+    }),
     index("event_log_date_idx").on(table.logDate),
     index("tags_path_gin_idx").using(
       "gin",
@@ -422,6 +463,8 @@ export type EventLog = typeof eventLog.$inferSelect;
 export type Organization = typeof organization.$inferSelect;
 export type Member = typeof member.$inferSelect;
 export type Invitation = typeof invitation.$inferSelect;
+export type AuditLog = typeof auditLog.$inferSelect;
+export type NewAuditLog = typeof auditLog.$inferInsert;
 export type NewLLMProvider = typeof llmProviders.$inferInsert;
 export type NewModel = typeof models.$inferInsert;
 export type NewChildKey = typeof childKeys.$inferInsert;

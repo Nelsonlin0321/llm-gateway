@@ -10,10 +10,13 @@ import {
   toModelListItem,
   validateUpdateModelInput,
 } from "@/lib/model/service";
+import { writeAuditLog } from "@/lib/audit";
 import {
   mutationDeniedMessage,
   requireOrganizationPermission,
 } from "@/lib/organization/access";
+import { invalidate_llm_provider_and_model_cache } from "@/lib/redis/invalidate";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   modelReturning,
@@ -38,6 +41,7 @@ export async function updateModel(input: unknown): Promise<ModelActionResult> {
       id: models.id,
       organizationId: models.organizationId,
       providerName: llmProviders.name,
+      compatibilityType: llmProviders.compatibilityType,
     })
     .from(models)
     .innerJoin(llmProviders, eq(models.providerId, llmProviders.id))
@@ -67,6 +71,20 @@ export async function updateModel(input: unknown): Promise<ModelActionResult> {
       .returning(modelReturning);
 
     revalidateOrganizationModelPaths(existing.organizationId);
+    await invalidate_llm_provider_and_model_cache(
+      existing.organizationId,
+      existing.providerName,
+      existing.compatibilityType,
+    );
+    await writeAuditLog({
+      organizationId: existing.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "update",
+      entity: "model",
+      entityId: model.id,
+      metadata: { alias: model.alias },
+    });
 
     return {
       ok: true,
@@ -74,8 +92,8 @@ export async function updateModel(input: unknown): Promise<ModelActionResult> {
       message: "Model updated successfully.",
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to update the model.";
-    return modelValidationError(message);
+    return modelValidationError(
+      publicMutationError("Unable to update the model.", error),
+    );
   }
 }

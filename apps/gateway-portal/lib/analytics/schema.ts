@@ -44,6 +44,7 @@ const filterValueSchema = z
 
 export const analyticsQuerySchema = z
   .object({
+    organizationId: z.string().trim().min(1, "Organization is required."),
     metric: z.enum(ANALYTICS_METRICS).default("requestCount"),
     dimension: dimensionSchema.default("provider"),
     datePreset: z.enum(DATE_PRESETS).default("7d"),

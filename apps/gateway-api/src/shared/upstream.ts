@@ -52,6 +52,9 @@ export function buildUpstreamHeaders(req: Request, apiKey: string): Headers {
     headers.set(key, value);
   }
   headers.set("authorization", `Bearer ${apiKey}`);
+  headers.set("Authorization", `Bearer ${apiKey}`);
+  headers.set("HTTP-Referer", "https://llm-gateway.io");
+  headers.set("X-OpenRouter-Title", "llm-gateway.io");
   headers.set("x-api-key", apiKey); // Follow the Anthropic API spec.
   headers.set("content-type", "application/json");
   return headers;

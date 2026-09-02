@@ -4,18 +4,13 @@ import test from "node:test";
 import type { RedisCacheClient } from "../src/lib/redis-client.js";
 import { REQUEST_LOG_STREAM } from "../src/lib/redis-keys.js";
 import {
-  applyPayloadCapture,
-  buildRequestLogFields,
   emitRequestLog,
   instrumentUpstreamResponse,
-  parseCaptureLevel,
   parseErrorFieldsFromJsonText,
   parseResponseIdFromJsonText,
   parseResponseIdFromSseText,
-  requestLogFieldsToXaddArgs,
   resolveResponseMode,
   sanitizeHeaders,
-  type CaptureLevel,
   type RequestLogResponseCapture,
 } from "../src/request-log/index.js";
 import type { UpstreamProxyContext } from "../src/proxy/upstream-proxy.js";
@@ -29,6 +24,9 @@ function buildChildKeyRecord(
     name: "prod-bot",
     key: "encrypted-must-not-log",
     creatorId: "creator-1",
+    organizationId: "org-1",
+    rateLimitRpm: null,
+    monthlyBudgetUsd: null,
     userEmail: "user@example.com",
     isActive: true,
     tags: { env: "prod", team: "platform" },
@@ -64,10 +62,6 @@ function buildProxyContext(
     upstreamModel: "gpt-5.4-mini-upstream",
     upstreamUrl: "https://api.openai.com/v1/chat/completions",
     masterApiKey: "sk-provider-secret",
-    upstreamHeaders: new Headers({
-      authorization: "Bearer sk-provider-secret",
-      "content-type": "application/json",
-    }),
     upstreamBody: JSON.stringify({
       model: "gpt-5.4-mini-upstream",
       messages: [{ role: "user", content: "hi" }],
@@ -124,6 +118,18 @@ class FakeStreamRedis implements RedisCacheClient {
     return 0;
   }
 
+  async incr(): Promise<number> {
+    return 1;
+  }
+
+  async expire(): Promise<number> {
+    return 1;
+  }
+
+  async ping(): Promise<string> {
+    return "PONG";
+  }
+
   async xadd(
     key: string,
     ...args: (string | Buffer | number)[]
@@ -153,15 +159,6 @@ function fieldsFromXaddArgs(
   return out;
 }
 
-test("parseCaptureLevel defaults to full", () => {
-  assert.equal(parseCaptureLevel(undefined), "full");
-  assert.equal(parseCaptureLevel(""), "full");
-  assert.equal(parseCaptureLevel("nope"), "full");
-  assert.equal(parseCaptureLevel("FULL"), "full");
-  assert.equal(parseCaptureLevel("metadata"), "metadata");
-  assert.equal(parseCaptureLevel("redacted"), "redacted");
-});
-
 test("sanitizeHeaders strips authorization and api-key headers", () => {
   const sanitized = sanitizeHeaders(
     new Headers({
@@ -176,15 +173,6 @@ test("sanitizeHeaders strips authorization and api-key headers", () => {
     "content-type": "application/json",
     "x-request-id": "req-1",
   });
-});
-
-test("applyPayloadCapture omits bodies at metadata level", () => {
-  assert.equal(applyPayloadCapture('{"a":1}', "metadata"), undefined);
-  assert.equal(applyPayloadCapture('{"a":1}', "full"), '{"a":1}');
-  assert.equal(
-    applyPayloadCapture("x".repeat(10), "redacted", 5),
-    "xxxxx…[truncated]",
-  );
 });
 
 test("resolveResponseMode and response parsers", () => {
@@ -229,7 +217,6 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
       "content-type": "application/json",
     }),
     response: baseResponse(),
-    captureLevel: "full",
     client: redis,
   });
 
@@ -251,6 +238,7 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
     extractFieldValuesFromXaddArgs(redis.xaddCalls[0]!.args),
   );
   assert.equal(flat.request_id, "req-1");
+  assert.equal(flat.organization_id, "org-1");
   assert.equal(flat.status_code, "200");
   assert.equal(flat.duration_ms, "150");
   assert.equal(flat.response_id, "chatcmpl-1");
@@ -274,7 +262,6 @@ test("emitRequestLog caps stream length when streamMaxLen is set", async () => {
     proxyContext: buildProxyContext(),
     requestHeaders: {},
     response: baseResponse(),
-    captureLevel: "metadata",
     streamMaxLen: 100,
     client: redis,
   });
@@ -296,7 +283,6 @@ test("emitRequestLog disables stream length cap when streamMaxLen is 0", async (
     proxyContext: buildProxyContext(),
     requestHeaders: {},
     response: baseResponse(),
-    captureLevel: "metadata",
     streamMaxLen: 0,
     client: redis,
   });
@@ -352,7 +338,6 @@ test("instrumentUpstreamResponse captures JSON response attributes", async () =>
     {
       isStream: false,
       startedAtMs,
-      captureLevel: "full",
       onComplete: (c) => {
         capture = c;
       },
@@ -401,7 +386,6 @@ test("instrumentUpstreamResponse captures SSE transcript and first_token_ms", as
     {
       isStream: true,
       startedAtMs,
-      captureLevel: "full",
       onComplete: (c) => {
         capture = c;
         resolveCapture();
@@ -441,7 +425,6 @@ test("instrumentUpstreamResponse captures JSON error type/message", async () => 
     {
       isStream: false,
       startedAtMs: Date.now(),
-      captureLevel: "metadata",
       onComplete: (c) => {
         capture = c;
       },

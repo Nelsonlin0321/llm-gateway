@@ -1,11 +1,7 @@
 import type { MiddlewareHandler } from "hono";
-import { prepareAnthropicPayload } from "../payload/payload-anthropic";
+import { parseAnthropicPayload } from "../payload/payload-anthropic";
 import { resolveProviderModel } from "../providers/resolve.js";
-import {
-  buildUpstreamBody,
-  buildUpstreamHeaders,
-  buildUpstreamUrl,
-} from "../shared/upstream";
+import { buildUpstreamBody, buildUpstreamUrl } from "../shared/upstream";
 import type { ChildKeyAuthVariables } from "../child-keys/index";
 import { isRecord } from "../utils.js";
 import type {
@@ -14,7 +10,20 @@ import type {
 } from "./upstream-proxy.js";
 import type { proxyDependencies } from "./dependencies";
 
-async function handleAnthropicProxy(
+function getResolveProviderModel(deps: proxyDependencies) {
+  return (
+    deps.resolveProviderModel ??
+    ((providerName: string, modelAlias: string, organizationId: string) =>
+      resolveProviderModel(
+        providerName,
+        modelAlias,
+        "anthropic",
+        organizationId,
+      ))
+  );
+}
+
+async function injectContext(
   c: Parameters<
     MiddlewareHandler<{
       Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
@@ -39,16 +48,17 @@ async function handleAnthropicProxy(
 
   const childKeyRecord = c.get("childKeyRecord");
   const requestPath = new URL(c.req.url).pathname;
-  const prepared = prepareAnthropicPayload(body);
+  const prepared = parseAnthropicPayload(body);
   if (!prepared.ok) {
     return c.json({ error: prepared.error.error }, prepared.error.status);
   }
   const { parsed, downstreamBody, metadata } = prepared.value;
-  const resolved = await (
-    deps.resolveProviderModel ??
-    ((providerName: string, modelAlias: string, creatorId: string) =>
-      resolveProviderModel(providerName, modelAlias, "anthropic", creatorId))
-  )(parsed.providerName, parsed.model, childKeyRecord.creatorId);
+  const resolveModel = getResolveProviderModel(deps);
+  const resolved = await resolveModel(
+    parsed.providerName,
+    parsed.model,
+    childKeyRecord.organizationId,
+  );
   if (!resolved.ok) {
     return c.json({ error: resolved.error }, resolved.status);
   }
@@ -81,7 +91,6 @@ async function handleAnthropicProxy(
     upstreamModel: resolved.value.model,
     upstreamUrl: upstreamUrl,
     masterApiKey: resolved.value.apiKey,
-    upstreamHeaders: buildUpstreamHeaders(c.req.raw, resolved.value.apiKey),
     upstreamBody: upstreamBody,
 
     // child key context
@@ -91,14 +100,14 @@ async function handleAnthropicProxy(
   c.set("proxyContext", proxyContext);
 }
 
-export function createAnthropicProxyHandler(
+export function injectAnthropicProxyContext(
   deps: proxyDependencies = {},
 ): MiddlewareHandler<{
   Variables: ChildKeyAuthVariables & UpstreamProxyVariables;
 }> {
   return async (c, next) => {
     const started = performance.now();
-    const failureResponse = await handleAnthropicProxy(c, deps);
+    const failureResponse = await injectContext(c, deps);
     const elapsedMs = performance.now() - started;
     console.log(`Parse Anthropic request took ${elapsedMs.toFixed(2)} ms`);
     if (failureResponse) {

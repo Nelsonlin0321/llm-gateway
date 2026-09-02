@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import {
+  builtInProviderIconUsesLightFill,
   getBuiltInProviderIconUrl,
 } from "@/lib/llm-provider/icons";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ export function BuiltInProviderIcon({
   const colorSrc = getBuiltInProviderIconUrl(name, "color");
   const monoSrc = getBuiltInProviderIconUrl(name, "mono");
   const [src, setSrc] = useState(colorSrc ?? monoSrc);
+  const invertToWhite = builtInProviderIconUsesLightFill(name);
 
   if (!src) {
     return (
@@ -42,7 +44,11 @@ export function BuiltInProviderIcon({
       alt=""
       width={18}
       height={18}
-      className={cn("size-4.5 shrink-0 object-contain", className)}
+      className={cn(
+        "size-4.5 shrink-0 object-contain",
+        invertToWhite && "invert",
+        className,
+      )}
       onError={() => {
         if (monoSrc && src !== monoSrc) {
           setSrc(monoSrc);

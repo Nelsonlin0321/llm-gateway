@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1787060900375,
-      "tag": "0000_sweet_archangel",
+      "when": 1788061482054,
+      "tag": "0000_late_ulik",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1787065000000,
-      "tag": "0001_provider_name_fts",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1787067000000,
-      "tag": "0002_model_name_fts",
+      "when": 1788069600000,
+      "tag": "0001_enterprise_hardening",
       "breakpoints": true
     }
   ]

@@ -23,68 +23,75 @@ import {
 } from "@/components/ui/card";
 import { formatMetricValue } from "@/lib/analytics/format";
 
-const workspaceCards = [
-  {
-    title: "Providers",
-    description: "Upstream credentials, endpoints, and compatibility modes.",
-    href: "/workspace/providers",
-    icon: PlugZap,
-    badge: "Live",
-    badgeVariant: "success" as const,
-  },
-  {
-    title: "Child Keys",
-    description: "Issue and rotate scoped keys for teams and applications.",
-    href: "/workspace/child-keys",
-    icon: KeyRound,
-    badge: "Live",
-    badgeVariant: "success" as const,
-  },
-  {
-    title: "Organization",
-    description:
-      "Create orgs, invite members, and assign root, admin, or viewer.",
-    href: "/workspace/organization",
-    icon: Building2,
-    badge: "Live",
-    badgeVariant: "success" as const,
-  },
-  {
-    title: "Guardrails",
-    description: "Model allow-lists, rate limits, and privacy controls.",
-    href: "#guardrails",
-    icon: ShieldCheck,
-    badge: "Planned",
-    badgeVariant: "neutral" as const,
-  },
-  {
-    title: "Analytics",
-    description: "Requests, tokens, latency, and spend by dimension.",
-    href: "/workspace/analytics",
-    icon: BarChart3,
-    badge: "Live",
-    badgeVariant: "success" as const,
-  },
-  {
-    title: "Routing",
-    description: "Default model paths, fallbacks, and traffic preferences.",
-    href: "#routing",
-    icon: Waypoints,
-    badge: "Preview",
-    badgeVariant: "info" as const,
-  },
-  {
-    title: "Budgets",
-    description: "Spend envelopes and alerts before month-end overages.",
-    href: "#billing",
-    icon: Wallet,
-    badge: "Planned",
-    badgeVariant: "warning" as const,
-  },
-] as const;
+function workspaceCards(organizationId: string) {
+  const orgBase = `/org/${organizationId}`;
+  return [
+    {
+      title: "Providers",
+      description: "Upstream credentials, endpoints, and compatibility modes.",
+      href: `${orgBase}/providers`,
+      icon: PlugZap,
+      badge: "Live",
+      badgeVariant: "success" as const,
+    },
+    {
+      title: "Child Keys",
+      description: "Issue and rotate scoped keys for teams and applications.",
+      href: `${orgBase}/child-keys`,
+      icon: KeyRound,
+      badge: "Live",
+      badgeVariant: "success" as const,
+    },
+    {
+      title: "Organization",
+      description:
+        "Create orgs, invite members, and assign root, admin, or viewer.",
+      href: "/organization",
+      icon: Building2,
+      badge: "Live",
+      badgeVariant: "success" as const,
+    },
+    {
+      title: "Guardrails",
+      description: "Model allow-lists, rate limits, and privacy controls.",
+      href: "#guardrails",
+      icon: ShieldCheck,
+      badge: "Planned",
+      badgeVariant: "neutral" as const,
+    },
+    {
+      title: "Analytics",
+      description: "Requests, tokens, latency, and spend by dimension.",
+      href: `${orgBase}/analytics`,
+      icon: BarChart3,
+      badge: "Live",
+      badgeVariant: "success" as const,
+    },
+    {
+      title: "Routing",
+      description: "Default model paths, fallbacks, and traffic preferences.",
+      href: "#routing",
+      icon: Waypoints,
+      badge: "Preview",
+      badgeVariant: "info" as const,
+    },
+    {
+      title: "Budgets",
+      description: "Spend envelopes and alerts before month-end overages.",
+      href: "#billing",
+      icon: Wallet,
+      badge: "Planned",
+      badgeVariant: "warning" as const,
+    },
+  ] as const;
+}
 
-export async function WorkspaceOverviewSection() {
-  const result = await getWorkspaceOverview();
+export async function WorkspaceOverviewSection({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
+  const result = await getWorkspaceOverview(organizationId);
 
   if (!result.ok) {
     return (
@@ -140,7 +147,7 @@ export async function WorkspaceOverviewSection() {
               {usage.from && usage.to ? ` · ${usage.from} → ${usage.to}` : null}
               . Explore deeper in{" "}
               <Link
-                href="/workspace/analytics"
+                href={`/org/${organizationId}/analytics`}
                 className="font-medium text-text-primary underline-offset-4 hover:underline"
               >
                 Analytics
@@ -167,7 +174,7 @@ export async function WorkspaceOverviewSection() {
           </p>
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {workspaceCards.map((card) => (
+          {workspaceCards(organizationId).map((card) => (
             <WorkspaceFeatureCard key={card.title} {...card} />
           ))}
         </div>

@@ -10,7 +10,10 @@ import {
   toModelListItem,
   validateCreateModelInput,
 } from "@/lib/model/service";
+import { writeAuditLog } from "@/lib/audit";
 import { requireOrganizationPermission } from "@/lib/organization/access";
+import { invalidate_llm_provider_and_model_cache } from "@/lib/redis/invalidate";
+import { publicMutationError } from "@/lib/safe-error";
 
 import {
   modelReturning,
@@ -34,6 +37,7 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
     .select({
       id: llmProviders.id,
       name: llmProviders.name,
+      compatibilityType: llmProviders.compatibilityType,
       organizationId: llmProviders.organizationId,
     })
     .from(llmProviders)
@@ -70,6 +74,20 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
       .returning(modelReturning);
 
     revalidateOrganizationModelPaths(provider.organizationId);
+    await invalidate_llm_provider_and_model_cache(
+      provider.organizationId,
+      provider.name,
+      provider.compatibilityType,
+    );
+    await writeAuditLog({
+      organizationId: provider.organizationId,
+      actorUserId: session.user.id,
+      actorEmail: session.user.email,
+      action: "create",
+      entity: "model",
+      entityId: model.id,
+      metadata: { alias: model.alias, provider: provider.name },
+    });
 
     return {
       ok: true,
@@ -77,8 +95,8 @@ export async function createModel(input: unknown): Promise<ModelActionResult> {
       message: "Model registered successfully.",
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unable to register the model.";
-    return modelValidationError(message);
+    return modelValidationError(
+      publicMutationError("Unable to register the model.", error),
+    );
   }
 }

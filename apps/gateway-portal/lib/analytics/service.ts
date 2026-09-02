@@ -1,4 +1,4 @@
-import { and, sql, type SQL } from "drizzle-orm";
+import { and, eq, sql, type SQL } from "drizzle-orm";
 
 import { db, eventLog } from "@/lib/db";
 
@@ -193,12 +193,15 @@ function metricFromRow(row: RawSeriesRow, metric: AnalyticsMetric): number {
   return row.requestCount;
 }
 
-async function fetchLatestLogDate(): Promise<string | null> {
+async function fetchLatestLogDate(
+  organizationId: string,
+): Promise<string | null> {
   const [latestRow] = await db
     .select({
       latestLogDate: sql<string>`max(${eventLog.logDate})`,
     })
-    .from(eventLog);
+    .from(eventLog)
+    .where(eq(eventLog.organizationId, organizationId));
 
   return latestRow?.latestLogDate
     ? String(latestRow.latestLogDate).slice(0, 10)
@@ -217,12 +220,15 @@ export async function fetchAnalyticsSeries(
   // Anchor presets to the latest available log day so empty "today" padding
   // does not appear when ingest lags the calendar.
   const latestLogDate =
-    query.datePreset === "custom" ? null : await fetchLatestLogDate();
+    query.datePreset === "custom"
+      ? null
+      : await fetchLatestLogDate(query.organizationId);
   const range = resolveDateRange(query, latestLogDate);
   const filterClause = buildFilterClauses(query.filters);
   const dimSql = dimensionSqlFragment(query.dimension);
 
   const whereParts: SQL[] = [
+    sql`${eventLog.organizationId} = ${query.organizationId}`,
     sql`${eventLog.logDate} >= ${range.from}`,
     sql`${eventLog.logDate} <= ${range.to}`,
   ];
@@ -395,12 +401,15 @@ export async function fetchAnalyticsSeries(
 /**
  * Discover available dimensions and filter values from recent event_log rows.
  */
-export async function fetchAnalyticsMeta(): Promise<AnalyticsMetaResult> {
+export async function fetchAnalyticsMeta(
+  organizationId: string,
+): Promise<AnalyticsMetaResult> {
   const [latestRow] = await db
     .select({
       latestLogDate: sql<string>`max(${eventLog.logDate})`,
     })
-    .from(eventLog);
+    .from(eventLog)
+    .where(eq(eventLog.organizationId, organizationId));
 
   const latestLogDate = latestRow?.latestLogDate
     ? String(latestRow.latestLogDate).slice(0, 10)
@@ -413,7 +422,8 @@ export async function fetchAnalyticsMeta(): Promise<AnalyticsMetaResult> {
     select distinct key
     from ${eventLog},
       lateral jsonb_object_keys(coalesce(${eventLog.metadataJson}, '{}'::jsonb)) as key
-    where ${eventLog.logDate} >= ${scanRange.from}
+    where ${eventLog.organizationId} = ${organizationId}
+      and ${eventLog.logDate} >= ${scanRange.from}
       and ${eventLog.logDate} <= ${scanRange.to}
     order by key
     limit 100
@@ -423,7 +433,8 @@ export async function fetchAnalyticsMeta(): Promise<AnalyticsMetaResult> {
     select distinct key
     from ${eventLog},
       lateral jsonb_object_keys(coalesce(${eventLog.childKeyTagsJson}, '{}'::jsonb)) as key
-    where ${eventLog.logDate} >= ${scanRange.from}
+    where ${eventLog.organizationId} = ${organizationId}
+      and ${eventLog.logDate} >= ${scanRange.from}
       and ${eventLog.logDate} <= ${scanRange.to}
     order by key
     limit 100
@@ -506,7 +517,11 @@ export async function fetchAnalyticsMeta(): Promise<AnalyticsMetaResult> {
     if (!DIMENSION_KEY_PATTERN.test(key) && !isBuiltinDimension(key)) {
       continue;
     }
-    const values = await fetchDistinctFilterValues(key, scanRange);
+    const values = await fetchDistinctFilterValues(
+      key,
+      scanRange,
+      organizationId,
+    );
     if (values.length === 0) {
       continue;
     }
@@ -524,6 +539,7 @@ export async function fetchAnalyticsMeta(): Promise<AnalyticsMetaResult> {
   const userEmails = await fetchDistinctFilterValues(
     USER_EMAIL_FILTER_KEY,
     scanRange,
+    organizationId,
   );
   if (userEmails.length > 0) {
     filterOptions.push({
@@ -544,6 +560,7 @@ export async function fetchAnalyticsMeta(): Promise<AnalyticsMetaResult> {
 async function fetchDistinctFilterValues(
   key: string,
   range: AnalyticsDateRange,
+  organizationId: string,
 ): Promise<string[]> {
   let query;
 
@@ -555,7 +572,8 @@ async function fetchDistinctFilterValues(
     query = sql`
       select distinct ${eventLog.userEmail} as value
       from ${eventLog}
-      where ${eventLog.logDate} >= ${range.from}
+      where ${eventLog.organizationId} = ${organizationId}
+        and ${eventLog.logDate} >= ${range.from}
         and ${eventLog.logDate} <= ${range.to}
         and ${eventLog.userEmail} is not null
         and ${eventLog.userEmail} <> ''
@@ -566,7 +584,8 @@ async function fetchDistinctFilterValues(
     query = sql`
       select distinct ${eventLog.provider} as value
       from ${eventLog}
-      where ${eventLog.logDate} >= ${range.from}
+      where ${eventLog.organizationId} = ${organizationId}
+        and ${eventLog.logDate} >= ${range.from}
         and ${eventLog.logDate} <= ${range.to}
       order by value
       limit 100
@@ -575,7 +594,8 @@ async function fetchDistinctFilterValues(
     query = sql`
       select distinct ${eventLog.requestedModel} as value
       from ${eventLog}
-      where ${eventLog.logDate} >= ${range.from}
+      where ${eventLog.organizationId} = ${organizationId}
+        and ${eventLog.logDate} >= ${range.from}
         and ${eventLog.logDate} <= ${range.to}
       order by value
       limit 100
@@ -586,12 +606,14 @@ async function fetchDistinctFilterValues(
       from (
         select nullif(${eventLog.metadataJson} ->> ${key}, '') as value
         from ${eventLog}
-        where ${eventLog.logDate} >= ${range.from}
+        where ${eventLog.organizationId} = ${organizationId}
+          and ${eventLog.logDate} >= ${range.from}
           and ${eventLog.logDate} <= ${range.to}
         union
         select nullif(${eventLog.childKeyTagsJson} ->> ${key}, '') as value
         from ${eventLog}
-        where ${eventLog.logDate} >= ${range.from}
+        where ${eventLog.organizationId} = ${organizationId}
+          and ${eventLog.logDate} >= ${range.from}
           and ${eventLog.logDate} <= ${range.to}
       ) as values
       where value is not null

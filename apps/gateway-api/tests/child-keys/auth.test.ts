@@ -25,6 +25,9 @@ function buildChildKeyRecord(
     name: "test-key",
     key: "encrypted-key",
     creatorId: "creator-1",
+    organizationId: "org-1",
+    rateLimitRpm: null,
+    monthlyBudgetUsd: null,
     userEmail: "user@example.com",
     isActive: true,
     tags: { env: "test", project: "gateway" },
@@ -218,5 +221,5 @@ test("requirePlainChildApiKey and verifyChildKeyToken round-trip", async () => {
   assert.throws(() => requirePlainChildApiKey(encryptApiKey(apiKey)), /plain/i);
 
   const payload = await verifyChildKeyToken(apiKey);
-  assert.equal(payload.name, "test-key");
+  assert.equal(payload.key_id, "key-test-1");
 });
