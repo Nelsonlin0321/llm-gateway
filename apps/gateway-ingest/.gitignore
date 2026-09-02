@@ -1,6 +1,11 @@
 node_modules/
 dist/
 .env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+.wrangler/
 *.log
 .DS_Store
 # generated mock dumps (use --write-json to recreate)

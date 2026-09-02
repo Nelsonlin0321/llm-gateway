@@ -36,7 +36,7 @@ Companion docs: [`README.MD`](./README.MD) (setup) · [`PROJECT.MD`](./PROJECT.M
                                       ▼
                     ┌─────────────────────────────────────┐
                     │           gateway-api               │
-                    │     Hono · Bun · :8080              │
+                    │     Hono · Workers · :8080          │
                     │  auth → resolve → proxy → respond   │
                     │  (+ async XADD request log)         │
                     └───────────┬─────────────┬───────────┘
@@ -51,6 +51,7 @@ Companion docs: [`README.MD`](./README.MD) (setup) · [`PROJECT.MD`](./PROJECT.M
                                                 ▼
                                     ┌───────────────────────┐
                                     │    gateway-ingest     │
+                                    │  Cron scheduled()     │
                                     │  reclaim → transform  │
                                     │  → load → XACK        │
                                     └───────────┬───────────┘
@@ -70,8 +71,8 @@ Companion docs: [`README.MD`](./README.MD) (setup) · [`PROJECT.MD`](./PROJECT.M
 
 | Component | Runtime | Responsibility |
 | --------- | ------- | -------------- |
-| **gateway-api** | Bun + Hono | Data plane: auth, route, proxy, emit logs |
-| **gateway-ingest** | Bun | Telemetry plane: stream → transform → Postgres |
+| **gateway-api** | Cloudflare Worker (Hono) | Data plane: auth, route, proxy, emit logs |
+| **gateway-ingest** | Cloudflare Worker (`scheduled()`) | Telemetry plane: cron drain, stream → transform → Postgres |
 | **gateway-portal** | Next.js | Control plane: CRUD, schema migrations, analytics UI |
 | **PostgreSQL** | — | System of record (config + logs) |
 | **Redis** | — | Auth/model cache + request-log stream |

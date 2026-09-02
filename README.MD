@@ -72,14 +72,14 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
            │  Bearer sk_<child_key>
            ▼
    ┌───────────────────┐
-   │   gateway-api     │  Hono · Bun
+   │   gateway-api     │  Hono · Cloudflare Worker
    │   :8080           │  OpenAI + Anthropic proxy
    └─────────┬─────────┘
              │ XADD (async)
              ▼
         Redis Streams  ·  Redis cache (auth / model resolve)
              │
-             │ consumer group
+             │ consumer group · Cron scheduled()
              ▼
    ┌───────────────────┐
    │  gateway-ingest   │  transform · cost · load
@@ -96,9 +96,9 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 
 | App | Role | Port | Runtime |
 | --- | ---- | ---- | ------- |
-| [`gateway-api`](./apps/gateway-api) | LLM proxy | `8080` | Bun + Hono |
+| [`gateway-api`](./apps/gateway-api) | LLM proxy | `8080` | Cloudflare Worker (Hono) |
 | [`gateway-portal`](./apps/gateway-portal) | Admin UI + schema owner | `3000` | Next.js |
-| [`gateway-ingest`](./apps/gateway-ingest) | Stream → Postgres | — | Bun |
+| [`gateway-ingest`](./apps/gateway-ingest) | Stream → Postgres | Cron | Cloudflare Worker (`scheduled()`) |
 
 ---
 
@@ -108,7 +108,7 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 
 - **Node.js** 20+ (portal) and/or **[Bun](https://bun.sh)** ≥ 1.1 (api + ingest)
 - **PostgreSQL** (Neon, local, or Docker)
-- **Redis** (cache + request-log stream; strongly recommended)
+- **Redis** (Upstash HTTP REST for Workers; cache + request-log stream)
 
 ### 1. Portal (control plane)
 
@@ -138,8 +138,9 @@ Proxy: [http://localhost:8080](http://localhost:8080)
 ```bash
 cd apps/gateway-ingest
 bun install
-# REDIS_URL + DATABASE_URL
-bun run dev
+# REDIS_URL (Upstash) + DATABASE_URL
+bun run dev                 # wrangler dev --test-scheduled
+curl "http://localhost:8081/__scheduled?cron=*+*+*+*+*"
 ```
 
 Optional demo data for analytics:
@@ -233,9 +234,9 @@ Workspace overview cards reuse the same query layer for spend-by-provider, reque
 ```
 llm-gateway/
 ├── apps/
-│   ├── gateway-api/       # Hono proxy (Bun)
+│   ├── gateway-api/       # Hono proxy (Cloudflare Worker)
 │   ├── gateway-portal/    # Next.js admin + analytics
-│   ├── gateway-ingest/    # Redis Stream → Postgres worker
+│   ├── gateway-ingest/    # Redis Stream → Postgres Cron Worker
 │   └── redis/             # Local Redis helpers
 ├── PROJECT.MD             # Product vision
 ├── SYSTEM_DESIGN.MD       # Target architecture

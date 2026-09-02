@@ -21,6 +21,7 @@ function baseConfig(overrides: Partial<IngestConfig> = {}): IngestConfig {
     blockMs: 5_000,
     claimMinIdleMs: 0,
     idleExitMs: 1_000,
+    maxDurationMs: 0,
     ...overrides,
   };
 }
@@ -61,6 +62,10 @@ class FakeRedis implements RedisStreamClient {
   async xadd(): Promise<string> {
     this.xaddCalls += 1;
     return "1-0";
+  }
+
+  async ping(): Promise<string> {
+    return "PONG";
   }
 
   async quit(): Promise<"OK"> {
@@ -110,6 +115,21 @@ test("runConsumeLoop idle-exits when no events arrive before the timeout", async
 
   assert.equal(result, "idle-exit");
   assert.ok(client.reads >= 1);
+});
+
+test("runConsumeLoop idle-exits immediately on an empty non-blocking read", async () => {
+  const client = new FakeRedis();
+
+  const result = await runConsumeLoop({
+    config: baseConfig({ idleExitMs: 30_000, blockMs: 0 }),
+    client,
+    db: {} as Db,
+    isStopping: () => false,
+    processEntries: async () => okBatch([]),
+  });
+
+  assert.equal(result, "idle-exit");
+  assert.equal(client.reads, 1);
 });
 
 test("runConsumeLoop resets the idle timer when a new event is ingested", async () => {
@@ -179,4 +199,32 @@ test("runConsumeLoop returns stopped when isStopping is true", async () => {
 
   assert.equal(result, "stopped");
   assert.equal(client.reads, 0);
+});
+
+test("runConsumeLoop stops at maxDurationMs even with remaining work", async () => {
+  let now = 0;
+  const client = new FakeRedis();
+  client.replies = [entryReply("1-0"), entryReply("2-0"), entryReply("3-0")];
+
+  const result = await runConsumeLoop({
+    config: baseConfig({
+      idleExitMs: 0,
+      blockMs: 0,
+      maxDurationMs: 50,
+    }),
+    client,
+    db: {} as Db,
+    isStopping: () => false,
+    now: () => now,
+    sleep: async () => {},
+    processEntries: async (_db, entries) => {
+      now += 40;
+      return okBatch(entries.map((e) => e.id));
+    },
+  });
+
+  assert.equal(result, "max-duration");
+  assert.ok(client.xackCalls.length >= 1);
+  assert.ok(client.reads >= 1);
+  assert.ok(client.reads < 3);
 });

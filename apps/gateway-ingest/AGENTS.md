@@ -1,8 +1,13 @@
 ## Runtime
 
-- This app runs on **Bun** (not Node.js). Use `bun` for install, dev, start, and test.
-- Prefer Bun built-ins and auto-loaded `.env` over Node-only packages when possible.
-- Node-compatible APIs (`node:test`, `process.env`) remain fine — Bun implements them.
+- This app deploys as a **Cloudflare Worker** with a `scheduled()` Cron Trigger. Local runtime is `wrangler dev --test-scheduled` (workerd).
+- Unit tests still run on **Bun** (`bun test`). Use `bun` for install and test.
+- Prefer Web-standard APIs (`fetch`, Worker bindings) over Node-only packages.
+- Node-compatible APIs (`process.env`, `Buffer`) remain fine — Workers `nodejs_compat` implements them.
+- Config comes from **Worker bindings**:
+  - Local: `.env` next to `wrangler.jsonc` (loaded by `wrangler dev`).
+  - Production: `vars` in `wrangler.jsonc` plus `wrangler secret put` (never commit secret values).
+  - `scheduled()` / `fetch` hydrate helpers that still read `process.env` from those bindings.
 
 ## Scope
 
@@ -11,13 +16,17 @@
   - `XREADGROUP … >` for new messages
   - Transform → load Postgres → `XACK` on success
 - Do **not** use `XREADGROUP … CLAIM` (Redis 8.4+ only).
+- Redis is **Upstash HTTP REST** (`@upstash/redis/cloudflare`). Workers cannot open Redis TCP. REST credentials are derived from `REDIS_URL` or `UPSTASH_REDIS_REST_*`.
+- `XREADGROUP BLOCK` is not supported on Upstash REST; default `REQUEST_LOG_BLOCK_MS=0`. An empty non-blocking read ends the drain.
 - Pipeline modules:
   - `src/consumer/` — Redis read / extract / ack / ensure-group
   - `src/transform/` — stream fields → `request_log` + `event_log` rows (token paths + cost)
   - `src/load/` — transactional inserts; auto-create day + org partitions on miss
   - `src/process.ts` — batch orchestrator (only successful entries are ACKed)
-  - `src/consume-loop.ts` — drain until idle-exit (`REQUEST_LOG_IDLE_EXIT_MS`; timer resets on each ingested event), then the process exits
-- Scheduling between runs is owned by outside orchestration. `REQUEST_LOG_IDLE_EXIT_MS=0` keeps a forever consume loop.
+  - `src/consume-loop.ts` — drain until idle-exit, max duration, or empty non-blocking read
+  - `src/job.ts` — one invocation (ensure group + drain)
+  - `src/index.ts` — Worker `scheduled()` + `fetch` (`/health`, `/ready`)
+- Scheduling between runs is the Cloudflare Cron Trigger in `wrangler.jsonc` (`triggers.crons`).
 - Token field paths live in `src/transform/token-paths.ts` (extend arrays for new providers).
 - `request_log` / `event_log` are `PARTITION BY RANGE (log_date)`, with
   daily children `PARTITION BY LIST (organization_id)`. On

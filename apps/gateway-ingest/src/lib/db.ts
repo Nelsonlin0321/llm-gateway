@@ -3,10 +3,10 @@ import { drizzle } from "drizzle-orm/neon-serverless";
 
 import * as schema from "../db/schema";
 
-// Bun provides a native WebSocket implementation (no `ws` package needed).
+// Workers and Bun both provide a global WebSocket (no `ws` package needed).
 neonConfig.webSocketConstructor = WebSocket;
 
-// Edge-friendly querying over fetch when WebSockets are unavailable.
+// Prefer fetch when WebSockets are unavailable (Cloudflare Workers).
 neonConfig.poolQueryViaFetch = true;
 
 type AppDb = ReturnType<typeof createDb>;
@@ -32,7 +32,7 @@ function getDb(): AppDb {
   }
 
   const instance = createDb(connectionString);
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV !== "test") {
     global.drizzleDb = instance;
   }
   return instance;
