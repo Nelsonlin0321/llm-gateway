@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-export const siteName = "Gateway";
-export const siteTagline = "LLM Control Plane";
-export const siteTitle = "Gateway — LLM Control Plane";
+export const siteName = "llm-gateway.io";
+export const siteTagline = "LLM Gateway Control Plane";
+export const siteTitle = "LLM Gateway — Open Source LLM Control Plane";
 export const siteDescription =
   "Enterprise control plane for LLM providers, child API keys, policy governance, and usage analytics.";
 
