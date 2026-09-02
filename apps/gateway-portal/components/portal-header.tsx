@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { PortalHeaderAuth } from "@/components/portal-header-auth";
@@ -18,14 +19,19 @@ export function PortalHeader({ navItems }: PortalHeaderProps) {
         <div className="flex min-w-0 items-center gap-6">
           <Link
             href="/"
-            aria-label="Gateway home"
-            className="flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
+            aria-label="llm-gateway.io home"
+            className="flex min-w-0 shrink-0 items-center gap-2.5 transition-opacity hover:opacity-90"
           >
-            <span className="flex size-7 items-center justify-center rounded-md bg-accent text-[10px] font-bold tracking-tight text-accent-foreground">
-              GW
-            </span>
-            <span className="hidden font-heading text-sm font-semibold tracking-[-0.02em] text-text-primary sm:inline">
-              Gateway
+            <Image
+              src="/logo-without-text.jpg"
+              alt=""
+              width={28}
+              height={28}
+              className="size-7 rounded-md bg-white object-cover object-[center_36%] ring-1 ring-border"
+              priority
+            />
+            <span className="hidden truncate font-heading text-sm font-semibold tracking-[-0.02em] text-text-primary sm:inline">
+              llm-gateway.io
             </span>
           </Link>
 
