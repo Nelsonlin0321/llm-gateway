@@ -167,8 +167,8 @@ export function ApiDocsContent() {
               </tbody>
             </table>
           </div>
-          <CodeBlock code={healthCurl()} label="bash · health" />
-          <CodeBlock code={readyCurl()} label="bash · ready" />
+          <CodeBlock code={healthCurl()} lang="shell" label="health" />
+          <CodeBlock code={readyCurl()} lang="shell" label="ready" />
         </Section>
 
         <Section id="base-url" title="Base URL">
@@ -180,9 +180,11 @@ export function ApiDocsContent() {
             . Examples on this page use the value configured for this
             deployment.
           </p>
-          <p className="rounded-lg border border-border bg-surface-2 px-3.5 py-3 font-mono text-[13px] text-text-primary">
-            {PROXY_API_URL_ENV}={proxyUrl}
-          </p>
+          <CodeBlock
+            code={`${PROXY_API_URL_ENV}=${proxyUrl}`}
+            lang="shell"
+            label="origin"
+          />
           {!configuredUrl ? (
             <p className="text-sm leading-6 text-text-secondary">
               This deployment has not set{" "}
@@ -201,7 +203,8 @@ export function ApiDocsContent() {
             ciphertext only — never put the encrypted value on the wire.
           </p>
           <CodeBlock
-            code={`Authorization: Bearer ${EXAMPLE_CHILD_KEY}`}
+            code={`-H "Authorization: Bearer ${EXAMPLE_CHILD_KEY}"`}
+            lang="shell"
             label="header"
           />
           <p className="text-sm leading-6 text-text-secondary">
@@ -237,11 +240,13 @@ export function ApiDocsContent() {
           </p>
           <CodeBlock
             code={listOpenaiModelsCurl()}
-            label="bash · OpenAI models"
+            lang="shell"
+            label="OpenAI models"
           />
           <CodeBlock
             code={listAnthropicModelsCurl()}
-            label="bash · Anthropic models"
+            lang="shell"
+            label="Anthropic models"
           />
         </Section>
 
@@ -308,19 +313,23 @@ export function ApiDocsContent() {
           </p>
           <CodeBlock
             code={openaiChatPayloadJson()}
-            label="JSON · chat completions"
+            lang="json"
+            label="chat completions"
           />
           <CodeBlock
             code={openaiChatCurl()}
-            label="bash · POST /openai/chat/completions"
+            lang="shell"
+            label="POST /openai/chat/completions"
           />
           <CodeBlock
             code={openaiEmbeddingsPayloadJson()}
-            label="JSON · embeddings"
+            lang="json"
+            label="embeddings"
           />
           <CodeBlock
             code={openaiEmbeddingsCurl()}
-            label="bash · POST /openai/v1/embeddings"
+            lang="shell"
+            label="POST /openai/v1/embeddings"
           />
         </Section>
 
@@ -338,11 +347,13 @@ export function ApiDocsContent() {
           </p>
           <CodeBlock
             code={anthropicMessagesPayloadJson()}
-            label="JSON · messages"
+            lang="json"
+            label="messages"
           />
           <CodeBlock
             code={anthropicMessagesCurl()}
-            label="bash · POST /anthropic/v1/messages"
+            lang="shell"
+            label="POST /anthropic/v1/messages"
           />
         </Section>
 
@@ -360,11 +371,13 @@ export function ApiDocsContent() {
           </p>
           <CodeBlock
             code={openaiChatStreamCurl()}
-            label="bash · OpenAI stream"
+            lang="shell"
+            label="OpenAI stream"
           />
           <CodeBlock
             code={anthropicMessagesStreamCurl()}
-            label="bash · Anthropic stream"
+            lang="shell"
+            label="Anthropic stream"
           />
         </Section>
 
@@ -399,9 +412,21 @@ export function ApiDocsContent() {
             gateway alias. Other SDK methods (embeddings, images, and so on)
             work when the upstream supports that route.
           </p>
-          <CodeBlock code={openaiPythonSdk()} label="python · openai" />
-          <CodeBlock code={openaiNodeSdk()} label="typescript · openai" />
-          <CodeBlock code={anthropicPythonSdk()} label="python · anthropic" />
+          <CodeBlock
+            code={openaiPythonSdk()}
+            lang="python"
+            label="openai"
+          />
+          <CodeBlock
+            code={openaiNodeSdk()}
+            lang="typescript"
+            label="openai"
+          />
+          <CodeBlock
+            code={anthropicPythonSdk()}
+            lang="python"
+            label="anthropic"
+          />
         </Section>
 
         <Section id="errors" title="Errors and rate limits">
