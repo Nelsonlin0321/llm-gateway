@@ -1,5 +1,4 @@
 import { and, desc, eq } from "drizzle-orm";
-
 import { decryptApiKeyForProxy } from "../child-keys/crypto";
 import { redis_cache } from "../lib/redis-client";
 import { getProviderModelCacheKey } from "../lib/redis-keys";
@@ -77,36 +76,6 @@ export type ResolveProviderFailure = {
 export type ResolveProviderResult =
   | ResolveProviderSuccess
   | ResolveProviderFailure;
-
-const defaultLookup: ProviderLookup = {
-  async findByName(
-    name: string,
-    compatibilityType: ProviderCompatibility,
-    organizationId: string,
-  ): Promise<ProviderLookupRecord | null> {
-    const [record] = await db
-      .select({
-        id: llmProviders.id,
-        name: llmProviders.name,
-        apiUrl: llmProviders.apiUrl,
-        encryptedApiKey: llmProviders.encryptedApiKey,
-        compatibilityType: llmProviders.compatibilityType,
-        isActive: llmProviders.isActive,
-      })
-      .from(llmProviders)
-      .where(
-        and(
-          eq(llmProviders.name, name),
-          eq(llmProviders.compatibilityType, compatibilityType),
-          eq(llmProviders.organizationId, organizationId),
-        ),
-      )
-      .orderBy(desc(llmProviders.updatedAt))
-      .limit(1);
-
-    return record ?? null;
-  },
-};
 
 const defaultProviderModelLookup: ProviderModelLookup = {
   async findByNameAndAlias(
@@ -219,7 +188,7 @@ export async function resolveProviderModel(
   compatibilityType: ProviderCompatibility,
   organizationId: string,
   lookup: ProviderModelLookup = defaultProviderModelLookup,
-  providerLookup: ProviderLookup = defaultLookup,
+  // providerLookup: ProviderLookup = defaultProviderLookup,
 ): Promise<ResolveProviderModelResult> {
   let record: ProviderModelLookupRecord | null;
 
@@ -239,29 +208,6 @@ export async function resolveProviderModel(
   }
 
   if (!record) {
-    let providerRecord: ProviderLookupRecord | null;
-    try {
-      providerRecord = await providerLookup.findByName(
-        providerName,
-        compatibilityType,
-        organizationId,
-      );
-    } catch {
-      return resolutionFailure(
-        503,
-        "Unable to load provider configuration right now.",
-        "server_error",
-      );
-    }
-
-    if (!providerRecord) {
-      return resolutionFailure(
-        400,
-        `Unknown provider "${providerName}".`,
-        "invalid_request_error",
-      );
-    }
-
     return resolutionFailure(
       400,
       `Unknown model "${providerName}/${modelAlias}".`,
