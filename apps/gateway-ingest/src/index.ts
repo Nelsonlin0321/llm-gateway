@@ -1,13 +1,8 @@
 import { loadConfig } from "./lib/config";
 import { db } from "./lib/db";
 import { createRedisClient } from "./lib/redis-client";
-import {
-  ackEntries,
-  ensureConsumerGroup,
-  readGroupEntries,
-} from "./consumer/index";
-import { REQUEST_LOG_DLQ_STREAM } from "./lib/redis-keys";
-import { processExtractedEntries } from "./process";
+import { ensureConsumerGroup } from "./consumer/index";
+import { runConsumeLoop } from "./consume-loop";
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -26,6 +21,7 @@ async function main(): Promise<void> {
     count: config.count,
     blockMs: config.blockMs,
     claimMinIdleMs: config.claimMinIdleMs,
+    idleExitMs: config.idleExitMs,
     mode: "xautoclaim + xreadgroup → transform → load → xack",
   });
 
@@ -50,16 +46,13 @@ async function main(): Promise<void> {
   });
 
   let stopping = false;
-  // Paginate XAUTOCLAIM through a large PEL instead of restarting at 0-0
-  // every loop (which re-scans already-visited pending entries).
-  let autoclaimStartId = "0-0";
 
-  const shutdown = async (signal: string) => {
+  const shutdown = async (reason: string) => {
     if (stopping) {
       return;
     }
     stopping = true;
-    console.log(`[gateway-ingest] received ${signal}, shutting down…`);
+    console.log(`[gateway-ingest] ${reason}, shutting down…`);
     try {
       await client.quit();
     } catch {
@@ -69,90 +62,24 @@ async function main(): Promise<void> {
   };
 
   process.on("SIGINT", () => {
-    void shutdown("SIGINT");
+    void shutdown("received SIGINT");
   });
   process.on("SIGTERM", () => {
-    void shutdown("SIGTERM");
+    void shutdown("received SIGTERM");
   });
 
-  while (!stopping) {
-    const result = await readGroupEntries({
-      client,
-      streamKey: config.streamKey,
-      groupName: config.groupName,
-      consumerName: config.consumerName,
-      count: config.count,
-      blockMs: config.blockMs,
-      claimMinIdleMs: config.claimMinIdleMs,
-      autoclaimStartId,
-    });
+  const result = await runConsumeLoop({
+    config,
+    client,
+    db,
+    isStopping: () => stopping,
+  });
 
-    if (!result.ok) {
-      console.error(`[gateway-ingest] ${result.stage} failed`, result.error);
-      // Brief backoff so a Redis blip does not spin the CPU.
-      await Bun.sleep(1000);
-      continue;
-    }
-
-    autoclaimStartId = result.nextAutoclaimStartId;
-
-    if (result.entries.length === 0) {
-      // Block timed out with no messages — loop again.
-      continue;
-    }
-
-    const batch = await processExtractedEntries(db, result.entries);
-
-    const deadLetterIds: string[] = [];
-    for (const dead of batch.deadLetters) {
-      try {
-        await client.xadd(
-          REQUEST_LOG_DLQ_STREAM,
-          "*",
-          "source_id",
-          dead.id,
-          "reason",
-          dead.reason,
-          "payload_json",
-          JSON.stringify(dead.fields),
-        );
-        deadLetterIds.push(dead.id);
-      } catch (error) {
-        console.error(
-          "[gateway-ingest] failed to write dead-letter; leaving pending",
-          { id: dead.id, error },
-        );
-      }
-    }
-
-    const idsToAck = [...batch.idsToAck, ...deadLetterIds];
-    const ackResult = await ackEntries({
-      client,
-      streamKey: config.streamKey,
-      groupName: config.groupName,
-      ids: idsToAck,
-    });
-
-    if (!ackResult.ok) {
-      console.error(
-        "[gateway-ingest] XACK failed; entries may be reclaimed later",
-        ackResult.error,
-      );
-    }
-
-    console.log("[gateway-ingest] batch handled", {
-      total: result.entries.length,
-      claimed: result.claimedCount,
-      new: result.newCount,
-      transformed: batch.transformed,
-      loaded: batch.loaded,
-      skippedMissingPayload: batch.skippedMissingPayload,
-      failed: batch.failed,
-      deadLettered: deadLetterIds.length,
-      acked: ackResult.ok ? ackResult.acked : 0,
-      ids: idsToAck,
-    });
+  if (stopping || result === "stopped") {
+    return;
   }
+
+  await shutdown(`idle for ${config.idleExitMs}ms with no events to ingest`);
 }
 
 main().catch((error) => {

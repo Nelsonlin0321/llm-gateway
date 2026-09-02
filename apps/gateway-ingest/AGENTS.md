@@ -16,6 +16,8 @@
   - `src/transform/` — stream fields → `request_log` + `event_log` rows (token paths + cost)
   - `src/load/` — transactional inserts; auto-create day + org partitions on miss
   - `src/process.ts` — batch orchestrator (only successful entries are ACKed)
+  - `src/consume-loop.ts` — drain until idle-exit (`REQUEST_LOG_IDLE_EXIT_MS`; timer resets on each ingested event), then the process exits
+- Scheduling between runs is owned by outside orchestration. `REQUEST_LOG_IDLE_EXIT_MS=0` keeps a forever consume loop.
 - Token field paths live in `src/transform/token-paths.ts` (extend arrays for new providers).
 - `request_log` / `event_log` are `PARTITION BY RANGE (log_date)`, with
   daily children `PARTITION BY LIST (organization_id)`. On
