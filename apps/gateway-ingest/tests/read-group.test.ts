@@ -110,6 +110,14 @@ class FakeRedis implements RedisStreamClient {
     return ids.length;
   }
 
+  async xadd(): Promise<string> {
+    return "1-0";
+  }
+
+  async ping(): Promise<string> {
+    return "PONG";
+  }
+
   async quit(): Promise<"OK"> {
     return "OK";
   }

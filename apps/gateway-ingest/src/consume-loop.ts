@@ -15,7 +15,7 @@ export type ProcessEntriesFn = (
   entries: ExtractedStreamEntry[],
 ) => Promise<ProcessBatchResult>;
 
-export type ConsumeLoopResult = "idle-exit" | "stopped";
+export type ConsumeLoopResult = "idle-exit" | "stopped" | "max-duration";
 
 export type ConsumeLoopInput = {
   config: IngestConfig;
@@ -27,23 +27,38 @@ export type ConsumeLoopInput = {
   sleep?: (ms: number) => Promise<void>;
 };
 
+function defaultSleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
- * Drain the stream until idle-exit, a stop signal, or (when idle-exit is
- * disabled) forever.
+ * Drain the stream until idle-exit, max duration, a stop signal, or
+ * (when idle-exit is disabled) forever.
  *
  * The idle timer starts at loop entry and resets whenever a non-empty
  * batch is read or finished. Empty reads do not reset it.
+ *
+ * A non-blocking empty read (`blockMs <= 0`) ends the drain when
+ * idle-exit is enabled — the scheduled Worker has no more work this tick.
  */
 export async function runConsumeLoop(
   input: ConsumeLoopInput,
 ): Promise<ConsumeLoopResult> {
   const processEntries = input.processEntries ?? processExtractedEntries;
   const now = input.now ?? Date.now;
-  const sleep = input.sleep ?? ((ms: number) => Bun.sleep(ms));
+  const sleep = input.sleep ?? defaultSleep;
   const idle = createIdleExitTracker(input.config.idleExitMs, now);
+  const startedAt = now();
   let autoclaimStartId = "0-0";
 
   while (!input.isStopping()) {
+    if (
+      input.config.maxDurationMs > 0 &&
+      now() - startedAt >= input.config.maxDurationMs
+    ) {
+      return "max-duration";
+    }
+
     if (idle.isExpired()) {
       return "idle-exit";
     }
@@ -73,6 +88,14 @@ export async function runConsumeLoop(
     autoclaimStartId = result.nextAutoclaimStartId;
 
     if (result.entries.length === 0) {
+      // Upstash REST cannot BLOCK. An empty non-blocking read means the
+      // stream has no currently available work for this invocation.
+      if (input.config.blockMs <= 0) {
+        if (input.config.idleExitMs > 0) {
+          return "idle-exit";
+        }
+        await sleep(1000);
+      }
       continue;
     }
 

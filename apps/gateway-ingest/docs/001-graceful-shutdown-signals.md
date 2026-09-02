@@ -1,76 +1,56 @@
-# Graceful shutdown via `SIGINT` / `SIGTERM` explained
+# Scheduled Worker invocations
 
-This note explains the signal handlers in [`src/index.ts`](../src/index.ts), especially this part:
+This note explains how `gateway-ingest` runs on Cloudflare Workers.
+
+The Worker entry is [`src/index.ts`](../src/index.ts):
 
 ```ts
-process.on("SIGINT", () => {
-  void shutdown("SIGINT");
-});
-process.on("SIGTERM", () => {
-  void shutdown("SIGTERM");
-});
+export default {
+  async scheduled(controller, env, ctx) {
+    await handleIngestInvocation(env);
+  },
+  fetch: handleFetch,
+};
 ```
 
-## What are `SIGINT` and `SIGTERM`?
+## What is `scheduled()`?
 
-They are operating system “signals” sent to a process to ask it to stop.
+Cloudflare Cron Triggers invoke the Worker on a time-based recurring schedule defined in `wrangler.jsonc`:
 
-- `SIGINT` typically means “interrupt”.
-  - Most commonly triggered when you press Ctrl+C in a terminal running the process.
-- `SIGTERM` typically means “terminate”.
-  - Commonly sent by process managers and container orchestrators (Docker/Kubernetes/systemd) when they want your service to stop gracefully.
+```jsonc
+"triggers": {
+  "crons": ["* * * * *"]
+}
+```
 
-## What does `process.on("SIGINT" | "SIGTERM", ...)` do?
+Each tick:
 
-`process.on(...)` registers an event handler on the Bun/Node-compatible `process` object.
+1. Cloudflare calls `scheduled(controller, env, ctx)`
+2. Bindings (`vars` + secrets) are merged onto `process.env`
+3. `runIngestJob` ensures the Redis consumer group and drains available stream entries
+4. The invocation returns when the stream is empty, idle-exit fires, or `REQUEST_LOG_MAX_DURATION_MS` is reached
 
-When the runtime receives a matching signal:
+The next cron tick starts another drain. Leftover pending entries are reclaimed via `XAUTOCLAIM`.
 
-1. it emits the corresponding event (`"SIGINT"` or `"SIGTERM"`)
-2. the provided callback runs
-3. the callback triggers application shutdown
+## Why not SIGINT / SIGTERM?
 
-If you do not register signal handlers, the runtime may terminate the process immediately (which can leave Redis connections open and can interrupt in-flight work).
+Workers are not long-lived OS processes. Isolates start for an invocation and exit when the handler finishes. There is no `process.on("SIGTERM")` shutdown path.
 
-## Why call `shutdown(...)` from both signals?
+Stop a local `wrangler dev` session with Ctrl+C in the terminal (Wrangler handles that). In production, pause or delete the Cron Trigger / Worker.
 
-It provides one unified graceful shutdown path, regardless of how the process is being stopped:
+## Local trigger
 
-- local dev: Ctrl+C (`SIGINT`)
-- production: service stop or container stop (`SIGTERM`)
+```bash
+bun run dev   # wrangler dev --test-scheduled
+curl "http://localhost:8081/__scheduled?cron=*+*+*+*+*"
+```
 
-## What does `void shutdown("SIGINT")` mean?
-
-`shutdown(...)` is an async function, so it returns a `Promise`.
-
-The `void` operator:
-
-- intentionally discards that `Promise` (fire-and-forget)
-- makes it explicit that the callback is not awaiting the result
-- avoids “unhandled promise” / “floating promise” lint warnings in many setups
-
-This pattern is common inside event handlers, where you want to trigger async cleanup but there is no upstream caller that can `await` the handler.
-
-## What does `shutdown(signal)` actually do?
-
-In [`src/index.ts`](../src/index.ts), `shutdown`:
-
-1. ensures it runs only once using the `stopping` flag
-2. logs the reason (signal or idle-exit)
-3. tries to gracefully close Redis with `await client.quit()`
-4. falls back to `client.disconnect()` if `quit()` throws
-5. exits the process with success code `0`
-
-The `stopping` flag is also used by the consume loop (`src/consume-loop.ts`):
-
-- the loop condition is `while (!isStopping())`
-- after shutdown starts, the loop stops scheduling new `XREADGROUP` calls
-- `REQUEST_LOG_IDLE_EXIT_MS` can also end a drain and then calls this same shutdown path (outside orchestration starts the next run)
+`GET /health` and `GET /ready` do not drain the stream.
 
 ## Practical effect
 
-If you stop `gateway-ingest`:
+If a drain is cut off by max duration or an isolate timeout:
 
-- it stops reading new Redis Stream messages
-- it asks Redis to close the connection cleanly
-- it then exits quickly and predictably
+- already-ACKed entries stay loaded in Postgres
+- un-ACKed entries remain in the consumer group PEL
+- the next cron reclaims them after `REQUEST_LOG_CLAIM_MIN_IDLE_MS`

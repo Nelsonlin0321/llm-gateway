@@ -1,0 +1,39 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "llm-gateway-ingest",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  "dev": {
+    "port": 8081,
+    "local_protocol": "http",
+  },
+  // Cron Triggers invoke `scheduled()`. Minimum interval is once per minute.
+  "triggers": {
+    "crons": ["* * * * *"],
+  },
+  // Non-secret config. These become Worker bindings (`env` / `process.env`).
+  // Override locally by putting the same key in `.env`.
+  "vars": {
+    "REQUEST_LOG_STREAM": "llm-gateway-request-logs",
+    "REQUEST_LOG_CONSUMER_GROUP": "gateway-ingest",
+    "REQUEST_LOG_CONSUMER_NAME": "gateway-ingest-worker",
+    "REQUEST_LOG_READ_COUNT": "20",
+    "REQUEST_LOG_BLOCK_MS": "0",
+    "REQUEST_LOG_CLAIM_MIN_IDLE_MS": "30000",
+    "REQUEST_LOG_IDLE_EXIT_MS": "30000",
+    "REQUEST_LOG_MAX_DURATION_MS": "60000",
+  },
+  // Secret *names* only — values are never stored in this file.
+  // Local: `wrangler dev` loads these keys from `.env` in this directory.
+  // Production: `bun run secret:put` / `wrangler secret put <NAME>`.
+  "secrets": {
+    "required": [
+      "DATABASE_URL",
+      "REDIS_URL",
+    ],
+  },
+}
