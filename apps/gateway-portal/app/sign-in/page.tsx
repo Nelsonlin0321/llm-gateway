@@ -7,7 +7,7 @@ import { noIndexRobots } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Sign in",
   description:
-    "Sign in to Gateway to manage LLM providers, child API keys, and usage analytics.",
+    "Sign in to llm-gateway.io to manage LLM providers, child API keys, and usage analytics.",
   robots: noIndexRobots,
 };
 
