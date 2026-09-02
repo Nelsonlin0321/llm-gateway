@@ -24,7 +24,7 @@
     "REQUEST_LOG_READ_COUNT": "20",
     "REQUEST_LOG_BLOCK_MS": "0",
     "REQUEST_LOG_CLAIM_MIN_IDLE_MS": "30000",
-    "REQUEST_LOG_IDLE_EXIT_MS": "30000",
+    "REQUEST_LOG_IDLE_EXIT_MS": "10000",
     "REQUEST_LOG_MAX_DURATION_MS": "60000",
   },
   // Secret *names* only — values are never stored in this file.
