@@ -8,12 +8,25 @@ import {
 } from "@/lib/site";
 
 test("getSiteUrl strips trailing slashes and falls back to localhost", () => {
+  const previousPublic = process.env.NEXT_PUBLIC_BASE_URL;
   const previous = process.env.BETTER_AUTH_URL;
+
+  process.env.NEXT_PUBLIC_BASE_URL = "https://www.llm-gateway.io/";
+  process.env.BETTER_AUTH_URL = "https://gateway.example.com/";
+  assert.equal(getSiteUrl(), "https://www.llm-gateway.io");
+
+  delete process.env.NEXT_PUBLIC_BASE_URL;
   process.env.BETTER_AUTH_URL = "https://gateway.example.com/";
   assert.equal(getSiteUrl(), "https://gateway.example.com");
 
   delete process.env.BETTER_AUTH_URL;
   assert.equal(getSiteUrl(), "http://localhost:3000");
+
+  if (previousPublic === undefined) {
+    delete process.env.NEXT_PUBLIC_BASE_URL;
+  } else {
+    process.env.NEXT_PUBLIC_BASE_URL = previousPublic;
+  }
 
   if (previous === undefined) {
     delete process.env.BETTER_AUTH_URL;
