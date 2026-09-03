@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 
 export const siteName = "llm-gateway.io";
-export const siteTagline = "LLM Gateway Control Plane";
-export const siteTitle = "LLM Gateway — Open Source LLM Control Plane";
+export const siteTagline = "Open Source LLM Gateway with Control Plane";
+export const siteTitle =
+  "Open LLM Gateway — Open Source LLM Gateway with Control Plane";
 export const siteDescription =
-  "Enterprise control plane for LLM providers, child API keys, policy governance, and usage analytics.";
+  "Open Source LLM Gateway with Control Plane — Enterprise control plane for LLM providers, child API keys, policy governance, and usage analytics.";
 
 export function getSiteUrl(): string {
   const raw = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
