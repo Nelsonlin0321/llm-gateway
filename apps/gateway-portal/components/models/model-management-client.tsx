@@ -51,9 +51,7 @@ type ModelManagementClientProps = {
 };
 
 type ModalState =
-  | { mode: "create" }
-  | { mode: "edit"; model: ModelListItem }
-  | null;
+  { mode: "create" } | { mode: "edit"; model: ModelListItem } | null;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -262,13 +260,15 @@ export function ModelManagementClient({
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
-                        {model.name}
-                      </p>
-                      <Badge variant="neutral" className="font-mono text-[11px]">
                         {model.alias}
-                      </Badge>
-                      <Badge variant="neutral">
-                        {model.providerName || "Provider"}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 text-[11px] text-text-secondary">
+                      <Badge
+                        variant="neutral"
+                        className="font-mono text-[11px]"
+                      >
+                        {model.name}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-1.5 text-[11px] text-text-secondary">
@@ -358,9 +358,7 @@ export function ModelManagementClient({
             );
           }
 
-          return handleCreate(
-            values as z.infer<typeof createModelInputSchema>,
-          );
+          return handleCreate(values as z.infer<typeof createModelInputSchema>);
         }}
       />
 
