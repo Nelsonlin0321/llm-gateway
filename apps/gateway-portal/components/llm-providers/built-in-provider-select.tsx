@@ -7,6 +7,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { BuiltInProvider } from "@/lib/llm-provider/built-in";
@@ -17,7 +18,7 @@ type BuiltInProviderSelectProps = {
   selected?: BuiltInProvider;
   disabled?: boolean;
   labelledBy?: string;
-  onSelect: (provider: BuiltInProvider) => void;
+  onSelect: (provider: BuiltInProvider | null) => void;
 };
 
 export function BuiltInProviderSelect({
@@ -27,6 +28,8 @@ export function BuiltInProviderSelect({
   labelledBy,
   onSelect,
 }: BuiltInProviderSelectProps) {
+  const isCustom = !selected;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -37,19 +40,17 @@ export function BuiltInProviderSelect({
           "hover:bg-surface-2 focus-visible:border-accent focus-visible:ring-3 focus-visible:ring-ring/40",
           "disabled:pointer-events-none disabled:opacity-50",
           "data-popup-open:border-accent data-popup-open:ring-3 data-popup-open:ring-ring/40",
-          selected ? "text-foreground" : "text-text-tertiary",
+          "text-foreground",
         )}
       >
         <span className="flex min-w-0 items-center gap-2">
           {selected ? (
             <>
               <BuiltInProviderIcon key={selected.name} name={selected.name} />
-              <span className="truncate font-medium text-foreground">
-                {selected.name}
-              </span>
+              <span className="truncate font-medium">{selected.name}</span>
             </>
           ) : (
-            <span className="truncate">Select a built-in provider</span>
+            <span className="truncate font-medium">Custom</span>
           )}
         </span>
         <ChevronsUpDown className="size-3.5 shrink-0 text-text-tertiary" />
@@ -58,6 +59,21 @@ export function BuiltInProviderSelect({
         align="start"
         className="z-70 max-h-72 min-w-(--anchor-width)"
       >
+        <DropdownMenuItem
+          onClick={() => onSelect(null)}
+          className={cn("items-start py-1.5", isCustom && "bg-accent/40")}
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-medium">Custom</span>
+            <span className="block truncate text-[11px] text-text-tertiary">
+              Enter your own name and URL
+            </span>
+          </span>
+          {isCustom ? (
+            <Check className="mt-0.5 size-3.5 shrink-0 text-accent" />
+          ) : null}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         {providers.map((provider) => (
           <DropdownMenuItem
             key={`${provider.apiFormat}:${provider.name}`}

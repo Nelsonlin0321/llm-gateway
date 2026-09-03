@@ -136,7 +136,27 @@ function ProviderFormModalInner({
     }));
   };
 
-  const handleBuiltInSelect = (provider: BuiltInProvider) => {
+  const handleBuiltInSelect = (provider: BuiltInProvider | null) => {
+    if (!provider) {
+      setValues((current) => {
+        const matching = findBuiltInProvider(
+          current.name,
+          current.compatibilityType,
+        );
+
+        if (!matching) {
+          return current;
+        }
+
+        return {
+          ...current,
+          name: "",
+          apiUrl: "",
+        };
+      });
+      return;
+    }
+
     setValues((current) => ({
       ...current,
       name: provider.name,
@@ -235,6 +255,9 @@ function ProviderFormModalInner({
                 labelledBy="built-in-provider-label"
                 onSelect={handleBuiltInSelect}
               />
+              <p className="text-sm text-text-secondary">
+                Optional. Keep Custom to type your own name and URL.
+              </p>
             </div>
 
             <div className="space-y-2 sm:col-span-2">
@@ -261,11 +284,23 @@ function ProviderFormModalInner({
                 type="url"
                 value={values.apiUrl}
                 onChange={(event) => updateValue("apiUrl", event.target.value)}
-                placeholder="https://api.example.com/v1"
+                placeholder={
+                  selectedBuiltIn?.name === "azure"
+                    ? selectedBuiltIn.apiUrl
+                    : "https://api.example.com/v1"
+                }
                 className={inputClassName}
                 autoComplete="off"
               />
-              <FieldError errors={fieldErrors.apiUrl} />
+              <FieldError
+                errors={fieldErrors.apiUrl}
+                helperText={
+                  selectedBuiltIn?.name === "azure" &&
+                  /<resources?>/.test(values.apiUrl)
+                    ? "Replace the resource placeholder with your Azure AI resource name."
+                    : undefined
+                }
+              />
             </div>
 
             <div className="space-y-2 sm:col-span-2">

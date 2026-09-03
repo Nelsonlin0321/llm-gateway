@@ -7,6 +7,7 @@ const UNPKG_SVG_CDN =
  */
 const providerIconIds: Record<string, string> = {
   openai: "openai",
+  azure: "azure",
   deepseek: "deepseek",
   "x-ai": "xai",
   mistral: "mistral",
@@ -57,11 +58,13 @@ const lightFillIconIds = new Set([
   "vercel",
   "nebius",
   "baseten",
+  "anthropic",
 ]);
 
 /** Lobe Icons that ship a dedicated color SVG (`{id}-color.svg`). */
 const colorIconIds = new Set([
   "alibaba",
+  "azure",
   "cerebras",
   "deepinfra",
   "deepseek",
