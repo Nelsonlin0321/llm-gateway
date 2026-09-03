@@ -298,6 +298,9 @@ export default async function Home() {
             <Link href="/" className="hover:text-text-secondary">
               Product
             </Link>
+            <Link href="/about" className="hover:text-text-secondary">
+              About
+            </Link>
             <Link href="/docs" className="hover:text-text-secondary">
               API docs
             </Link>
