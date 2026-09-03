@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { PortalHeader } from "@/components/portal-header";
 import ReactHotToastProvider from "@/components/providers/react-hot-toast";
 import { getSiteUrl, siteDescription, siteName, siteTitle } from "@/lib/site";
@@ -98,6 +99,7 @@ export default function RootLayout({
           <PortalHeader navItems={portalHeaderNavItems} />
           {children}
           <Analytics />
+          <SpeedInsights />
         </ReactHotToastProvider>
       </body>
     </html>
