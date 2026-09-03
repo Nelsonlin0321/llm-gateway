@@ -46,6 +46,22 @@ test("finds a built-in provider by name and compatibility type", () => {
   assert.equal(findBuiltInProvider("openai", "anthropic"), undefined);
 });
 
+test("includes azure as openai and anthropic built-ins with resource URL templates", () => {
+  const azureOpenAi = findBuiltInProvider("azure", "openai");
+  const azureAnthropic = findBuiltInProvider("azure", "anthropic");
+
+  assert.equal(
+    azureOpenAi?.apiUrl,
+    "https://<resources>.services.ai.azure.com/openai/v1",
+  );
+  assert.equal(
+    azureAnthropic?.apiUrl,
+    "https://<resource>.services.ai.azure.com/anthropic",
+  );
+  assert.equal(getBuiltInProviderIconId("azure"), "azure");
+  assert.equal(builtInProviderIconHasColor("azure"), true);
+});
+
 test("built-in names and URLs match provider form constraints", () => {
   const namesByFormat = new Map<string, Set<string>>();
 

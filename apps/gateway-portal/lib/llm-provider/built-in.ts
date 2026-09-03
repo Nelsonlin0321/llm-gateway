@@ -14,6 +14,11 @@ export const builtInProviders: BuiltInProvider[] = [
     apiFormat: "openai",
   },
   {
+    name: "azure",
+    apiUrl: "https://<resources>.services.ai.azure.com/openai/v1",
+    apiFormat: "openai",
+  },
+  {
     name: "deepseek",
     apiUrl: "https://api.deepseek.com",
     apiFormat: "openai",
@@ -168,6 +173,11 @@ export const builtInProviders: BuiltInProvider[] = [
   {
     name: "anthropic",
     apiUrl: "https://api.anthropic.com/v1",
+    apiFormat: "anthropic",
+  },
+  {
+    name: "azure",
+    apiUrl: "https://<resource>.services.ai.azure.com/anthropic",
     apiFormat: "anthropic",
   },
   {
