@@ -8,7 +8,7 @@ export const siteDescription =
   "Open Source LLM Gateway with Control Plane — Enterprise control plane for LLM providers, child API keys, policy governance, and usage analytics.";
 
 export function getSiteUrl(): string {
-  const raw = process.env.BETTER_AUTH_URL ?? "http://localhost:3000";
+  const raw = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
   return raw.replace(/\/+$/, "");
 }
 
