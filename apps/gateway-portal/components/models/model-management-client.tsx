@@ -2,7 +2,14 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { FlaskConical, PencilLine, Plus, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  FlaskConical,
+  PencilLine,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import type { z } from "zod";
@@ -11,6 +18,7 @@ import { createModel } from "@/app/server-actions/model/create-model";
 import { deleteModel } from "@/app/server-actions/model/delete-model";
 import { testModel } from "@/app/server-actions/model/test-model";
 import { updateModel } from "@/app/server-actions/model/update-model";
+import { BuiltInProviderIcon } from "@/components/llm-providers/built-in-provider-icon";
 import { ModelFormModal } from "@/components/models/model-form-modal";
 import { ModelListFilters } from "@/components/models/model-list-filters";
 import {
@@ -51,9 +59,7 @@ type ModelManagementClientProps = {
 };
 
 type ModalState =
-  | { mode: "create" }
-  | { mode: "edit"; model: ModelListItem }
-  | null;
+  { mode: "create" } | { mode: "edit"; model: ModelListItem } | null;
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en", {
@@ -88,6 +94,7 @@ export function ModelManagementClient({
   const [isSubmitting, startSubmitting] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [copiedAliasId, setCopiedAliasId] = useState<string | null>(null);
   const canCreate = hasPermission(role, "model", "create");
   const canUpdate = hasPermission(role, "model", "update");
   const canDelete = hasPermission(role, "model", "delete");
@@ -179,6 +186,19 @@ export function ModelManagementClient({
     router.refresh();
   };
 
+  const handleCopyAlias = async (model: ModelListItem) => {
+    try {
+      await navigator.clipboard.writeText(model.alias);
+      setCopiedAliasId(model.id);
+      toast.success("Model alias copied to clipboard.");
+      window.setTimeout(() => {
+        setCopiedAliasId((current) => (current === model.id ? null : current));
+      }, 1600);
+    } catch {
+      toast.error("Unable to copy model alias.");
+    }
+  };
+
   return (
     <>
       <section className="grid grid-cols-3 gap-3">
@@ -261,14 +281,47 @@ export function ModelManagementClient({
                 >
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
+                      <span
+                        aria-hidden
+                        className="flex size-6 shrink-0 items-center justify-center rounded-md border border-border bg-surface-2"
+                      >
+                        <BuiltInProviderIcon
+                          key={model.providerName}
+                          name={model.providerName}
+                          className="bg-transparent"
+                        />
+                      </span>
                       <p className="text-sm font-semibold tracking-[-0.01em] text-text-primary">
-                        {model.name}
-                      </p>
-                      <Badge variant="neutral" className="font-mono text-[11px]">
                         {model.alias}
-                      </Badge>
-                      <Badge variant="neutral">
-                        {model.providerName || "Provider"}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        className="h-7 px-2 text-text-secondary hover:text-text-primary"
+                        onClick={() => void handleCopyAlias(model)}
+                        aria-label={
+                          copiedAliasId === model.id
+                            ? `Copied alias ${model.alias}`
+                            : `Copy alias ${model.alias}`
+                        }
+                        title={
+                          copiedAliasId === model.id ? "Copied" : "Copy alias"
+                        }
+                      >
+                        {copiedAliasId === model.id ? (
+                          <Check className="size-3.5" />
+                        ) : (
+                          <Copy className="size-3.5" />
+                        )}
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 text-[11px] text-text-secondary">
+                      <Badge
+                        variant="neutral"
+                        className="font-mono text-[11px]"
+                      >
+                        {model.name}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-1.5 text-[11px] text-text-secondary">
@@ -358,9 +411,7 @@ export function ModelManagementClient({
             );
           }
 
-          return handleCreate(
-            values as z.infer<typeof createModelInputSchema>,
-          );
+          return handleCreate(values as z.infer<typeof createModelInputSchema>);
         }}
       />
 

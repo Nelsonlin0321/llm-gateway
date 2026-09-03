@@ -95,9 +95,7 @@ export function ModelFormModal({
 
   const title = useMemo(
     () =>
-      mode === "create"
-        ? "Register model"
-        : `Edit ${model?.name ?? "model"}`,
+      mode === "create" ? "Register model" : `Edit ${model?.name ?? "model"}`,
     [mode, model?.name],
   );
 
@@ -202,7 +200,7 @@ export function ModelFormModal({
               >
                 {providers.map((provider) => (
                   <option key={provider.id} value={provider.id}>
-                    {provider.name}
+                    {provider.name} · {provider.compatibilityType}
                     {provider.isActive ? "" : " (inactive)"}
                   </option>
                 ))}
