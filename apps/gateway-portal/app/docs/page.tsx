@@ -12,7 +12,7 @@ import {
 } from "@/lib/docs/api-guide";
 import { getSiteUrl, serializeJsonLd, siteName } from "@/lib/site";
 
-const title = "How to use the Gateway API";
+const title = "How to use the Open LLM Gateway API";
 const description =
   "Call any OpenAI- or Anthropic-compatible route through Open LLM Gateway using a child API key and provider/alias model IDs.";
 
@@ -84,7 +84,9 @@ export default function DocsPage() {
               <>
                 {" "}
                 (
-                <code className="font-mono text-text-secondary">{proxyUrl}</code>
+                <code className="font-mono text-text-secondary">
+                  {proxyUrl}
+                </code>
                 )
               </>
             ) : null}
@@ -100,15 +102,16 @@ export default function DocsPage() {
       </main>
       <footer className="border-t border-border">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-6 text-[13px] text-text-tertiary sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p>
-            {siteName} API — OpenAI- and Anthropic-compatible proxy
-          </p>
+          <p>{siteName} API — OpenAI- and Anthropic-compatible proxy</p>
           <nav aria-label="Footer" className="flex flex-wrap gap-4">
             <Link href="/" className="hover:text-text-secondary">
               Product
             </Link>
             <Link href="/docs" className="hover:text-text-secondary">
               API docs
+            </Link>
+            <Link href="/privacy" className="hover:text-text-secondary">
+              Privacy
             </Link>
             <Link href="/workspace" className="hover:text-text-secondary">
               Console
