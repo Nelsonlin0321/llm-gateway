@@ -150,7 +150,7 @@ export function PortalHeaderAuth() {
               <DropdownMenuItem
                 className="cursor-pointer gap-2"
                 onClick={() => {
-                  router.push("/workspace/organization");
+                  router.push("/organization");
                 }}
               >
                 <Building2 className="size-4" />

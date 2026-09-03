@@ -124,8 +124,8 @@ export default async function Home() {
                 console.
               </h1>
               <p className="max-w-xl text-base leading-7 text-text-secondary">
-                Gateway is the management layer between your upstream AI
-                providers and every team that consumes them — credentials,
+                Open LLM Gateway is the management layer between your upstream
+                AI providers and every team that consumes them — credentials,
                 policies, and analytics in one place.
               </p>
             </div>
@@ -298,8 +298,14 @@ export default async function Home() {
             <Link href="/" className="hover:text-text-secondary">
               Product
             </Link>
+            <Link href="/about" className="hover:text-text-secondary">
+              About
+            </Link>
             <Link href="/docs" className="hover:text-text-secondary">
               API docs
+            </Link>
+            <Link href="/privacy" className="hover:text-text-secondary">
+              Privacy
             </Link>
             <Link href="/sign-up" className="hover:text-text-secondary">
               Create account
