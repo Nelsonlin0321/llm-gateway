@@ -9,6 +9,7 @@ import {
 import type {
   RedisStreamClient,
   XAutoClaimResult,
+  XPendingResult,
   XReadGroupResult,
 } from "../src/lib/redis-client.js";
 
@@ -77,6 +78,16 @@ class FakeRedis implements RedisStreamClient {
 
   public readReply: XReadGroupResult | null = null;
   public claimReply: XAutoClaimResult = ["0-0", []];
+  public pendingReply: XPendingResult = [];
+  public pendingError: Error | null = null;
+  public xpendingCalls: Array<{
+    key: string;
+    group: string;
+    start: string;
+    end: string;
+    count: number;
+    consumer?: string;
+  }> = [];
   public readError: Error | null = null;
   public claimError: Error | null = null;
 
@@ -108,6 +119,21 @@ class FakeRedis implements RedisStreamClient {
   async xack(key: string, group: string, ...ids: string[]): Promise<number> {
     this.xackCalls.push({ key, group, ids });
     return ids.length;
+  }
+
+  async xpending(
+    key: string,
+    group: string,
+    start: string,
+    end: string,
+    count: number,
+    consumer?: string,
+  ): Promise<XPendingResult> {
+    this.xpendingCalls.push({ key, group, start, end, count, consumer });
+    if (this.pendingError) {
+      throw this.pendingError;
+    }
+    return this.pendingReply;
   }
 
   async xadd(): Promise<string> {
@@ -159,6 +185,7 @@ test("readGroupEntries claims idle pending then fills remaining with new message
   assert.equal(result.entries.length, 2);
   assert.equal(result.entries[0]?.source, "autoclaim");
   assert.equal(result.entries[1]?.source, "xreadgroup");
+  assert.equal(result.entries[1]?.deliveryCount, 1);
   assert.equal(result.nextAutoclaimStartId, "5-0");
 
   assert.deepEqual(client.xautoclaimCalls[0], [
@@ -330,6 +357,94 @@ test("readGroupEntries surfaces XAUTOCLAIM errors", async () => {
     assert.equal(result.stage, "xautoclaim");
     assert.match(String(result.error), /NOGROUP/);
   }
+});
+
+test("readGroupEntries attaches XPENDING delivery counts to claimed entries", async () => {
+  const client = new FakeRedis();
+  client.claimReply = [
+    "5-0",
+    [
+      ["1-0", ["event_id", "claimed-1"]],
+      ["2-0", ["event_id", "claimed-2"]],
+    ],
+  ];
+  client.pendingReply = [
+    ["1-0", "consumer-1", 60000, 4],
+    ["2-0", "consumer-1", 60000, 2],
+  ];
+  client.readReply = null;
+
+  const result = await readGroupEntries({
+    client,
+    streamKey: "s",
+    groupName: "g",
+    consumerName: "c",
+    count: 10,
+    blockMs: 0,
+    claimMinIdleMs: 60000,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+  assert.equal(result.entries[0]?.deliveryCount, 4);
+  assert.equal(result.entries[1]?.deliveryCount, 2);
+  assert.equal(client.xpendingCalls.length, 1);
+  assert.deepEqual(client.xpendingCalls[0], {
+    key: "s",
+    group: "g",
+    start: "1-0",
+    end: "2-0",
+    count: 2,
+    consumer: "c",
+  });
+});
+
+test("readGroupEntries defaults missing XPENDING ids to deliveryCount 2", async () => {
+  const client = new FakeRedis();
+  client.claimReply = ["1-0", [["1-0", ["event_id", "claimed-1"]]]];
+  client.pendingReply = [];
+  client.readReply = null;
+
+  const result = await readGroupEntries({
+    client,
+    streamKey: "s",
+    groupName: "g",
+    consumerName: "c",
+    count: 10,
+    blockMs: 0,
+    claimMinIdleMs: 60000,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+  assert.equal(result.entries[0]?.deliveryCount, 2);
+});
+
+test("readGroupEntries leaves deliveryCount unset when XPENDING fails", async () => {
+  const client = new FakeRedis();
+  client.claimReply = ["1-0", [["1-0", ["event_id", "claimed-1"]]]];
+  client.pendingError = new Error("XPENDING unavailable");
+  client.readReply = null;
+
+  const result = await readGroupEntries({
+    client,
+    streamKey: "s",
+    groupName: "g",
+    consumerName: "c",
+    count: 10,
+    blockMs: 0,
+    claimMinIdleMs: 60000,
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) {
+    return;
+  }
+  assert.equal(result.entries[0]?.deliveryCount, undefined);
 });
 
 test("readGroupEntries surfaces XREADGROUP errors", async () => {

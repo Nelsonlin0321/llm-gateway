@@ -32,6 +32,10 @@ class FakeRedis implements RedisStreamClient {
     return 0;
   }
 
+  async xpending() {
+    return [];
+  }
+
   async xadd(): Promise<string> {
     return "1-0";
   }

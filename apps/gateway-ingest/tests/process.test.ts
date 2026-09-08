@@ -16,6 +16,7 @@ function makeEntry(
     fields: partial.fields ?? {},
     source: partial.source ?? "xreadgroup",
     payloadMissing: partial.payloadMissing,
+    deliveryCount: partial.deliveryCount,
   };
 }
 
@@ -59,44 +60,49 @@ function goodFields(): Record<string, string> {
   };
 }
 
-type InsertCall = { table: "request" | "event"; row: unknown };
+type InsertCall = {
+  table: "request" | "event" | "dead-request" | "dead-event";
+  row: unknown;
+};
 
 function fakeDb(options: {
   fail?: boolean;
+  failDead?: boolean;
   calls?: InsertCall[];
 }): Db {
   const calls = options.calls ?? [];
-  let insertIndex = 0;
 
   return {
     transaction: async (fn: (tx: unknown) => Promise<void>) => {
-      if (options.fail) {
-        throw new Error("db down");
-      }
       const tx = {
-        insert: (table: { [key: string]: unknown }) => {
-          // Identify table by a distinctive column name present only on one side.
-          // request_log has responseText; event_log has schemaVersion.
-          const isRequest =
-            "responseText" in table ||
-            // drizzle table objects expose columns; fall back to call order
-            false;
-          return {
-            values: (row: unknown) => ({
-              onConflictDoNothing: async () => {
-                const rowObj = row as Record<string, unknown>;
-                const kind: "request" | "event" =
-                  "responseText" in rowObj || "requestHeadersJson" in rowObj
-                    ? "request"
-                    : "event";
-                void isRequest;
-                void insertIndex;
-                insertIndex += 1;
+        insert: () => ({
+          values: (row: unknown) => ({
+            onConflictDoNothing: async () => {
+              const rowObj = row as Record<string, unknown>;
+              const isDead =
+                "failureReason" in rowObj || "streamId" in rowObj;
+              if (isDead) {
+                if (options.failDead) {
+                  throw new Error("dead insert failed");
+                }
+                const kind =
+                  "requestPayloadJson" in rowObj || "responseText" in rowObj
+                    ? "dead-request"
+                    : "dead-event";
                 calls.push({ table: kind, row });
-              },
-            }),
-          };
-        },
+                return;
+              }
+              if (options.fail) {
+                throw new Error("db down");
+              }
+              const kind: "request" | "event" =
+                "responseText" in rowObj || "requestHeadersJson" in rowObj
+                  ? "request"
+                  : "event";
+              calls.push({ table: kind, row });
+            },
+          }),
+        }),
       };
       await fn(tx);
     },
@@ -115,16 +121,24 @@ test("processExtractedEntries ACKs missing payload without DB write", async () =
   assert.equal(calls.length, 0);
 });
 
-test("processExtractedEntries dead-letters unrecoverable transform failures", async () => {
-  const db = fakeDb({});
+test("processExtractedEntries parks transform failures into dead logs and ACKs", async () => {
+  const calls: InsertCall[] = [];
+  const db = fakeDb({ calls });
   const result = await processExtractedEntries(db, [
     makeEntry({ id: "bad-1", fields: { event_id: "only" } }),
   ]);
-  assert.deepEqual(result.idsToAck, []);
+  assert.deepEqual(result.idsToAck, ["bad-1"]);
   assert.equal(result.failed, 0);
-  assert.equal(result.deadLetters.length, 1);
-  assert.equal(result.deadLetters[0]?.id, "bad-1");
+  assert.equal(result.parkedDeadLogs, 1);
   assert.equal(result.loaded, 0);
+  const deadRequest = calls.find((call) => call.table === "dead-request");
+  const deadEvent = calls.find((call) => call.table === "dead-event");
+  assert.ok(deadRequest);
+  assert.ok(deadEvent);
+  const requestRow = deadRequest.row as Record<string, unknown>;
+  assert.equal(requestRow.eventId, "only");
+  assert.equal(requestRow.streamId, "bad-1");
+  assert.equal(requestRow.failureReason, "missing request_id");
 });
 
 test("processExtractedEntries loads and ACKs good entries", async () => {
@@ -151,4 +165,59 @@ test("processExtractedEntries does not ACK on load failure", async () => {
   assert.equal(result.failed, 1);
   assert.equal(result.transformed, 1);
   assert.equal(result.loaded, 0);
+  assert.equal(result.parkedDeadLogs, 0);
+});
+
+test("processExtractedEntries parks dead logs and ACKs after more than 3 failures", async () => {
+  const calls: InsertCall[] = [];
+  const db = fakeDb({ fail: true, calls });
+  const result = await processExtractedEntries(db, [
+    makeEntry({
+      id: "db-fail-4",
+      fields: goodFields(),
+      deliveryCount: 4,
+    }),
+  ]);
+  assert.deepEqual(result.idsToAck, ["db-fail-4"]);
+  assert.equal(result.failed, 0);
+  assert.equal(result.parkedDeadLogs, 1);
+  assert.equal(result.loaded, 0);
+  const deadRequest = calls.find((call) => call.table === "dead-request");
+  const deadEvent = calls.find((call) => call.table === "dead-event");
+  assert.ok(deadRequest);
+  assert.ok(deadEvent);
+  const requestRow = deadRequest.row as Record<string, unknown>;
+  assert.equal(requestRow.eventId, "evt-1");
+  assert.equal(requestRow.requestId, "req-1");
+  assert.equal(requestRow.organizationId, "org-1");
+  assert.equal(requestRow.streamId, "db-fail-4");
+  assert.equal(requestRow.failureCount, 4);
+  assert.equal(requestRow.failureReason, "db down");
+  assert.ok("requestPayloadJson" in requestRow);
+  assert.ok("responseText" in requestRow);
+  assert.equal("schemaVersion" in (deadEvent.row as object), false);
+});
+
+test("processExtractedEntries does not ACK when dead-log insert also fails", async () => {
+  const db = fakeDb({ fail: true, failDead: true });
+  const result = await processExtractedEntries(db, [
+    makeEntry({
+      id: "db-fail-park",
+      fields: goodFields(),
+      deliveryCount: 4,
+    }),
+  ]);
+  assert.deepEqual(result.idsToAck, []);
+  assert.equal(result.failed, 1);
+  assert.equal(result.parkedDeadLogs, 0);
+});
+
+test("processExtractedEntries does not ACK transform failures when dead-log insert fails", async () => {
+  const db = fakeDb({ failDead: true });
+  const result = await processExtractedEntries(db, [
+    makeEntry({ id: "bad-park", fields: { event_id: "only" } }),
+  ]);
+  assert.deepEqual(result.idsToAck, []);
+  assert.equal(result.failed, 1);
+  assert.equal(result.parkedDeadLogs, 0);
 });

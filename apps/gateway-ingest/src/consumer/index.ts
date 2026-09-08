@@ -10,6 +10,7 @@ export {
   type EnsureGroupResult,
 } from "./ensure-group";
 export {
+  attachDeliveryCounts,
   buildXAutoClaimArgs,
   buildXReadGroupArgs,
   readGroupEntries,

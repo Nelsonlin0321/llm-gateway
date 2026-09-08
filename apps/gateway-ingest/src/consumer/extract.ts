@@ -18,6 +18,11 @@ export type ExtractedStreamEntry = {
   payloadMissing?: boolean;
   /** How this entry was obtained. */
   source?: "autoclaim" | "xreadgroup";
+  /**
+   * Redis PEL delivery count (incremented by XREADGROUP / XAUTOCLAIM, not by us).
+   * New messages are 1. Reclaimed pending entries come from XPENDING.
+   */
+  deliveryCount?: number;
 };
 
 /**
@@ -43,6 +48,7 @@ function entryFromRaw(
   fields: string[] | null,
   source: ExtractedStreamEntry["source"],
 ): ExtractedStreamEntry {
+  const deliveryCount = source === "xreadgroup" ? 1 : undefined;
   if (fields === null) {
     return {
       stream,
@@ -50,6 +56,7 @@ function entryFromRaw(
       fields: {},
       payloadMissing: true,
       source,
+      deliveryCount,
     };
   }
   return {
@@ -57,6 +64,7 @@ function entryFromRaw(
     id,
     fields: fieldsArrayToRecord(fields),
     source,
+    deliveryCount,
   };
 }
 

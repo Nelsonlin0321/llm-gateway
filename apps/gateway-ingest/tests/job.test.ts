@@ -49,6 +49,10 @@ class FakeRedis implements RedisStreamClient {
     return 0;
   }
 
+  async xpending() {
+    return [];
+  }
+
   async xadd(): Promise<string> {
     return "1-0";
   }
@@ -74,11 +78,11 @@ test("runIngestJob ensures the consumer group then idle-exits when empty", async
     isStopping: () => false,
     processEntries: async () => ({
       idsToAck: [],
-      deadLetters: [],
       transformed: 0,
       loaded: 0,
       skippedMissingPayload: 0,
       failed: 0,
+      parkedDeadLogs: 0,
     }),
   });
 
@@ -103,11 +107,11 @@ test("runIngestJob treats BUSYGROUP as already created", async () => {
     isStopping: () => false,
     processEntries: async () => ({
       idsToAck: [],
-      deadLetters: [],
       transformed: 0,
       loaded: 0,
       skippedMissingPayload: 0,
       failed: 0,
+      parkedDeadLogs: 0,
     }),
   });
 

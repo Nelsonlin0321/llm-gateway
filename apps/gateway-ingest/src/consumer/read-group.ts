@@ -1,6 +1,7 @@
 import type {
   RedisStreamClient,
   XAutoClaimResult,
+  XPendingResult,
   XReadGroupResult,
 } from "../lib/redis-client";
 import {
@@ -158,6 +159,13 @@ export async function readGroupEntries(
 
     const claimed = extractAutoclaimEntries(input.streamKey, claimRaw);
     nextAutoclaimStartId = claimed.nextStartId;
+    await attachDeliveryCounts({
+      client: input.client,
+      streamKey: input.streamKey,
+      groupName: input.groupName,
+      consumerName: input.consumerName,
+      entries: claimed.entries,
+    });
     entries.push(...claimed.entries);
     claimedCount = claimed.entries.length;
   }
@@ -207,4 +215,50 @@ export async function readGroupEntries(
     newCount: 0,
     nextAutoclaimStartId,
   };
+}
+
+/** Copy Redis PEL delivery counts onto XAUTOCLAIM entries via XPENDING. */
+export async function attachDeliveryCounts(input: {
+  client: RedisStreamClient;
+  streamKey: string;
+  groupName: string;
+  consumerName: string;
+  entries: ExtractedStreamEntry[];
+}): Promise<void> {
+  if (input.entries.length === 0) {
+    return;
+  }
+
+  const startId = input.entries[0]?.id;
+  const endId = input.entries[input.entries.length - 1]?.id;
+  if (!startId || !endId) {
+    return;
+  }
+
+  let pending: XPendingResult;
+  try {
+    pending = await input.client.xpending(
+      input.streamKey,
+      input.groupName,
+      startId,
+      endId,
+      input.entries.length,
+      input.consumerName,
+    );
+  } catch (error) {
+    console.warn(
+      "[gateway-ingest] XPENDING failed; delivery counts unavailable",
+      { error },
+    );
+    return;
+  }
+
+  const counts = new Map<string, number>();
+  for (const row of pending) {
+    counts.set(row[0], row[3]);
+  }
+
+  for (const entry of input.entries) {
+    entry.deliveryCount = counts.get(entry.id) ?? 2;
+  }
 }

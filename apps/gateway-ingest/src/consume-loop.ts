@@ -4,7 +4,6 @@ import type { IngestConfig } from "./lib/config";
 import type { Db } from "./lib/db";
 import { createIdleExitTracker } from "./lib/idle-exit";
 import type { RedisStreamClient } from "./lib/redis-client";
-import { REQUEST_LOG_DLQ_STREAM } from "./lib/redis-keys";
 import {
   processExtractedEntries,
   type ProcessBatchResult,
@@ -103,29 +102,7 @@ export async function runConsumeLoop(
 
     const batch = await processEntries(input.db, result.entries);
 
-    const deadLetterIds: string[] = [];
-    for (const dead of batch.deadLetters) {
-      try {
-        await input.client.xadd(
-          REQUEST_LOG_DLQ_STREAM,
-          "*",
-          "source_id",
-          dead.id,
-          "reason",
-          dead.reason,
-          "payload_json",
-          JSON.stringify(dead.fields),
-        );
-        deadLetterIds.push(dead.id);
-      } catch (error) {
-        console.error(
-          "[gateway-ingest] failed to write dead-letter; leaving pending",
-          { id: dead.id, error },
-        );
-      }
-    }
-
-    const idsToAck = [...batch.idsToAck, ...deadLetterIds];
+    const idsToAck = batch.idsToAck;
     const ackResult = await ackEntries({
       client: input.client,
       streamKey: input.config.streamKey,
@@ -148,7 +125,7 @@ export async function runConsumeLoop(
       loaded: batch.loaded,
       skippedMissingPayload: batch.skippedMissingPayload,
       failed: batch.failed,
-      deadLettered: deadLetterIds.length,
+      parkedDeadLogs: batch.parkedDeadLogs,
       acked: ackResult.ok ? ackResult.acked : 0,
       ids: idsToAck,
     });
