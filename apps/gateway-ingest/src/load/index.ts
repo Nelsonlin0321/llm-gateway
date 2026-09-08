@@ -1,4 +1,12 @@
-export { loadRows, type LoadRowsInput, type LoadRowsResult } from "./insert";
+export {
+  loadDeadRows,
+  loadRows,
+  toDeadLogRows,
+  toDeadLogRowsFromFields,
+  type LoadDeadRowsInput,
+  type LoadRowsInput,
+  type LoadRowsResult,
+} from "./insert";
 export {
   buildCreateDayPartitionSql,
   buildCreateOrgPartitionSql,

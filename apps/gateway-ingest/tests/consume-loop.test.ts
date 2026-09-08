@@ -59,6 +59,10 @@ class FakeRedis implements RedisStreamClient {
     return ids.length;
   }
 
+  async xpending() {
+    return [];
+  }
+
   async xadd(): Promise<string> {
     this.xaddCalls += 1;
     return "1-0";
@@ -87,11 +91,11 @@ function entryReply(id: string): XReadGroupResult {
 function okBatch(ids: string[]): ProcessBatchResult {
   return {
     idsToAck: ids,
-    deadLetters: [],
     transformed: ids.length,
     loaded: ids.length,
     skippedMissingPayload: 0,
     failed: 0,
+    parkedDeadLogs: 0,
   };
 }
 

@@ -21,8 +21,8 @@
 - Pipeline modules:
   - `src/consumer/` — Redis read / extract / ack / ensure-group
   - `src/transform/` — stream fields → `request_log` + `event_log` rows (token paths + cost)
-  - `src/load/` — transactional inserts; auto-create day + org partitions on miss
-  - `src/process.ts` — batch orchestrator (only successful entries are ACKed)
+  - `src/load/` — transactional inserts; auto-create day + org partitions on miss; park exhausted rows into unpartitioned `dead_request_log` / `dead_event_log`
+  - `src/process.ts` — batch orchestrator (success and missing payload are ACKed; transform failures and deliveryCount > 3 park into dead_* tables then ACK; other load failures stay pending)
   - `src/consume-loop.ts` — drain until idle-exit, max duration, or empty non-blocking read
   - `src/job.ts` — one invocation (ensure group + drain)
   - `src/index.ts` — Worker `scheduled()` + `fetch` (`/health`, `/ready`)

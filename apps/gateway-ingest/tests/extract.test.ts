@@ -93,6 +93,7 @@ test("extractStreamEntries parses a multi-entry XREADGROUP reply", () => {
       provider: "openai",
     },
     source: "xreadgroup",
+    deliveryCount: 1,
   });
   assert.equal(entries[1]?.id, "1710000000001-0");
   assert.equal(entries[1]?.fields.provider, "anthropic");
@@ -127,6 +128,7 @@ test("extractStreamEntries skips malformed stream/entry rows", () => {
     id: "ok-id",
     fields: { k: "v" },
     source: "xreadgroup",
+    deliveryCount: 1,
   });
 });
 

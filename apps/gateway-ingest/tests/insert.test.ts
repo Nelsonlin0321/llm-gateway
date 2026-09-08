@@ -2,7 +2,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { loadRows } from "../src/load/insert.js";
+import {
+  loadDeadRows,
+  loadRows,
+  toDeadLogRows,
+  toDeadLogRowsFromFields,
+} from "../src/load/insert.js";
 import { clearEnsuredPartitionCache } from "../src/load/partitions.js";
 import type { Db } from "../src/lib/db.js";
 import type { NewEventLog, NewRequestLog } from "../src/db/schema.js";
@@ -189,4 +194,125 @@ test("loadRows fails when partition create fails", async () => {
   });
   const result = await loadRows(db, sampleRows());
   assert.equal(result.ok, false);
+});
+
+test("toDeadLogRows copies only identity, request/response, and failure meta", () => {
+  const sample = sampleRows();
+  const dead = toDeadLogRows({
+    ...sample,
+    streamId: "9-0",
+    failureReason: "db down",
+    failureCount: 4,
+  });
+
+  assert.deepEqual(
+    {
+      eventId: dead.requestLog.eventId,
+      requestId: dead.requestLog.requestId,
+      logDate: dead.requestLog.logDate,
+      organizationId: dead.requestLog.organizationId,
+      requestPayloadJson: dead.requestLog.requestPayloadJson,
+      responseText: dead.requestLog.responseText,
+      streamId: dead.requestLog.streamId,
+      failureReason: dead.requestLog.failureReason,
+      failureCount: dead.requestLog.failureCount,
+    },
+    {
+      eventId: "evt-1",
+      requestId: "req-1",
+      logDate: "2026-08-01",
+      organizationId: "org-1",
+      requestPayloadJson: null,
+      responseText: null,
+      streamId: "9-0",
+      failureReason: "db down",
+      failureCount: 4,
+    },
+  );
+  assert.equal("schemaVersion" in dead.eventLog, false);
+  assert.equal("provider" in dead.eventLog, false);
+  assert.equal(dead.eventLog.eventId, "evt-1");
+  assert.equal(dead.eventLog.streamId, "9-0");
+});
+
+test("toDeadLogRowsFromFields fills identity from stream fields with fallbacks", () => {
+  const dead = toDeadLogRowsFromFields({
+    fields: {
+      event_id: "evt-raw",
+      request_payload_json: "{\"a\":1}",
+      response_payload_json: "{\"b\":2}",
+      logged_at: "2026-03-17T12:00:00.000Z",
+    },
+    streamId: "8-0",
+    failureReason: "missing request_id",
+    failureCount: 1,
+  });
+
+  assert.equal(dead.requestLog.eventId, "evt-raw");
+  assert.equal(dead.requestLog.requestId, "");
+  assert.equal(dead.requestLog.organizationId, "");
+  assert.equal(dead.requestLog.logDate, "2026-03-17");
+  assert.equal(dead.requestLog.requestPayloadJson, "{\"a\":1}");
+  assert.equal(dead.requestLog.responseText, "{\"b\":2}");
+  assert.equal(dead.requestLog.streamId, "8-0");
+  assert.equal(dead.eventLog.eventId, "evt-raw");
+  assert.equal(dead.eventLog.streamId, "8-0");
+});
+
+test("toDeadLogRowsFromFields uses stream id when event_id is missing", () => {
+  const dead = toDeadLogRowsFromFields({
+    fields: {},
+    streamId: "missing-evt",
+    failureReason: "missing event_id",
+    failureCount: 1,
+  });
+  assert.equal(dead.requestLog.eventId, "missing-evt");
+  assert.equal(dead.eventLog.eventId, "missing-evt");
+});
+
+test("loadDeadRows inserts both dead tables", async () => {
+  const sample = sampleRows();
+  const dead = toDeadLogRows({
+    ...sample,
+    streamId: "9-0",
+    failureReason: "db down",
+    failureCount: 4,
+  });
+  const inserts: unknown[] = [];
+  const db = {
+    transaction: async (fn: (tx: unknown) => Promise<void>) => {
+      const tx = {
+        insert: () => ({
+          values: (row: unknown) => ({
+            onConflictDoNothing: async () => {
+              inserts.push(row);
+            },
+          }),
+        }),
+      };
+      await fn(tx);
+    },
+  } as unknown as Db;
+
+  const result = await loadDeadRows(db, dead);
+  assert.equal(result.ok, true);
+  assert.equal(inserts.length, 2);
+});
+
+test("loadDeadRows treats unique violations as success", async () => {
+  const sample = sampleRows();
+  const dead = toDeadLogRows({
+    ...sample,
+    streamId: "9-0",
+    failureReason: "db down",
+    failureCount: 4,
+  });
+  const db = {
+    transaction: async () => {
+      throw { code: "23505", message: "duplicate key" };
+    },
+  } as unknown as Db;
+
+  const result = await loadDeadRows(db, dead);
+  assert.equal(result.ok, true);
 });

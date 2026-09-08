@@ -1,6 +1,23 @@
-import type { NewEventLog, NewRequestLog } from "../db/schema";
-import { eventLog, requestLog } from "../db/schema";
+import type {
+  NewDeadEventLog,
+  NewDeadRequestLog,
+  NewEventLog,
+  NewRequestLog,
+} from "../db/schema";
+import {
+  deadEventLog,
+  deadRequestLog,
+  eventLog,
+  requestLog,
+} from "../db/schema";
 import type { Db } from "../lib/db";
+import {
+  parseBool,
+  parseNullableString,
+  parseOptionalString,
+  parseTimestamp,
+  toLogDate,
+} from "../transform/parse";
 import {
   ensureDayPartitions,
   isMissingPartitionError,
@@ -93,5 +110,120 @@ export async function loadRows(
       }
       return { ok: false, error: retryError };
     }
+  }
+}
+
+export type LoadDeadRowsInput = {
+  requestLog: NewDeadRequestLog;
+  eventLog: NewDeadEventLog;
+};
+
+export function toDeadLogRows(input: {
+  requestLog: NewRequestLog;
+  eventLog: NewEventLog;
+  streamId: string;
+  failureReason: string;
+  failureCount: number;
+}): LoadDeadRowsInput {
+  const deadLetteredAt = new Date();
+  return {
+    requestLog: {
+      eventId: input.requestLog.eventId,
+      requestId: input.requestLog.requestId,
+      logDate: input.requestLog.logDate,
+      organizationId: input.requestLog.organizationId,
+      requestPayloadJson: input.requestLog.requestPayloadJson,
+      responseText: input.requestLog.responseText,
+      streamId: input.streamId,
+      failureReason: input.failureReason,
+      failureCount: input.failureCount,
+      deadLetteredAt,
+    },
+    eventLog: {
+      eventId: input.eventLog.eventId,
+      requestId: input.eventLog.requestId,
+      logDate: input.eventLog.logDate,
+      organizationId: input.eventLog.organizationId,
+      streamId: input.streamId,
+      failureReason: input.failureReason,
+      failureCount: input.failureCount,
+      deadLetteredAt,
+    },
+  };
+}
+
+/**
+ * Build dead-log rows from raw stream fields when transform never produced
+ * mapped rows. Missing identity fields fall back so the insert can still land.
+ */
+export function toDeadLogRowsFromFields(input: {
+  fields: Record<string, string>;
+  streamId: string;
+  failureReason: string;
+  failureCount: number;
+}): LoadDeadRowsInput {
+  const loggedAt = parseTimestamp(input.fields.logged_at) ?? new Date();
+  const isStream = parseBool(input.fields.is_stream, false);
+  const eventId =
+    parseOptionalString(input.fields.event_id) ?? input.streamId;
+  const requestId = parseOptionalString(input.fields.request_id) ?? "";
+  const organizationId =
+    parseOptionalString(input.fields.organization_id) ?? "";
+  const logDate = toLogDate(loggedAt);
+  const requestPayloadJson = parseNullableString(
+    input.fields.request_payload_json,
+  );
+  const responseText = isStream
+    ? parseNullableString(input.fields.response_stream_text)
+    : parseNullableString(input.fields.response_payload_json);
+  const deadLetteredAt = new Date();
+  const identity = {
+    eventId,
+    requestId,
+    logDate,
+    organizationId,
+    streamId: input.streamId,
+    failureReason: input.failureReason,
+    failureCount: input.failureCount,
+    deadLetteredAt,
+  };
+  return {
+    requestLog: {
+      ...identity,
+      requestPayloadJson,
+      responseText,
+    },
+    eventLog: identity,
+  };
+}
+
+/**
+ * Insert one dead_request_log + dead_event_log pair.
+ *
+ * These tables are unpartitioned and have no FKs, so a poison live-table
+ * insert (missing org, missing partition after retry, etc.) can still land.
+ * Unique conflicts are treated as success so a later ACK retry is idempotent.
+ */
+export async function loadDeadRows(
+  db: Db,
+  input: LoadDeadRowsInput,
+): Promise<LoadRowsResult> {
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(deadRequestLog)
+        .values(input.requestLog)
+        .onConflictDoNothing();
+      await tx
+        .insert(deadEventLog)
+        .values(input.eventLog)
+        .onConflictDoNothing();
+    });
+    return { ok: true };
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: true };
+    }
+    return { ok: false, error };
   }
 }

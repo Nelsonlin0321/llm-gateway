@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { resolveRedisRest } from "../src/lib/redis-client.js";
+import {
+  parseXPendingResult,
+  resolveRedisRest,
+} from "../src/lib/redis-client.js";
 
 test("resolveRedisRest prefers explicit Upstash REST bindings", () => {
   const rest = resolveRedisRest({
@@ -34,4 +37,21 @@ test("resolveRedisRest returns null for local Redis without a password", () => {
 
 test("resolveRedisRest returns null when credentials are missing", () => {
   assert.equal(resolveRedisRest({}), null);
+});
+
+test("parseXPendingResult maps ranged XPENDING rows", () => {
+  const parsed = parseXPendingResult([
+    ["1-0", "consumer-1", 1200, 4],
+    ["2-0", "consumer-1", "30", "2"],
+    ["bad"],
+  ]);
+  assert.deepEqual(parsed, [
+    ["1-0", "consumer-1", 1200, 4],
+    ["2-0", "consumer-1", 30, 2],
+  ]);
+});
+
+test("parseXPendingResult returns empty for non-array replies", () => {
+  assert.deepEqual(parseXPendingResult(null), []);
+  assert.deepEqual(parseXPendingResult({}), []);
 });

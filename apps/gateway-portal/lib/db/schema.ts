@@ -362,6 +362,55 @@ export const eventLog = pgTable(
   ],
 );
 
+/**
+ * Minimal parking tables for rows that failed ingest more than 3 times.
+ * Unpartitioned and without FKs so poison payloads can still be stored.
+ */
+function deadLetterMetaColumns() {
+  return {
+    streamId: text().notNull(),
+    failureReason: text().notNull(),
+    failureCount: integer().notNull(),
+    deadLetteredAt: timestamp().defaultNow().notNull(),
+  };
+}
+
+export const deadRequestLog = pgTable(
+  "dead_request_log",
+  {
+    eventId: text().notNull(),
+    requestId: text().notNull(),
+    logDate: date().notNull(),
+    organizationId: text().notNull(),
+    requestPayloadJson: text(),
+    responseText: text(),
+    ...deadLetterMetaColumns(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.organizationId, table.eventId, table.logDate],
+    }),
+    index("dead_request_log_stream_id_idx").on(table.streamId),
+  ],
+);
+
+export const deadEventLog = pgTable(
+  "dead_event_log",
+  {
+    eventId: text().notNull(),
+    requestId: text().notNull(),
+    logDate: date().notNull(),
+    organizationId: text().notNull(),
+    ...deadLetterMetaColumns(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.organizationId, table.logDate, table.eventId],
+    }),
+    index("dead_event_log_stream_id_idx").on(table.streamId),
+  ],
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -460,6 +509,8 @@ export type Model = typeof models.$inferSelect;
 export type ChildKey = typeof childKeys.$inferSelect;
 export type RequestLog = typeof requestLog.$inferSelect;
 export type EventLog = typeof eventLog.$inferSelect;
+export type DeadRequestLog = typeof deadRequestLog.$inferSelect;
+export type DeadEventLog = typeof deadEventLog.$inferSelect;
 export type Organization = typeof organization.$inferSelect;
 export type Member = typeof member.$inferSelect;
 export type Invitation = typeof invitation.$inferSelect;
@@ -470,6 +521,8 @@ export type NewModel = typeof models.$inferInsert;
 export type NewChildKey = typeof childKeys.$inferInsert;
 export type NewRequestLog = typeof requestLog.$inferInsert;
 export type NewEventLog = typeof eventLog.$inferInsert;
+export type NewDeadRequestLog = typeof deadRequestLog.$inferInsert;
+export type NewDeadEventLog = typeof deadEventLog.$inferInsert;
 export type NewOrganization = typeof organization.$inferInsert;
 export type NewMember = typeof member.$inferInsert;
 export type NewInvitation = typeof invitation.$inferInsert;
