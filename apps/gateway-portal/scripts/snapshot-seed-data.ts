@@ -13,8 +13,11 @@
  * Default seed path: scripts/seed/snapshot.json
  *
  * Tables (export + seed order respects FKs):
- *   user → session, account, verification, llmProviders, childKeys
- *   llmProviders → models
+ *   user → session, account, member, invitation, auditLog, llmProviders, childKeys, eventLog
+ *   organization → member, invitation, auditLog, llmProviders, models, childKeys, requestLog, eventLog
+ *   llmProviders → models, eventLog
+ *   childKeys → eventLog
+ *   verification, deadRequestLog, deadEventLog (no FKs)
  */
 
 import "dotenv/config";
@@ -28,9 +31,15 @@ import {
   session,
   account,
   verification,
+  organization,
+  member,
+  invitation,
+  auditLog,
   llmProviders,
   models,
   childKeys,
+  requestLog,
+  eventLog,
 } from "../lib/db";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,12 +54,18 @@ const SNAPSHOT_VERSION = 1 as const;
  */
 const TABLE_SPECS = [
   { key: "user", table: user },
+  { key: "organization", table: organization },
+  { key: "verification", table: verification },
   { key: "session", table: session },
   { key: "account", table: account },
-  { key: "verification", table: verification },
+  { key: "member", table: member },
+  { key: "invitation", table: invitation },
+  { key: "auditLog", table: auditLog },
   { key: "llmProvider", table: llmProviders },
   { key: "models", table: models },
   { key: "childKeys", table: childKeys },
+  { key: "requestLog", table: requestLog },
+  { key: "eventLog", table: eventLog },
 ] as const;
 
 type TableKey = (typeof TABLE_SPECS)[number]["key"];
@@ -70,6 +85,9 @@ const DATE_FIELDS = new Set([
   "expiresAt",
   "accessTokenExpiresAt",
   "refreshTokenExpiresAt",
+  "loggedAt",
+  "startedAt",
+  "completedAt",
   "issuedAt", // integer epoch — leave as number; listed only for docs
 ]);
 
