@@ -15,6 +15,18 @@ CREATE TABLE "account" (
 	"updated_at" timestamp NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "audit_log" (
+	"id" text PRIMARY KEY NOT NULL,
+	"organization_id" text NOT NULL,
+	"actor_user_id" text,
+	"actor_email" text NOT NULL,
+	"action" text NOT NULL,
+	"entity" text NOT NULL,
+	"entity_id" text,
+	"metadata" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "child_key" (
 	"id" text PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,
@@ -26,8 +38,36 @@ CREATE TABLE "child_key" (
 	"organization_id" text NOT NULL,
 	"expires_at" timestamp,
 	"issued_at" integer NOT NULL,
+	"rate_limit_rpm" integer,
+	"monthly_budget_usd" double precision,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "dead_event_log" (
+	"event_id" text NOT NULL,
+	"request_id" text NOT NULL,
+	"log_date" date NOT NULL,
+	"organization_id" text NOT NULL,
+	"stream_id" text NOT NULL,
+	"failure_reason" text NOT NULL,
+	"failure_count" integer NOT NULL,
+	"dead_lettered_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "dead_event_log_organization_id_log_date_event_id_pk" PRIMARY KEY("organization_id","log_date","event_id")
+);
+--> statement-breakpoint
+CREATE TABLE "dead_request_log" (
+	"event_id" text NOT NULL,
+	"request_id" text NOT NULL,
+	"log_date" date NOT NULL,
+	"organization_id" text NOT NULL,
+	"request_payload_json" text,
+	"response_text" text,
+	"stream_id" text NOT NULL,
+	"failure_reason" text NOT NULL,
+	"failure_count" integer NOT NULL,
+	"dead_lettered_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "dead_request_log_organization_id_event_id_log_date_pk" PRIMARY KEY("organization_id","event_id","log_date")
 );
 --> statement-breakpoint
 CREATE TABLE "event_log" (
@@ -74,9 +114,8 @@ CREATE TABLE "event_log" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp NOT NULL,
 	CONSTRAINT "event_log_organization_id_log_date_event_id_pk" PRIMARY KEY("organization_id","log_date","event_id")
- ) PARTITION BY RANGE (log_date)
-;
-
+) PARTITION BY RANGE ("log_date");
+--> statement-breakpoint
 CREATE TABLE "invitation" (
 	"id" text PRIMARY KEY NOT NULL,
 	"organization_id" text NOT NULL,
@@ -146,8 +185,8 @@ CREATE TABLE "request_log" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp NOT NULL,
 	CONSTRAINT "request_log_organization_id_event_id_log_date_pk" PRIMARY KEY("organization_id","event_id","log_date")
- ) PARTITION BY RANGE (log_date);
-
+) PARTITION BY RANGE ("log_date");
+--> statement-breakpoint
 CREATE TABLE "session" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
@@ -182,6 +221,8 @@ CREATE TABLE "verification" (
 );
 --> statement-breakpoint
 ALTER TABLE "account" ADD CONSTRAINT "account_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_actor_user_id_user_id_fk" FOREIGN KEY ("actor_user_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "child_key" ADD CONSTRAINT "child_key_creator_id_user_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "child_key" ADD CONSTRAINT "child_key_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "event_log" ADD CONSTRAINT "event_log_provider_id_llm_provider_id_fk" FOREIGN KEY ("provider_id") REFERENCES "public"."llm_provider"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
@@ -199,7 +240,12 @@ ALTER TABLE "model" ADD CONSTRAINT "model_organization_id_organization_id_fk" FO
 ALTER TABLE "request_log" ADD CONSTRAINT "request_log_organization_id_organization_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organization"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "session" ADD CONSTRAINT "session_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "account_userId_idx" ON "account" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "audit_log_organization_id_idx" ON "audit_log" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "audit_log_created_at_idx" ON "audit_log" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "child_key_tags_idx" ON "child_key" USING gin ("tags");--> statement-breakpoint
+CREATE INDEX "child_key_organization_id_idx" ON "child_key" USING btree ("organization_id");--> statement-breakpoint
+CREATE INDEX "dead_event_log_stream_id_idx" ON "dead_event_log" USING btree ("stream_id");--> statement-breakpoint
+CREATE INDEX "dead_request_log_stream_id_idx" ON "dead_request_log" USING btree ("stream_id");--> statement-breakpoint
 CREATE INDEX "event_log_date_idx" ON "event_log" USING btree ("log_date");--> statement-breakpoint
 CREATE INDEX "tags_path_gin_idx" ON "event_log" USING gin ("child_key_tags_json" jsonb_path_ops);--> statement-breakpoint
 CREATE INDEX "metadata_path_gin_idx" ON "event_log" USING gin ("metadata_json" jsonb_path_ops);--> statement-breakpoint
@@ -209,8 +255,10 @@ CREATE UNIQUE INDEX "llm_provider_name_compatibility_type_key" ON "llm_provider"
 CREATE INDEX "llm_provider_creator_id_idx" ON "llm_provider" USING btree ("creator_id");--> statement-breakpoint
 CREATE INDEX "llm_provider_organization_id_idx" ON "llm_provider" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "llm_provider_name_fts_idx" ON "llm_provider" USING gin (to_tsvector('simple'::regconfig, "name"));--> statement-breakpoint
+CREATE UNIQUE INDEX "member_organizationId_userId_key" ON "member" USING btree ("organization_id","user_id");--> statement-breakpoint
 CREATE INDEX "member_organizationId_idx" ON "member" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "member_userId_idx" ON "member" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "model_organization_id_alias_key" ON "model" USING btree ("organization_id","alias");--> statement-breakpoint
 CREATE INDEX "model_provider_id_idx" ON "model" USING btree ("provider_id");--> statement-breakpoint
 CREATE INDEX "model_name_fts_idx" ON "model" USING gin (to_tsvector('simple'::regconfig, "name"));--> statement-breakpoint
 CREATE INDEX "request_log_date_idx" ON "request_log" USING btree ("log_date");--> statement-breakpoint

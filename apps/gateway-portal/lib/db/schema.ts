@@ -258,13 +258,10 @@ export const childKeys = pgTable(
 );
 
 /**
- * Request/response header + payload capture for gateway calls.
- * Primary key `id` is the gateway `request_id`.
- *
- * Intended PostgreSQL layout (custom SQL migration; Drizzle does not model this):
- *   PARTITION BY RANGE (log_date)
- *   Daily children PARTITION BY LIST (organization_id)
- *   Leaf: {table}_{YYYY_MM_DD}_{normalized_organization_id}
+ * Gateway request/response capture.
+ * PK includes logDate so RANGE partitioning is legal.
+ * PARTITION BY RANGE (log_date) is applied after generate by
+ * scripts/patch-partitioned-log-tables.ts (Drizzle cannot emit it).
  */
 export const requestLog = pgTable(
   "request_log",
@@ -293,6 +290,7 @@ export const requestLog = pgTable(
   ],
 );
 
+/** Same RANGE/LIST partition layout as `requestLog` (patched after generate). */
 export const eventLog = pgTable(
   "event_log",
   {
