@@ -24,9 +24,11 @@ import "dotenv/config";
 import { mkdir, writeFile, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { sql } from "drizzle-orm";
 
 import {
   db,
+  type Db,
   user,
   session,
   account,
@@ -91,6 +93,24 @@ const DATE_FIELDS = new Set([
   "issuedAt", // integer epoch — leave as number; listed only for docs
 ]);
 
+const PARTITIONED_LOG_TABLES = {
+  requestLog: "request_log",
+  eventLog: "event_log",
+} as const;
+
+type PartitionedLogTableKey = keyof typeof PARTITIONED_LOG_TABLES;
+type PartitionedParentTable =
+  (typeof PARTITIONED_LOG_TABLES)[PartitionedLogTableKey];
+
+/**
+ * `request_log_YYYY_MM_DD_` is the longest prefix (23 chars). PostgreSQL
+ * identifiers truncate at 63 bytes, so keep the org suffix within 40.
+ */
+const MAX_NORMALIZED_ORG_ID_LENGTH = 40;
+
+/** In-process cache: `table\0logDate\0organizationId` already ensured. */
+const ensuredPartitions = new Set<string>();
+
 function isIsoDateString(value: unknown): value is string {
   return (
     typeof value === "string" &&
@@ -132,6 +152,200 @@ function rehydrateRow(row: Record<string, unknown>): Record<string, unknown> {
 function resolveSeedPath(arg?: string): string {
   if (!arg) return DEFAULT_SEED_PATH;
   return path.isAbsolute(arg) ? arg : path.resolve(process.cwd(), arg);
+}
+
+function partitionCacheKey(
+  parent: PartitionedParentTable,
+  logDate: string,
+  organizationId: string,
+): string {
+  return `${parent}\0${logDate}\0${organizationId}`;
+}
+
+function isValidLogDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const d = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
+function normalizePartitionLogDate(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim().slice(0, 10);
+    return isValidLogDate(trimmed) ? trimmed : null;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString().slice(0, 10);
+  }
+  return null;
+}
+
+function isValidOrganizationId(value: string): boolean {
+  return value.trim().length > 0 && !value.includes("\0");
+}
+
+function normalizeOrganizationId(value: string): string {
+  if (!isValidOrganizationId(value)) {
+    throw new Error(`invalid organization_id for partition: ${value}`);
+  }
+  const normalized = value
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toLowerCase();
+  if (!normalized) {
+    throw new Error(`invalid organization_id for partition: ${value}`);
+  }
+  if (normalized.length > MAX_NORMALIZED_ORG_ID_LENGTH) {
+    throw new Error(
+      `organization_id too long for partition name (${normalized.length} > ${MAX_NORMALIZED_ORG_ID_LENGTH}): ${value}`,
+    );
+  }
+  return normalized;
+}
+
+function escapeSqlLiteral(value: string): string {
+  return value.replaceAll("'", "''");
+}
+
+function nextLogDate(logDate: string): string {
+  const d = new Date(`${logDate}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function dayPartitionTableName(
+  parent: PartitionedParentTable,
+  logDate: string,
+): string {
+  return `${parent}_${logDate.replaceAll("-", "_")}`;
+}
+
+function partitionTableName(
+  parent: PartitionedParentTable,
+  logDate: string,
+  organizationId: string,
+): string {
+  return `${dayPartitionTableName(parent, logDate)}_${normalizeOrganizationId(organizationId)}`;
+}
+
+function isAlreadyExistsError(error: unknown): boolean {
+  if (error == null || typeof error !== "object") {
+    return false;
+  }
+  const e = error as { code?: unknown; message?: unknown; cause?: unknown };
+  if (e.code === "42P07") {
+    return true;
+  }
+  if (/already exists/i.test(String(e.message ?? ""))) {
+    return true;
+  }
+  if (e.cause !== undefined) {
+    return isAlreadyExistsError(e.cause);
+  }
+  return false;
+}
+
+function buildCreateDayPartitionSql(
+  parent: PartitionedParentTable,
+  logDate: string,
+): string {
+  if (!isValidLogDate(logDate)) {
+    throw new Error(`invalid log_date for partition: ${logDate}`);
+  }
+  const name = dayPartitionTableName(parent, logDate);
+  const until = nextLogDate(logDate);
+  return (
+    `CREATE TABLE IF NOT EXISTS ${name} PARTITION OF ${parent} ` +
+    `FOR VALUES FROM ('${logDate}') TO ('${until}') ` +
+    `PARTITION BY LIST (organization_id)`
+  );
+}
+
+function buildCreateOrgPartitionSql(
+  parent: PartitionedParentTable,
+  logDate: string,
+  organizationId: string,
+): string {
+  if (!isValidLogDate(logDate)) {
+    throw new Error(`invalid log_date for partition: ${logDate}`);
+  }
+  if (!isValidOrganizationId(organizationId)) {
+    throw new Error(`invalid organization_id for partition: ${organizationId}`);
+  }
+  const dayName = dayPartitionTableName(parent, logDate);
+  const name = partitionTableName(parent, logDate, organizationId);
+  const bound = escapeSqlLiteral(organizationId.trim());
+  return (
+    `CREATE TABLE IF NOT EXISTS ${name} PARTITION OF ${dayName} ` +
+    `FOR VALUES IN ('${bound}')`
+  );
+}
+
+async function executeDdl(db: Db, ddl: string): Promise<void> {
+  try {
+    await db.execute(sql.raw(ddl));
+  } catch (error) {
+    if (isAlreadyExistsError(error)) {
+      return;
+    }
+    throw error;
+  }
+}
+
+async function ensureDayPartition(
+  db: Db,
+  parent: PartitionedParentTable,
+  logDate: string,
+  organizationId: string,
+): Promise<void> {
+  if (!isValidLogDate(logDate)) {
+    throw new Error(`invalid log_date for partition: ${logDate}`);
+  }
+  if (!isValidOrganizationId(organizationId)) {
+    throw new Error(`invalid organization_id for partition: ${organizationId}`);
+  }
+
+  const key = partitionCacheKey(parent, logDate, organizationId.trim());
+  if (ensuredPartitions.has(key)) {
+    return;
+  }
+
+  await executeDdl(db, buildCreateDayPartitionSql(parent, logDate));
+  await executeDdl(
+    db,
+    buildCreateOrgPartitionSql(parent, logDate, organizationId),
+  );
+  ensuredPartitions.add(key);
+}
+
+async function ensureLogPartitionsForRows(
+  key: PartitionedLogTableKey,
+  rows: Record<string, unknown>[],
+): Promise<void> {
+  const parent = PARTITIONED_LOG_TABLES[key];
+
+  for (const row of rows) {
+    const logDate = normalizePartitionLogDate(row.logDate);
+    if (!logDate) {
+      throw new Error(
+        `invalid ${key}.logDate for partition seed: ${String(row.logDate)}`,
+      );
+    }
+
+    const organizationId = row.organizationId;
+    if (
+      typeof organizationId !== "string" ||
+      !isValidOrganizationId(organizationId)
+    ) {
+      throw new Error(
+        `invalid ${key}.organizationId for partition seed: ${String(organizationId)}`,
+      );
+    }
+
+    await ensureDayPartition(db, parent, logDate, organizationId);
+  }
 }
 
 async function exportSnapshot(outPath: string): Promise<void> {
@@ -208,6 +422,10 @@ async function seedFromSnapshot(
     const prepared = rows.map((row) =>
       rehydrateRow(row as Record<string, unknown>),
     );
+
+    if (key === "requestLog" || key === "eventLog") {
+      await ensureLogPartitionsForRows(key, prepared);
+    }
 
     // Batch insert to stay under parameter limits on large tables
     const BATCH = 100;
