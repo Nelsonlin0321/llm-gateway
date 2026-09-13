@@ -102,19 +102,24 @@ function urlPathFromUrl(url: string): string {
 
 /** Keep filesystem-safe path segments (preserve dots and common model chars). */
 function sanitizeFileSegment(value: string): string {
-  return value
-    .replaceAll("/", "-")
-    .replaceAll("\\", "-")
-    .replace(/[^\w.\-@+]/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^[-_.]+|[-_.]+$/g, "") || "unknown";
+  return (
+    value
+      .replaceAll("/", "-")
+      .replaceAll("\\", "-")
+      .replace(/[^\w.\-@+]/g, "_")
+      .replace(/_+/g, "_")
+      .replace(/^[-_.]+|[-_.]+$/g, "") || "unknown"
+  );
 }
 
 /**
  * Alias is `provider/model` (e.g. minimax/MiniMax-M3).
  * Split on the first `/` only so model names can contain slashes if ever needed.
  */
-function splitAlias(alias: string): { providerName: string; modelName: string } {
+function splitAlias(alias: string): {
+  providerName: string;
+  modelName: string;
+} {
   const slash = alias.indexOf("/");
   if (slash === -1) {
     return { providerName: "unknown", modelName: alias || "unknown" };
