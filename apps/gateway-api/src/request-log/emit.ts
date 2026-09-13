@@ -48,7 +48,7 @@ export type EmitRequestLogResult =
   | { ok: true; streamId: string; fields: RequestLogV1Fields }
   | { ok: false; reason: "no_client" | "xadd_failed"; error?: unknown };
 
-const DEFAULT_REQUEST_LOG_STREAM_MAXLEN = 10_000;
+const DEFAULT_REQUEST_LOG_STREAM_MAXLEN = 64;
 
 export function getRequestLogStreamMaxLen(
   env: WorkerBindings = process.env,
@@ -103,6 +103,11 @@ export async function emitRequestLog(
   const streamKey = input.streamKey ?? REQUEST_LOG_STREAM;
   const xaddArgs = requestLogFieldsToXaddArgs(fields);
   const streamMaxLen = input.streamMaxLen ?? getRequestLogStreamMaxLen();
+  // Build the Redis `XADD` arguments in command order:
+  // - `MAXLEN ~ <count>` asks Redis to approximately trim the stream to this size
+  //   instead of growing forever.
+  // - `*` tells Redis to auto-generate the next stream entry ID.
+  // - `...xaddArgs` appends the flattened field/value pairs for this request log.
   const xaddCommandArgs: (string | Buffer | number)[] = streamMaxLen
     ? ["MAXLEN", "~", streamMaxLen, "*", ...xaddArgs]
     : ["*", ...xaddArgs];
