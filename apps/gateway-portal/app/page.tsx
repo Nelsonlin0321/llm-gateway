@@ -6,6 +6,7 @@ import {
   KeyRound,
   LockKeyhole,
   ShieldCheck,
+  Zap,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,6 @@ import {
 import {
   getSiteUrl,
   serializeJsonLd,
-  siteDescription,
   siteName,
   siteTagline,
   siteTitle,
@@ -28,7 +28,34 @@ import {
 import { getSessionOrNull } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 
+const homeDescription =
+  "Ultra-lightweight LLM gateway. A 372 KB Hono proxy on Bun — 108 KB gzip, about 10 ms of CPU at p50 measured on the Cloudflare Worker — plus a control plane for providers, child keys, and spend.";
+
+const speedFacts = [
+  {
+    value: "372 KB",
+    label: "Minified proxy",
+    detail: "Hono on Bun, six dependencies",
+  },
+  {
+    value: "108 KB",
+    label: "Gzip bundle",
+    detail: "Compressed bundle on the wire",
+  },
+  {
+    value: "9.6 ms",
+    label: "Cloudflare Worker",
+    detail: "Measured CPU, p50. P99 19 ms.",
+  },
+] as const;
+
 const capabilities = [
+  {
+    icon: Zap,
+    title: "Lightweight, fast proxy",
+    description:
+      "A small Hono app on Bun. No Express and no Node HTTP stack on the request path. Tokens stream straight through, and request logs never block the client.",
+  },
   {
     icon: LockKeyhole,
     title: "Provider vault",
@@ -56,24 +83,24 @@ const capabilities = [
 ] as const;
 
 const trustPoints = [
+  "Hono on Bun",
+  "Streaming pass-through",
   "Encrypted master credentials",
   "Signed child API keys",
-  "Audit-ready admin actions",
-  "Multi-provider routing",
 ] as const;
 
 export const metadata: Metadata = {
   title: {
     absolute: siteTitle,
   },
-  description: siteDescription,
+  description: homeDescription,
   alternates: {
     canonical: "/",
   },
   openGraph: {
     url: "/",
     title: siteTitle,
-    description: siteDescription,
+    description: homeDescription,
   },
 };
 
@@ -87,14 +114,14 @@ export default async function Home() {
         "@type": "WebSite",
         name: siteName,
         url: siteUrl,
-        description: siteDescription,
+        description: homeDescription,
       },
       {
         "@type": "SoftwareApplication",
         name: siteName,
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
-        description: siteDescription,
+        description: homeDescription,
         url: siteUrl,
         offers: {
           "@type": "Offer",
@@ -116,19 +143,38 @@ export default async function Home() {
         <section className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-center">
           <div className="space-y-6">
             <Badge variant="info" className="w-fit">
-              Enterprise LLM control plane
+              Ultra-lightweight · Hono on Bun
             </Badge>
             <div className="space-y-4">
               <h1 className="max-w-2xl font-heading text-[2.25rem] leading-[1.1] font-semibold tracking-[-0.035em] text-text-primary sm:text-[2.75rem]">
-                Operate every provider, key, and dollar of LLM spend from one
-                console.
+                A fast, lightweight gateway for every provider, key, and dollar
+                of LLM spend.
               </h1>
               <p className="max-w-xl text-base leading-7 text-text-secondary">
-                Open LLM Gateway is the management layer between your upstream
-                AI providers and every team that consumes them — credentials,
-                policies, and analytics in one place.
+                The proxy is a small Hono app on Bun. Measured on the
+                Cloudflare Worker, CPU time is about 10 ms at the median and
+                19 ms at p99. That is JavaScript time only — waiting on the
+                model is not included. Tokens stream straight back. The console
+                is where credentials, policies, and spend stay.
               </p>
             </div>
+            <dl className="grid max-w-xl grid-cols-3 gap-3">
+              {speedFacts.map((fact) => (
+                <div key={fact.label}>
+                  <dt className="text-[11px] font-medium tracking-[0.08em] text-text-tertiary uppercase">
+                    {fact.label}
+                  </dt>
+                  <dd className="mt-1">
+                    <span className="block font-heading text-xl font-semibold tracking-[-0.03em] text-text-primary tabular-nums sm:text-2xl">
+                      {fact.value}
+                    </span>
+                    <span className="mt-0.5 block text-[12px] leading-4 text-text-tertiary">
+                      {fact.detail}
+                    </span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
             <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
               <Link
                 href="/workspace"
@@ -231,11 +277,11 @@ export default async function Home() {
               Platform capabilities
             </p>
             <h2 className="font-heading text-xl font-semibold tracking-[-0.03em] text-text-primary sm:text-2xl">
-              Built for platform, security, and finance teams.
+              Light on the hot path. Strict everywhere else.
             </h2>
             <p className="text-sm leading-6 text-text-secondary">
-              Replace ad-hoc key sharing and spreadsheet cost tracking with a
-              governed control plane your organization can trust.
+              The data plane stays a thin Hono proxy. The console still governs
+              who can call which model, and what it costs.
             </p>
           </div>
 
@@ -269,11 +315,11 @@ export default async function Home() {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1.5">
               <h2 className="font-heading text-lg font-semibold tracking-[-0.02em] text-text-primary">
-                Ready to govern LLM access?
+                Put a fast proxy in front of your models.
               </h2>
               <p className="max-w-lg text-sm text-text-secondary">
-                Connect a provider, register models, and issue your first child
-                key in minutes.
+                Connect a provider, register models, and issue a child key. The
+                gateway stays a 372 KB Hono app on Bun.
               </p>
             </div>
             <Link
