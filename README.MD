@@ -81,7 +81,7 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 
 ## How light and how fast
 
-These figures are from the current `gateway-api` on Bun, measured locally on this machine and checked a second time. They do **not** include Postgres, Redis, or an upstream model. Latency tails move between runs; the table shows both.
+Size figures are from the current `gateway-api` on Bun, measured locally. The CPU figures below were measured on the deployed Cloudflare Worker. Neither includes Postgres, Redis, or the upstream model.
 
 | Measure | Result |
 | --- | --- |
@@ -89,7 +89,13 @@ These figures are from the current `gateway-api` on Bun, measured locally on thi
 | Declared runtime dependencies | 6 (`hono`, `jose`, `drizzle-orm`, `@upstash/redis`, `@neondatabase/serverless`, `dotenv`). `dotenv` is not imported by the proxy; Bun loads `.env` itself |
 | Minified Bun bundle | 372 KB (380,495 bytes), 108 KB gzip (110,319 bytes) |
 | Bun process RSS | about 64 MB at startup; about 84 MB after a few thousand loopback requests (an earlier run was about 88 MB) |
-| Gateway CPU on a successful call (HS256 verify, two AES-256-GCM decrypts, JSON rewrite) | 0.04 ms |
+| CPU time, measured on the Cloudflare Worker | p50 9.63 ms, p90 13.93 ms, p99 18.92 ms, p999 18.92 ms |
+
+These CPU figures were measured on the Cloudflare Worker, not on a local Bun process. Worker CPU time is JavaScript execution only. Waiting on Upstash or the model does not count. Cloudflare’s own range for auth plus payload parsing is about 10–20 ms, and a typical Worker is about 2.2 ms, so this sits with the heavier Workers rather than with an empty route. The tail is tight: p99 is about twice p50. p99 and p999 are the same value, which usually means the sample is still small and 18.92 ms is the worst point observed so far.
+
+The Workers Free plan caps CPU at 10 ms per request, so this median is already against that cap. On the Paid plan the default cap is 30 seconds, and 19 ms is far under it.
+
+A local loop of only the HS256 verify, two AES-256-GCM decrypts, and a 1.2 KB JSON rewrite measured 0.04 ms. That is not the production number. A real invocation also runs Hono, reads the provider body, and builds the request log.
 
 `/health` and rejected-key timings are not listed. They never touch Redis or a provider, so they do not measure a successful LLM call.
 
@@ -102,7 +108,7 @@ Compared with calling the provider directly from the same machine, a **warm** re
 3. Upstash `INCR` for the per-minute rate limit.
 4. Parse the body, Upstash `GET` for the provider and model, decrypt the master key, rewrite `model`.
 
-Those three Redis commands are sequential HTTPS calls (`@upstash/redis`), not a pipeline. The first request in a rate-limit minute also sends `EXPIRE` before the model lookup. Local CPU for the crypto and JSON work is the 0.04 ms above.
+Those three Redis commands are sequential HTTPS calls (`@upstash/redis`), not a pipeline. The first request in a rate-limit minute also sends `EXPIRE` before the model lookup. They show up in wall time, not in the Worker CPU figures above.
 
 Timed against the configured Upstash from this development machine (40 samples, probe keys deleted afterward):
 
