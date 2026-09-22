@@ -81,7 +81,7 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 
 ## How light and how fast
 
-Size figures are from the current `gateway-api` on Bun, measured locally. The CPU figures below were measured on the deployed Cloudflare Worker. Neither includes Postgres, Redis, or the upstream model.
+Size figures are from the current `gateway-api` on Bun, measured locally. Added latency is from the same machine: the real Hono proxy in front of a local mock, minus a direct call to that mock. Redis, Postgres, and the upstream model are not in that number.
 
 | Measure | Result |
 | --- | --- |
@@ -89,43 +89,27 @@ Size figures are from the current `gateway-api` on Bun, measured locally. The CP
 | Declared runtime dependencies | 6 (`hono`, `jose`, `drizzle-orm`, `@upstash/redis`, `@neondatabase/serverless`, `dotenv`). `dotenv` is not imported by the proxy; Bun loads `.env` itself |
 | Minified Bun bundle | 372 KB (380,495 bytes), 108 KB gzip (110,319 bytes) |
 | Bun process RSS | about 64 MB at startup; about 84 MB after a few thousand loopback requests (an earlier run was about 88 MB) |
-| CPU time, measured on the Cloudflare Worker | p50 9.63 ms, p90 13.93 ms, p99 18.92 ms, p999 18.92 ms |
+| Added latency | p50 **0.16 ms**, p99 **0.30 ms** |
 
-These CPU figures were measured on the Cloudflare Worker, not on a local Bun process. Worker CPU time is JavaScript execution only. Waiting on Upstash or the model does not count. Cloudflare’s own range for auth plus payload parsing is about 10–20 ms, and a typical Worker is about 2.2 ms, so this sits with the heavier Workers rather than with an empty route. The tail is tight: p99 is about twice p50. p99 and p999 are the same value, which usually means the sample is still small and 18.92 ms is the worst point observed so far.
+### Added latency
 
-The Workers Free plan caps CPU at 10 ms per request, so this median is already against that cap. On the Paid plan the default cap is 30 seconds, and 19 ms is far under it.
+```text
+overhead = latency(client → gateway → mock) − latency(client → mock)
+```
 
-A local loop of only the HS256 verify, two AES-256-GCM decrypts, and a 1.2 KB JSON rewrite measured 0.04 ms. That is not the production number. A real invocation also runs Hono, reads the provider body, and builds the request log.
+The script is [`apps/gateway-api/scripts/measure-gateway-overhead.ts`](apps/gateway-api/scripts/measure-gateway-overhead.ts) (`bun run bench:overhead` from `apps/gateway-api`). Both sides send the same non-streaming chat body. The gateway side is the real OpenAI proxy: Hono middleware, an in-memory HS256 verify, two AES-256-GCM decrypts, payload parse, model rewrite, `hono/proxy`, and JSON response capture. Provider resolution is a fixed in-memory record. Nothing connects to Redis or Postgres.
 
-`/health` and rejected-key timings are not listed. They never touch Redis or a provider, so they do not measure a successful LLM call.
+300 samples after 50 warmup pairs, on this machine:
 
-### Added latency on a successful call
+| Path | p50 | p90 | p99 |
+| --- | --- | --- | --- |
+| Client → mock | 0.048 ms | 0.081 ms | 0.754 ms |
+| Client → gateway → mock | 0.212 ms | 0.302 ms | 0.434 ms |
+| **Overhead (paired)** | **0.163 ms** | **0.220 ms** | **0.302 ms** |
 
-Compared with calling the provider directly from the same machine, a **warm** request (child key and model already in Redis) does this **before** the upstream fetch:
+The homepage rounds that overhead to **0.16 ms** at p50 and **0.30 ms** at p99.
 
-1. Verify the child-key JWT and decrypt the stored key.
-2. Upstash `GET` for the child key.
-3. Upstash `INCR` for the per-minute rate limit.
-4. Parse the body, Upstash `GET` for the provider and model, decrypt the master key, rewrite `model`.
-
-Those three Redis commands are sequential HTTPS calls (`@upstash/redis`), not a pipeline. The first request in a rate-limit minute also sends `EXPIRE` before the model lookup. They show up in wall time, not in the Worker CPU figures above.
-
-Timed against the configured Upstash from this development machine (40 samples, probe keys deleted afterward):
-
-| Successful-call overhead, before the provider is contacted | Result |
-| --- | --- |
-| One Upstash REST command | p50 68 ms (average 86 ms) |
-| Warm path: child-key `GET` + rate-limit `INCR` + model `GET` | p50 **241 ms**, p95 408 ms |
-| First request in the minute: those three plus `EXPIRE` | p50 **326 ms** |
-
-So a successful call from this machine adds about **a quarter of a second** before the LLM sees the request. Nearly all of that is the distance to Upstash, not Hono or Bun. Run the gateway in the same region as Upstash and the same three calls cost much less; the count does not change. A local TCP Redis would not help today: both Bun and Cloudflare Workers use the Upstash HTTP client.
-
-After the provider responds:
-
-- **Streaming:** chunks are copied through as they arrive. Time to first token is the provider’s time plus the overhead above, not another Redis wait.
-- **Non-streaming JSON:** the gateway holds the body until the provider finishes, then returns it. Total time is the provider’s time plus that same overhead.
-- The request-log `XADD` runs after the response and is not included above.
-- A cache miss replaces a `GET` with a Postgres query and a Redis `SET` (cache TTL is 30 days). That miss path was not timed. Each in-flight stream also keeps a copy of the SSE text, capped at 1,000,000 characters.
+Streaming still copies chunks through as they arrive. Non-streaming JSON is buffered until the mock body finishes, which is included in the times above. Each in-flight stream keeps a copy of the SSE text, capped at 1,000,000 characters. The request-log `XADD` is stubbed in this run, so a Redis write is not included.
 
 ---
 

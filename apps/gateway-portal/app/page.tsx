@@ -29,7 +29,7 @@ import { getSessionOrNull } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 
 const homeDescription =
-  "Ultra-lightweight LLM gateway. A 372 KB Hono proxy on Bun — 108 KB gzip, about 10 ms of CPU at p50 measured on the Cloudflare Worker — plus a control plane for providers, child keys, and spend.";
+  "Ultra-lightweight LLM gateway. A 372 KB Hono proxy on Bun — 108 KB gzip, about 0.16 ms of added latency at p50 versus a direct call — plus a control plane for providers, child keys, and spend.";
 
 const speedFacts = [
   {
@@ -43,9 +43,9 @@ const speedFacts = [
     detail: "Compressed bundle on the wire",
   },
   {
-    value: "9.6 ms",
-    label: "Cloudflare Worker",
-    detail: "Measured CPU, p50. P99 19 ms.",
+    value: "0.16 ms",
+    label: "Added latency",
+    detail: "P50 versus a direct mock. P99 0.30 ms.",
   },
 ] as const;
 
@@ -151,11 +151,11 @@ export default async function Home() {
                 of LLM spend.
               </h1>
               <p className="max-w-xl text-base leading-7 text-text-secondary">
-                The proxy is a small Hono app on Bun. Measured on the
-                Cloudflare Worker, CPU time is about 10 ms at the median and
-                19 ms at p99. That is JavaScript time only — waiting on the
-                model is not included. Tokens stream straight back. The console
-                is where credentials, policies, and spend stay.
+                The proxy is a small Hono app on Bun. Against a local mock it
+                adds about 0.16 ms at the median versus calling that mock
+                directly, and 0.30 ms at p99. Redis and the model are not in
+                that number. Tokens stream straight back. The console is where
+                credentials, policies, and spend stay.
               </p>
             </div>
             <dl className="grid max-w-xl grid-cols-3 gap-3">
