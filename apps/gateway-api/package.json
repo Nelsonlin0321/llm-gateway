@@ -12,6 +12,7 @@
     "test": "bun test tests --path-ignore-patterns='**/*.live.test.ts'",
     "test:openai-chat": "LIVE_PROXY_TEST=1 bun test tests/openai-chat-completions-*.live.test.ts",
     "test:anthropic-messages": "LIVE_PROXY_TEST=1 bun test tests/anthropic-messages-*.live.test.ts",
+    "bench:overhead": "bun scripts/measure-gateway-overhead.ts",
     "db:generate": "bun --env-file=.env drizzle-kit generate",
     "db:migrate": "bun --env-file=.env drizzle-kit migrate",
     "db:studio": "bun --env-file=.env drizzle-kit studio"
