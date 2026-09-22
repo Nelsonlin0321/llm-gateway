@@ -1,15 +1,16 @@
 # Open LLM Gateway
 
-### Self-hosted control plane for multi-provider LLM access
+### Ultra-lightweight, fast multi-provider LLM gateway
 
 <p align="center">
-  <strong>One gateway. Many providers. Org-scoped keys. Real cost analytics.</strong>
+  <strong>Hono on Bun.</strong> One gateway. Many providers. Org-scoped keys. Real cost analytics.
 </p>
 
 <p align="center">
   <a href="#features"><img src="https://img.shields.io/badge/status-active-brightgreen" alt="Status" /></a>
+  <a href="https://hono.dev"><img src="https://img.shields.io/badge/Hono-E36002?logo=hono&logoColor=white" alt="Hono" /></a>
+  <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-000000?logo=bun&logoColor=white" alt="Bun" /></a>
   <a href="#tech-stack"><img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript" /></a>
-  <a href="apps/gateway-api"><img src="https://img.shields.io/badge/proxy-Hono%20%2B%20Workers-orange" alt="Hono" /></a>
   <a href="apps/gateway-portal"><img src="https://img.shields.io/badge/portal-Next.js-black?logo=next.js" alt="Next.js" /></a>
   <a href="#license"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="License" /></a>
   <a href="#contributing"><img src="https://img.shields.io/badge/PRs-welcome-ff69b4" alt="PRs welcome" /></a>
@@ -19,7 +20,9 @@
   <img src="./readme.png" alt="Open LLM Gateway — self-hosted multi-provider control plane with child keys and cost analytics" width="800" />
 </p>
 
-Open LLM Gateway sits between your applications and upstream model providers. It gives you a **single place** to manage credentials, issue scoped child API keys, route by model alias, stream request telemetry, and explore spend — without shipping master provider keys to every teammate or microservice.
+Open LLM Gateway sits between your applications and upstream model providers. The proxy is a **small [Hono](https://hono.dev) app on [Bun](https://bun.sh)**: web-standard `Request` / `Response`, Bun’s native HTTP server, TypeScript with no compile step, and SSE pass-through so tokens stream straight back to the client. Request logs are best-effort and never sit on that path.
+
+Around that thin data plane you get a **single place** to manage credentials, issue scoped child API keys, route by model alias, and explore spend — without shipping master provider keys to every teammate or microservice. The same Hono app also deploys as a Cloudflare Worker.
 
 > **Star this repo** if you care about self-hosted LLM governance, multi-provider routing, and honest usage analytics. Stars help others discover the project.
 
@@ -29,6 +32,7 @@ Open LLM Gateway sits between your applications and upstream model providers. It
 
 | Pain | Open LLM Gateway |
 | ---- | ---------------- |
+| Heavy proxies and SaaS gateways on the hot path | **Ultra-lightweight** [Hono](https://hono.dev) app on [Bun](https://bun.sh) — tiny router, native HTTP, streaming pass-through |
 | Master API keys scattered across services | Encrypt master keys once; issue **child keys** to apps & teams |
 | Different SDKs / base URLs per vendor | Unified **OpenAI-compatible** + **Anthropic** proxy surfaces |
 | No ownership of tokens or cost | Model pricing, key tags, and **stacked analytics** by provider / model / tags |
@@ -42,7 +46,10 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 
 ## Features
 
-### Gateway API — high-performance proxy
+### Gateway API — ultra-lightweight Hono on Bun
+- [Hono](https://hono.dev) router served by [Bun](https://bun.sh) (`export default { fetch, port }`). No Express, no Node HTTP stack on the proxy path.
+- Local hot reload: `bun run dev:bun`. Install, tests, and scripts run on Bun.
+- Same app deploys to Cloudflare Workers (`bun run dev` / `bun run deploy`).
 - OpenAI-compatible routes: `POST /openai/*`, `GET /openai/v1/models`
 - Anthropic Messages routes: `POST /anthropic/*`, `GET /anthropic/v1/models`
 - Model routing via `provider/alias` (e.g. `deepseek/chat`), resolved **inside the child key’s organization**
@@ -79,7 +86,7 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
            │  Bearer sk_<child_key>
            ▼
    ┌───────────────────┐
-   │   gateway-api     │  Hono · Cloudflare Worker
+   │   gateway-api     │  Hono · Bun
    │   :8080           │  OpenAI + Anthropic proxy
    └─────────┬─────────┘
              │ XADD (async)
@@ -103,7 +110,7 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 
 | App | Role | Port | Runtime |
 | --- | ---- | ---- | ------- |
-| [`gateway-api`](./apps/gateway-api) | LLM proxy | `8080` | Cloudflare Worker (Hono) |
+| [`gateway-api`](./apps/gateway-api) | LLM proxy | `8080` | Hono on Bun (also Cloudflare Worker) |
 | [`gateway-portal`](./apps/gateway-portal) | Admin UI + schema owner | `3000` | Next.js |
 | [`gateway-ingest`](./apps/gateway-ingest) | Stream → Postgres | `8081` (dev) | Cloudflare Worker (`scheduled()`) |
 
@@ -147,7 +154,8 @@ Then: **Providers** → **Models** → **Child keys**. Copy the `sk_…` secret 
 cd apps/gateway-api
 bun install
 # REDIS_URL must be an Upstash URL (password is used as the REST token)
-bun run dev                 # wrangler dev on http://localhost:8080
+bun run dev:bun             # Bun hot-reload on http://localhost:8080
+# or: bun run dev           # wrangler dev (Cloudflare Worker) on the same port
 ```
 
 Proxy: [http://localhost:8080](http://localhost:8080)
@@ -312,7 +320,7 @@ Workspace overview cards reuse the same query layer for spend-by-provider, reque
 ```
 llm-gateway/
 ├── apps/
-│   ├── gateway-api/       # Hono proxy (Cloudflare Worker)
+│   ├── gateway-api/       # Ultra-light Hono proxy on Bun (also Cloudflare Worker)
 │   ├── gateway-portal/    # Next.js admin + analytics + schema owner
 │   └── gateway-ingest/    # Redis Stream → Postgres Cron Worker
 ├── docker-compose.yml     # Local Postgres (+ optional TCP Redis)
@@ -355,7 +363,7 @@ Portal schema changes: edit `apps/gateway-portal/lib/db/schema.ts` → `npm run 
 
 | Layer | Stack |
 | ----- | ----- |
-| Proxy | [Hono](https://hono.dev), Cloudflare Workers, TypeScript, [@upstash/redis](https://github.com/upstash/redis-js) |
+| Proxy | [Hono](https://hono.dev) on [Bun](https://bun.sh) — small router, native HTTP, TypeScript with no compile step. Same app deploys as a Cloudflare Worker. [@upstash/redis](https://github.com/upstash/redis-js) |
 | Portal | Next.js App Router, Better Auth (organization plugin), shadcn/ui, Tailwind, Drizzle |
 | Ingest | Cloudflare Workers Cron, Redis Streams, Drizzle, Postgres partitions |
 | Data | PostgreSQL · Redis (cache + streams) |
@@ -443,6 +451,6 @@ limitations under the License.
 ---
 
 <p align="center">
-  <strong>Open LLM Gateway</strong> — one gateway, many providers, governed keys, observable spend.<br />
+  <strong>Open LLM Gateway</strong> — ultra-lightweight Hono on Bun. One gateway, many providers, governed keys, observable spend.<br />
   If this saves you a weekend of plumbing multi-provider LLM access, please <strong>★ star the repo</strong>.
 </p>
