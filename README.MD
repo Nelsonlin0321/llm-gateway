@@ -32,7 +32,7 @@ Around that thin data plane you get a **single place** to manage credentials, is
 
 | Pain | Open LLM Gateway |
 | ---- | ---------------- |
-| Heavy proxies and SaaS gateways on the hot path | **Ultra-lightweight** [Hono](https://hono.dev) app on [Bun](https://bun.sh) — tiny router, native HTTP, streaming pass-through |
+| Heavy proxies and SaaS gateways on the hot path | **Ultra-lightweight** [Hono](https://hono.dev) app on [Bun](https://bun.sh) — tiny router, native HTTP, streaming pass-through. [Measured size and latency](#how-light-and-how-fast) |
 | Master API keys scattered across services | Encrypt master keys once; issue **child keys** to apps & teams |
 | Different SDKs / base URLs per vendor | Unified **OpenAI-compatible** + **Anthropic** proxy surfaces |
 | No ownership of tokens or cost | Model pricing, key tags, and **stacked analytics** by provider / model / tags |
@@ -76,6 +76,50 @@ If you want something between a raw reverse proxy and a full SaaS gateway (OpenR
 - Transform → token/cost calculation → Postgres load
 - Daily range partitions plus per-org list leaves for `event_log` / `request_log`
 - Mock seed scripts for local analytics demos
+
+---
+
+## How light and how fast
+
+These figures are from the current `gateway-api` on Bun, measured locally on this machine and checked a second time. They do **not** include Postgres, Redis, or an upstream model. Latency tails move between runs; the table shows both.
+
+| Measure | Result |
+| --- | --- |
+| App source | 34 TypeScript files, 3,773 lines |
+| Declared runtime dependencies | 6 (`hono`, `jose`, `drizzle-orm`, `@upstash/redis`, `@neondatabase/serverless`, `dotenv`). `dotenv` is not imported by the proxy; Bun loads `.env` itself |
+| Minified Bun bundle | 372 KB (380,495 bytes), 108 KB gzip (110,319 bytes) |
+| Bun process RSS | about 64 MB at startup; about 84 MB after a few thousand loopback requests (an earlier run was about 88 MB) |
+| Gateway CPU on a successful call (HS256 verify, two AES-256-GCM decrypts, JSON rewrite) | 0.04 ms |
+
+`/health` and rejected-key timings are not listed. They never touch Redis or a provider, so they do not measure a successful LLM call.
+
+### Added latency on a successful call
+
+Compared with calling the provider directly from the same machine, a **warm** request (child key and model already in Redis) does this **before** the upstream fetch:
+
+1. Verify the child-key JWT and decrypt the stored key.
+2. Upstash `GET` for the child key.
+3. Upstash `INCR` for the per-minute rate limit.
+4. Parse the body, Upstash `GET` for the provider and model, decrypt the master key, rewrite `model`.
+
+Those three Redis commands are sequential HTTPS calls (`@upstash/redis`), not a pipeline. The first request in a rate-limit minute also sends `EXPIRE` before the model lookup. Local CPU for the crypto and JSON work is the 0.04 ms above.
+
+Timed against the configured Upstash from this development machine (40 samples, probe keys deleted afterward):
+
+| Successful-call overhead, before the provider is contacted | Result |
+| --- | --- |
+| One Upstash REST command | p50 68 ms (average 86 ms) |
+| Warm path: child-key `GET` + rate-limit `INCR` + model `GET` | p50 **241 ms**, p95 408 ms |
+| First request in the minute: those three plus `EXPIRE` | p50 **326 ms** |
+
+So a successful call from this machine adds about **a quarter of a second** before the LLM sees the request. Nearly all of that is the distance to Upstash, not Hono or Bun. Run the gateway in the same region as Upstash and the same three calls cost much less; the count does not change. A local TCP Redis would not help today: both Bun and Cloudflare Workers use the Upstash HTTP client.
+
+After the provider responds:
+
+- **Streaming:** chunks are copied through as they arrive. Time to first token is the provider’s time plus the overhead above, not another Redis wait.
+- **Non-streaming JSON:** the gateway holds the body until the provider finishes, then returns it. Total time is the provider’s time plus that same overhead.
+- The request-log `XADD` runs after the response and is not included above.
+- A cache miss replaces a `GET` with a Postgres query and a Redis `SET` (cache TTL is 30 days). That miss path was not timed. Each in-flight stream also keeps a copy of the SSE text, capped at 1,000,000 characters.
 
 ---
 
