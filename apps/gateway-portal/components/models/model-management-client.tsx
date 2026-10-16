@@ -390,12 +390,13 @@ export function ModelManagementClient({
           modalState?.mode === "edit"
             ? `edit-${modalState.model.id}`
             : modalState?.mode === "create"
-              ? "create"
+              ? `create-${query.providerId ?? "all"}`
               : "closed"
         }
         open={modalState !== null}
         mode={modalState?.mode ?? "create"}
         providers={providers}
+        defaultProviderId={query.providerId}
         model={modalState?.mode === "edit" ? modalState.model : undefined}
         isSubmitting={isSubmitting}
         onClose={() => {
