@@ -32,6 +32,8 @@ type ModelFormModalProps = {
   open: boolean;
   providers: ProviderSummary[];
   model?: ModelListItem;
+  /** Create-mode selection when the models page is filtered by provider. */
+  defaultProviderId?: string;
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (
@@ -75,12 +77,15 @@ export function ModelFormModal({
   open,
   providers,
   model,
+  defaultProviderId,
   isSubmitting,
   onClose,
   onSubmit,
 }: ModelFormModalProps) {
   const initialProvider =
-    providers.find((item) => item.id === model?.providerId) ?? providers[0];
+    providers.find((item) => item.id === model?.providerId) ??
+    providers.find((item) => item.id === defaultProviderId) ??
+    providers[0];
   const [providerId, setProviderId] = useState(initialProvider?.id ?? "");
   const providerName =
     providers.find((item) => item.id === providerId)?.name ??

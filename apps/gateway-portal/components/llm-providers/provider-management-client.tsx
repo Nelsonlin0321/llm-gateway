@@ -69,7 +69,6 @@ export function ProviderManagementClient({
   role = null,
 }: ProviderManagementClientProps) {
   const router = useRouter();
-  const modelsHref = `/org/${organizationId}/models`;
   const [modalState, setModalState] = useState<ModalState>(null);
   const [providerPendingDelete, setProviderPendingDelete] =
     useState<ProviderListItem | null>(null);
@@ -287,7 +286,7 @@ export function ProviderManagementClient({
 
                   <div className="flex shrink-0 flex-wrap items-center gap-1.5 self-start lg:self-center">
                     <Link
-                      href={modelsHref}
+                      href={`/org/${organizationId}/models?provider=${encodeURIComponent(provider.id)}`}
                       className={cn(
                         buttonVariants({ variant: "outline", size: "sm" }),
                       )}
