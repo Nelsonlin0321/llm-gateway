@@ -6,6 +6,15 @@ const positivePriceSchema = z.coerce
   .number({ error: "Enter a valid number." })
   .positive("Price must be a positive number.");
 
+/** Cached input can be free. Blank input stays invalid; `0` is allowed. */
+const nonNegativePriceSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim() === "" ? undefined : value,
+  z.coerce
+    .number({ error: "Enter a valid number." })
+    .nonnegative("Price must be zero or greater."),
+);
+
 const modelNameSchema = z
   .string()
   .trim()
@@ -28,7 +37,7 @@ const modelFieldsSchema = z.object({
   alias: modelAliasSuffixSchema,
   inputPrice: positivePriceSchema,
   outputPrice: positivePriceSchema,
-  inputCachePrice: positivePriceSchema,
+  inputCachePrice: nonNegativePriceSchema,
 });
 
 export const createModelInputSchema = modelFieldsSchema.extend({

@@ -54,6 +54,39 @@ test("createModelInputSchema requires positive prices and non-empty names", () =
   });
   assert.equal(zeroPrice.success, false);
 
+  const zeroCachePrice = createModelInputSchema.safeParse({
+    providerId: "provider-1",
+    name: "gpt-4.1",
+    alias: "alias",
+    inputPrice: "2.5",
+    outputPrice: 10,
+    inputCachePrice: "0",
+  });
+  assert.equal(zeroCachePrice.success, true);
+  if (zeroCachePrice.success) {
+    assert.equal(zeroCachePrice.data.inputCachePrice, 0);
+  }
+
+  const blankCachePrice = createModelInputSchema.safeParse({
+    providerId: "provider-1",
+    name: "gpt-4.1",
+    alias: "alias",
+    inputPrice: 1,
+    outputPrice: 1,
+    inputCachePrice: "  ",
+  });
+  assert.equal(blankCachePrice.success, false);
+
+  const negativeCachePrice = createModelInputSchema.safeParse({
+    providerId: "provider-1",
+    name: "gpt-4.1",
+    alias: "alias",
+    inputPrice: 1,
+    outputPrice: 1,
+    inputCachePrice: -0.01,
+  });
+  assert.equal(negativeCachePrice.success, false);
+
   const negativePrice = createModelInputSchema.safeParse({
     providerId: "provider-1",
     name: "gpt-4.1",
@@ -164,16 +197,19 @@ test("parseModelListSearchParams reads provider, compatibility, and name query",
   );
 });
 
-test("updateModelInputSchema requires id and positive prices", () => {
+test("updateModelInputSchema requires id and allows a zero cache price", () => {
   const valid = validateUpdateModelInput({
     id: "model-1",
     name: "gpt-4.1",
     alias: "gpt-4.1-mini",
     inputPrice: 1.5,
     outputPrice: 6,
-    inputCachePrice: 0.75,
+    inputCachePrice: 0,
   });
   assert.equal(valid.success, true);
+  if (valid.success) {
+    assert.equal(valid.data.inputCachePrice, 0);
+  }
 
   const missingId = updateModelInputSchema.safeParse({
     name: "gpt-4.1",
