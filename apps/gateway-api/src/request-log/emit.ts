@@ -3,6 +3,7 @@ import { getRedisClient, type RedisCacheClient } from "../lib/redis-client.js";
 import { REQUEST_LOG_STREAM } from "../lib/redis-keys.js";
 import { buildRequestLogFields, requestLogFieldsToXaddArgs } from "./build.js";
 import type {
+  CaptureLevel,
   RequestLogResponseCapture,
   RequestLogV1Fields,
 } from "./schema.js";
@@ -39,6 +40,8 @@ export type EmitRequestLogInput = {
   proxyContext: UpstreamProxyContext;
   // requestHeaders: Headers | Record<string, string>;
   response: RequestLogResponseCapture;
+  /** Overrides `REQUEST_LOG_CAPTURE_LEVEL` for the four body fields. */
+  captureLevel?: CaptureLevel;
   streamKey?: string;
   streamMaxLen?: number;
   client?: RedisCacheClient | null;
@@ -97,6 +100,7 @@ export async function emitRequestLog(
     requestPayloadJson: ctx.requestPayloadJson,
     metadataJson: ctx.metadataJson,
     upstreamRequestPayloadJson: ctx.upstreamBody,
+    captureLevel: input.captureLevel,
     response: input.response,
   });
 

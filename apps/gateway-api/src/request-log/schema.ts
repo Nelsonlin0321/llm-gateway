@@ -9,6 +9,9 @@ export const REQUEST_LOG_EVENT_TYPE = "request_log" as const;
 
 export type ResponseMode = "json" | "sse";
 
+/** `REQUEST_LOG_CAPTURE_LEVEL`: how much of the four body fields to store. */
+export type CaptureLevel = "metadata" | "redacted" | "full";
+
 /**
  * Flat Redis Stream entry fields. Nested values are JSON-stringified.
  * Optional fields are omitted from the stream entry when absent.
@@ -129,6 +132,13 @@ export type BuildRequestLogInput = {
   metadataJson: string;
   /** Rewritten body actually sent upstream (stringified). */
   upstreamRequestPayloadJson: string;
+
+  /**
+   * Policy for `request_payload_json`, `upstream_request_payload_json`,
+   * `response_payload_json`, and `response_stream_text`.
+   * Defaults to `REQUEST_LOG_CAPTURE_LEVEL` (`full` when unset or invalid).
+   */
+  captureLevel?: CaptureLevel;
 
   response: RequestLogResponseCapture;
 };
