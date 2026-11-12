@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 
 import {
+  applyPayloadCapture,
+  getCaptureLevel,
   // sanitizeHeaders,
   stringifyChildKeyTags,
 } from "./capture.js";
@@ -18,6 +20,23 @@ export function buildRequestLogFields(
   input: BuildRequestLogInput,
 ): RequestLogV1Fields {
   const response = input.response;
+  const captureLevel = input.captureLevel ?? getCaptureLevel();
+  const requestPayloadJson = applyPayloadCapture(
+    input.requestPayloadJson,
+    captureLevel,
+  );
+  const upstreamRequestPayloadJson = applyPayloadCapture(
+    input.upstreamRequestPayloadJson,
+    captureLevel,
+  );
+  const responsePayloadJson = applyPayloadCapture(
+    response.responsePayloadJson,
+    captureLevel,
+  );
+  const responseStreamText = applyPayloadCapture(
+    response.responseStreamText,
+    captureLevel,
+  );
 
   const fields: RequestLogV1Fields = {
     schema_version: REQUEST_LOG_SCHEMA_VERSION,
@@ -62,17 +81,17 @@ export function buildRequestLogFields(
     duration_ms: String(response.durationMs),
   };
 
-  if (input.requestPayloadJson !== undefined) {
-    fields.request_payload_json = input.requestPayloadJson;
+  if (requestPayloadJson !== undefined) {
+    fields.request_payload_json = requestPayloadJson;
   }
-  if (input.upstreamRequestPayloadJson !== undefined) {
-    fields.upstream_request_payload_json = input.upstreamRequestPayloadJson;
+  if (upstreamRequestPayloadJson !== undefined) {
+    fields.upstream_request_payload_json = upstreamRequestPayloadJson;
   }
-  if (response.responsePayloadJson !== undefined) {
-    fields.response_payload_json = response.responsePayloadJson;
+  if (responsePayloadJson !== undefined) {
+    fields.response_payload_json = responsePayloadJson;
   }
-  if (response.responseStreamText !== undefined) {
-    fields.response_stream_text = response.responseStreamText;
+  if (responseStreamText !== undefined) {
+    fields.response_stream_text = responseStreamText;
   }
   if (response.responseId) {
     fields.response_id = response.responseId;

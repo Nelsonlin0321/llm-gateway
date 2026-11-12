@@ -18,6 +18,7 @@ export type WorkerBindings = {
   UPSTREAM_TIMEOUT_MS?: string;
   CHILD_KEY_RATE_LIMIT_RPM?: string;
   GATEWAY_CORS_ORIGINS?: string;
+  REQUEST_LOG_CAPTURE_LEVEL?: string;
   REQUEST_LOG_STREAM_MAXLEN?: string;
   NODE_ENV?: string;
 };

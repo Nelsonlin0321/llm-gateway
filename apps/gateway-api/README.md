@@ -155,6 +155,7 @@ Optional instead of (or in addition to) `REDIS_URL`:
 | `REQUEST_BODY_LIMIT_BYTES` | `1048576` | Max proxy request body |
 | `UPSTREAM_TIMEOUT_MS` | `120000` | Upstream fetch timeout |
 | `CHILD_KEY_RATE_LIMIT_RPM` | `600` | Default child-key requests per minute (`0` disables) |
+| `REQUEST_LOG_CAPTURE_LEVEL` | `full` | `metadata` omits bodies, `redacted` truncates them to 2048 characters, `full` stores them. Applies to `request_payload_json`, `upstream_request_payload_json`, `response_payload_json`, and `response_stream_text` |
 | `REQUEST_LOG_STREAM_MAXLEN` | `10000` | Approximate max stream length (`XADD MAXLEN ~`) |
 | `GATEWAY_CORS_ORIGINS` | *(empty)* | Comma-separated CORS allowlist; empty disables CORS |
 
@@ -278,7 +279,8 @@ bun run scripts/bulk-proxy-test.ts
 
 - Master keys decrypted only in-process for the upstream hop.  
 - Child keys are JWTs (`sk_` prefix); rotate via portal.  
-- Keep `REQUEST_LOG_STREAM_MAXLEN` modest in production (`vars` in `wrangler.jsonc`).  
+- Keep `REQUEST_LOG_STREAM_MAXLEN` modest in production (`vars` in `wrangler.jsonc`).
+- Set `REQUEST_LOG_CAPTURE_LEVEL=metadata` or `redacted` where full request and response bodies should not be kept. Unset stores full bodies. `redacted` keeps the first 2048 characters, so token usage at the end of a long stream may be cut off before ingest reads it.  
 - Share `JWT_SIGNING_SECRET` and `API_ENCRYPT_KEY` only with portal (and secrets manager).
 
 ---

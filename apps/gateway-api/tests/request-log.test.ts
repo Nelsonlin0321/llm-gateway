@@ -3,9 +3,13 @@ import test from "node:test";
 
 import type { RedisCacheClient } from "../src/lib/redis-client.js";
 import { REQUEST_LOG_STREAM } from "../src/lib/redis-keys.js";
+import { getRequestLogStreamMaxLen } from "../src/request-log/emit.js";
 import {
+  applyPayloadCapture,
   emitRequestLog,
+  getCaptureLevel,
   instrumentUpstreamResponse,
+  parseCaptureLevel,
   parseErrorFieldsFromJsonText,
   parseResponseIdFromJsonText,
   parseResponseIdFromSseText,
@@ -159,6 +163,38 @@ function fieldsFromXaddArgs(
   return out;
 }
 
+const BODY_FIELDS = [
+  "request_payload_json",
+  "upstream_request_payload_json",
+  "response_payload_json",
+  "response_stream_text",
+] as const;
+
+test("parseCaptureLevel defaults invalid values to full", () => {
+  assert.equal(parseCaptureLevel(undefined), "full");
+  assert.equal(parseCaptureLevel("  "), "full");
+  assert.equal(parseCaptureLevel("nope"), "full");
+  assert.equal(parseCaptureLevel(" Metadata "), "metadata");
+  assert.equal(parseCaptureLevel("REDACTED"), "redacted");
+  assert.equal(getCaptureLevel({}), "full");
+  assert.equal(
+    getCaptureLevel({ REQUEST_LOG_CAPTURE_LEVEL: "metadata" }),
+    "metadata",
+  );
+});
+
+test("applyPayloadCapture omits, truncates, or keeps a body", () => {
+  const long = "x".repeat(2_050);
+  assert.equal(applyPayloadCapture(long, "metadata"), undefined);
+  assert.equal(applyPayloadCapture(undefined, "full"), undefined);
+  assert.equal(applyPayloadCapture("short", "redacted"), "short");
+  assert.equal(
+    applyPayloadCapture(long, "redacted"),
+    `${"x".repeat(2_048)}…[truncated]`,
+  );
+  assert.equal(applyPayloadCapture(long, "full"), long);
+});
+
 test("sanitizeHeaders strips authorization and api-key headers", () => {
   const sanitized = sanitizeHeaders(
     new Headers({
@@ -217,6 +253,7 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
       "content-type": "application/json",
     }),
     response: baseResponse(),
+    captureLevel: "full",
     client: redis,
   });
 
@@ -230,7 +267,7 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
   assert.deepEqual(redis.xaddCalls[0]!.args.slice(0, 4), [
     "MAXLEN",
     "~",
-    10_000,
+    getRequestLogStreamMaxLen(),
     "*",
   ]);
 
@@ -253,6 +290,95 @@ test("emitRequestLog XADDs response fields and never logs secrets", async () => 
   assert.equal(joined.includes("sk-provider-secret"), false);
   assert.equal(joined.includes("encrypted-must-not-log"), false);
   assert.equal(joined.includes("user@example.com"), true);
+});
+
+test("REQUEST_LOG_CAPTURE_LEVEL controls the four body fields", async () => {
+  const long = "y".repeat(3_000);
+  const streamText = `${long}stream`;
+  const redis = new FakeStreamRedis();
+  const response = baseResponse({
+    responsePayloadJson: `${long}response`,
+    responseStreamText: streamText,
+  });
+  const proxyContext = buildProxyContext({
+    requestPayloadJson: `${long}request`,
+    upstreamBody: `${long}upstream`,
+  });
+
+  const metadata = await emitRequestLog({
+    proxyContext,
+    response,
+    captureLevel: "metadata",
+    client: redis,
+  });
+  assert.equal(metadata.ok, true);
+  if (!metadata.ok) {
+    return;
+  }
+  for (const field of BODY_FIELDS) {
+    assert.equal(metadata.fields[field], undefined);
+  }
+  assert.equal(metadata.fields.status_code, "200");
+  assert.equal(metadata.fields.metadata_json, JSON.stringify({ session: "s1" }));
+
+  const redacted = await emitRequestLog({
+    proxyContext,
+    response,
+    captureLevel: "redacted",
+    streamKey: "redacted",
+    client: redis,
+  });
+  assert.equal(redacted.ok, true);
+  if (!redacted.ok) {
+    return;
+  }
+  const truncated = `${"y".repeat(2_048)}…[truncated]`;
+  assert.equal(redacted.fields.request_payload_json, truncated);
+  assert.equal(redacted.fields.upstream_request_payload_json, truncated);
+  assert.equal(redacted.fields.response_payload_json, truncated);
+  assert.equal(redacted.fields.response_stream_text, truncated);
+
+  const full = await emitRequestLog({
+    proxyContext,
+    response,
+    captureLevel: "full",
+    streamKey: "full",
+    client: redis,
+  });
+  assert.equal(full.ok, true);
+  if (!full.ok) {
+    return;
+  }
+  assert.equal(full.fields.request_payload_json, `${long}request`);
+  assert.equal(full.fields.upstream_request_payload_json, `${long}upstream`);
+  assert.equal(full.fields.response_payload_json, `${long}response`);
+  assert.equal(full.fields.response_stream_text, streamText);
+});
+
+test("emitRequestLog reads REQUEST_LOG_CAPTURE_LEVEL from the environment", async () => {
+  const previous = process.env.REQUEST_LOG_CAPTURE_LEVEL;
+  process.env.REQUEST_LOG_CAPTURE_LEVEL = "metadata";
+  try {
+    const redis = new FakeStreamRedis();
+    const result = await emitRequestLog({
+      proxyContext: buildProxyContext(),
+      response: baseResponse({ responseStreamText: "data: hi\n\n" }),
+      client: redis,
+    });
+    assert.equal(result.ok, true);
+    if (!result.ok) {
+      return;
+    }
+    for (const field of BODY_FIELDS) {
+      assert.equal(result.fields[field], undefined);
+    }
+  } finally {
+    if (previous === undefined) {
+      delete process.env.REQUEST_LOG_CAPTURE_LEVEL;
+    } else {
+      process.env.REQUEST_LOG_CAPTURE_LEVEL = previous;
+    }
+  }
 });
 
 test("emitRequestLog caps stream length when streamMaxLen is set", async () => {

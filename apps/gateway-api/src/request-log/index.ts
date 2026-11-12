@@ -1,4 +1,10 @@
-export { sanitizeHeaders, stringifyChildKeyTags } from "./capture.js";
+export {
+  applyPayloadCapture,
+  getCaptureLevel,
+  parseCaptureLevel,
+  sanitizeHeaders,
+  stringifyChildKeyTags,
+} from "./capture.js";
 export { buildRequestLogFields, requestLogFieldsToXaddArgs } from "./build.js";
 export { emitRequestLog } from "./emit.js";
 export type {
@@ -30,6 +36,7 @@ export {
 } from "./schema.js";
 export type {
   BuildRequestLogInput,
+  CaptureLevel,
   RequestLogResponseCapture,
   RequestLogV1Fields,
   ResponseMode,
